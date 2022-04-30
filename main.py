@@ -1,160 +1,50 @@
 """PDP-11 Emulator"""
-topofmemory = 0o377777 # 0xFFFF which is 16 bits
-iospace = topofmemory - 0o27777
+from pdp11psw import psw
+from pdp11ram import ram
+from pdp11reg import reg
 
-registers = [0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
-memory = bytearray(topofmemory)
-pc = 0
 nooperandmethods = {}
 branchmethods = {}
+run = True
 
+reg = reg()
+ram = ram()
+psw = psw(ram)
 
-# 104000-104377 EMT (trap & interrupt)
-# 104400-104777 TRAP (trap & interrupt)
-
-# 013400 0 001 011 100 000 000 BCS (branch)
-# 16SSDD 1 110 *** *** *** *** subtract src from dst (double)
-# 06SSDD 0 110 *** *** *** *** ADD add src to dst (double)
-
-# PSW bit meanings and masks
-# 15 14 current mode        0o140000
-# 13 12 previous mode       0o030000
-# 7 6 5 priority            0o000340
-# 4 T trap                  0o000020
-# 3 N result was negative   0o000010
-# 2 Z result was zero       0o000004
-# 1 V overflow              0o000002
-# 0 C result had carry      0o000001
-
-PSWaddress = topofmemory-3
-cmodemask = 0o140000
-pmoremask = 0o030000
-modemask = 0o170000
-prioritymask = 0o000340
-trapmask = 0o000020
-Nmask = 0o000010
-Zmask = 0o000004
-Vmask = 0o000002
-Cmask = 0o000001
-
-
-def PSW():
-    return readmemoryword(PSWaddress)
-
-
-def setPSW(mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1):
-    psw = PSW()
-    if mode > -1:
-        oldmode = psw & modemask
-        psw = psw & ~cmodemask | mode << 14 | oldmode >> 2
-    if priority > -1:
-        psw = psw & ~prioritymask | priority << 5
-    if trap > -1:
-        psw = psw & ~trapmask | trap << 4
-    if N > -1:
-        psw = psw & ~Nmask | N << 3
-    if Z > -1:
-        psw = psw & ~Zmask | Z << 2
-    if V > -1:
-        psw = psw & ~Vmask | V << 1
-    if C > -1:
-        psw = psw & ~Cmask | C
-    writememoryword(PSWaddress, psw)
-
-
-def N():
-    return PSW() & ~Nmask >> 3
-
-
-def Z():
-    return PSW() & ~Zmask >> 2
-
-
-def V():
-    return PSW() & ~Vmask >> 1
-
-
-def C():
-    return PSW() & ~Cmask
-
-
-def readmemorybyte(address):
-    """Read a byte of memory.
-    Return 0o377 for anything in the vector space.
-    Return 0o111 for anything in the iospace.
-    Return 0 for anything else."""
-    if address in range(0o0, 0o274):
-        return 0o377
-    elif address in range(300, iospace):
-        return memory[address]
-    elif address in range(iospace, topofmemory):
-        return 0o111
-    else:
-        return 0o222
-
-
-def readmemoryword(address):
-    """Read a word of memory.
-    Low bytes are stored at even-numbered memory locations
-    and high bytes at odd-numbered memory locations.
-    Returns two bytes."""
-    #print(f'readmemoryword({oct(address)})')
-    hi = memory[address+1]
-    low = memory[address]
-    # print(f'{oct(hi)} {oct(low)}')
-    return (hi << 8) + low
-
-
-def writememoryword(address, data):
-    """write a two-word data chunk to memory.
-    address needs to be even"""
-    # print(f'writememoryword({oct(address)}, {oct(data)})')
-    hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
-    lo = data & 0o000377  # 0 000 000 011 111 111
-    # print(f'hi:{oct(hi)} lo:{oct(lo)}')
-    memory[address+1] = hi
-    memory[address] = lo
-    # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
-
-
-def writememorybyte(address, data):
-    """write a byte to memory.
-    address can be even or odd"""
-    memory[address] = data
-
-
-def JMP(pc, psw, offset):
+def JMP(offset):
     """jump 4-56"""
-    run = pc != 0
-    return offset, psw
+    run = reg.getpc() != 0
+    reg.setpc(offset)
 
 
-def RTS(pc, psw, offset):
+def RTS(offset):
     """jump to subroutine 4-58"""
-    return pc + 2, psw
+    reg.incpc()
 
 
-def SWAB(pc, psw, offset):
+def SWAB(offset):
     """Swap Bytes 0003DO 4-17"""
-    return pc + 2, psw
+    reg.incpc()
 
 
-def MFPI(pc, psw, offset):
+def MFPI(offset):
     """move from previous instruction space 4-77"""
-    return pc + 2, psw
+    reg.incpc()
 
 
-def MTPI(pc, psw, offset):
+def MTPI(offset):
     """move to previous instruction space 4-78"""
-    return pc + 2, psw
+    reg.incpc()
 
 
-def HALT(pc, psw, offset):  # Halt
-    return 0, psw
+def HALT(instruction):  # Halt
+    print (f'{oct(reg.getpc())} HALT')
+    global run
+    run = False
 
 
 def NOP():  # no operation
-    return pc, psw
+    reg.incpc()
 
 
 def isbranch(instruction):
@@ -172,40 +62,42 @@ def isbranch(instruction):
 def branch(instruction):
     """dispatch a branch opcode
     parameter: opcode of form 0 000 000 *** *** *** """
-    global pc, psw
     opcode = (instruction & 0o177400)
     offset = instruction & 0o000377
-    #print(f'branch {oct(instruction)} opcode {oct(opcode)} offset {oct(offset)}')
+    print(f'branch {oct(instruction)} opcode {oct(opcode)} offset {oct(offset)}')
     try:
         branchmethods[opcode](offset)
     except KeyError:
         print(f'branch not found in dictionary')
-    return pc, psw
 
 
 def BR(offset):  # Branch
-    global pc
-    print(f'{oct(pc)} BR {oct(offset)}')
-    return pc + 2 * offset, psw
+    global run
+    oldpc = reg.getpc()
+    newpc = reg.getpc() + 2 * offset
+    if oldpc == newpc:
+        print(f'{oct(reg.getpc())} BR {oct(offset)} halts')
+        run = False
+    else:
+        print(f'{oct(reg.getpc())} BR {oct(offset)}')
+        reg.setpc(newpc)
     # with the Branch instruction at location 500 see p. 4-37
 
 
 def BNE(offset):  # branch if not equal Z=0
-    global pc
-    print(f'{oct(pc)} BNE {oct(offset)}')
-    if Z() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BNE {oct(offset)}')
+    if psw.Z() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BEQ(offset):  # branch if equal Z=1
-    global pc
-    print(f'{oct(pc)} BEQ {oct(offset)}')
-    if Z() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BEQ {oct(offset)}')
+    if psw.Z() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 # Symbols in DEC book and Python operators
@@ -216,129 +108,129 @@ def BEQ(offset):  # branch if equal Z=1
 
 def BGE(offset):  # branch if greater than or equal 4-47
     global pc
-    print(f'{oct(pc)} BGE {oct(offset)}')
-    if N() | V() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BGE {oct(offset)}')
+    if psw.N() | psw.V() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BLT(offset):  # branch if less thn zero
     global pc
-    print(f'{oct(pc)} BLT {oct(offset)}')
-    if N() ^ V() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BLT {oct(offset)}')
+    if psw.N() ^ psw.V() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BGT(offset):  # branch if equal Z=1
     global pc
-    print(f'{oct(pc)} BGT {oct(offset)}')
-    if Z() | (N() ^ V()) == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BGT {oct(offset)}')
+    if psw.Z() | (psw.N() ^ psw.V()) == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BLE(offset):  # branch if equal Z=1
     global pc
-    print(f'{oct(pc)} BLE {oct(offset)}')
-    if Z() | (N() ^ V()) == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BLE {oct(offset)}')
+    if psw.Z() | (psw.N() ^ psw.V()) == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BHI(offset):  # branch if higher 101000
     global pc
-    print(f'{oct(pc)} BHI {oct(offset)}')
-    if C() == 0 and Z() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BHI {oct(offset)}')
+    if psw.C() == 0 and psw.Z() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BLOS(offset):  # branch if lower or same 101400
     global pc
-    print(f'{oct(pc)} BLOS {oct(offset)}')
-    if C() | Z() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BLOS {oct(offset)}')
+    if psw.C() | psw.Z() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BHIS(offset):  # branch if higher or same 103000
     global pc
-    print(f'{oct(pc)} BHIS {oct(offset)}')
-    if C() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BHIS {oct(offset)}')
+    if psw.C() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BLO(offset):  # branch if lower 103400
     """BLO is the same as BCS"""
     global pc
-    print(f'{oct(pc)} BLO {oct(offset)}')
-    if C() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BLO {oct(offset)}')
+    if psw.C() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BPL(offset):  # branch if positive N=0
     global pc
-    print(f'{oct(pc)} BPL {oct(offset)}')
-    if N() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BPL {oct(offset)}')
+    if psw.N() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BMI(offset):  # branch if negative N=1
     global pc
-    print(f'{oct(pc)} BMI {oct(offset)}')
-    if N() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BMI {oct(offset)}')
+    if psw.N() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BVC(offset):  # Branch if overflow is clear V=0
     global pc
-    print(f'{oct(pc)} BVC {oct(offset)}')
-    if V() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BVC {oct(offset)}')
+    if psw.V() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BVS(offset):  # Branch if overflow is set V=1
     global pc
-    print(f'{oct(pc)} BVS {oct(offset)}')
-    if V() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BVS {oct(offset)}')
+    if psw.V() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BCC(offset):  # Branch if Carry is clear C=0
     global pc
-    print(f'{oct(pc)} BCC {oct(offset)}')
-    if C() == 0:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BCC {oct(offset)}')
+    if psw.C() == 0:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def BCS(offset):  # Branch if Carry is set C=1
     global pc
-    print(f'{oct(pc)} BCS {oct(offset)}')
-    if C() == 1:
-        pc = pc + 2 * offset
+    print(f'{oct(reg.getpc())} BCS {oct(offset)}')
+    if psw.C() == 1:
+        reg.setpc(reg.getpc() + 2 * offset)
     else:
-        pc = pc + 2
+        reg.incpc()
 
 
 def setupmethods():
@@ -368,28 +260,28 @@ def setupmethods():
     branchmethods[0o103400] = BCS  # BLO
 
 
-def nooperand(pc, psw, instruction):
+def nooperand(instruction):
     """dispatch a no-operand opcode
     parameter: opcode of form * 000 0** *** *** *** """
-    print(f'{oct(pc)} nooperand {oct(instruction)}')
+    print(f'{oct(reg.getpc())} nooperand {oct(instruction)}')
     try:
         method = nooperandmethods[instruction]
-        method
+        method(instruction)
     except KeyError:
         print(f'{oct(instruction)} is not a nooperand')
-    return pc + 2, psw
+    reg.incpc() # *** remove once methods are implemeted
 
 
-def INC(pc, psw, byte, destadd, dest):
+def INC(byte, destadd, dest):
     print(f'INC{byte} {oct(destadd)}')
     if byte:
-        writememorybyte(destadd, dest + 1)
+        ram.writebyte(destadd, dest + 1)
     else:
-        writememoryword(destadd, dest + 1)
-    return pc + 2, psw
+        ram.writeword(destadd, dest + 1)
+    reg.incpc() # *** remove once methods are implemeted
 
 
-def singleoperand(pc, psw, instruction):
+def singleoperand(instruction):
     """dispatch a single-operand opcode
     parameter: opcode of form * 000 1** *** *** *** """
     # single operands
@@ -418,18 +310,18 @@ def singleoperand(pc, psw, instruction):
 
     if instruction & 0o100000 == 0o100000:
         byte = "B"
-        dest = readmemorybyte(destadd)
+        dest = ram.readbyte(destadd)
     else:
         byte = ""
-        dest = readmemoryword(destadd)
+        dest = ram.readword(destadd)
     if opcode == 0o0005200:
-        pc, psw = INC(pc, psw, byte, destadd, dest)
+        pc = INC(byte, destadd, dest)
     else:
-        print(f'{oct(pc)} singleoperand {oct(instruction)} {oct(opcode)} {oct(destadd)}')
-    return pc + 2, psw
+        print(f'{oct(reg.getpc())} singleoperand {oct(instruction)} {oct(opcode)} {oct(destadd)}')
+    reg.incpc()
 
 
-def rssoperand(pc, psw, instruction):
+def rssoperand(instruction):
     """dispatch an RSS opcode
     parameter: opcode of form 0 111 *** *** *** *** """
     # register source or destination
@@ -448,24 +340,24 @@ def rssoperand(pc, psw, instruction):
     opcode = (instruction & 0o077000) >> 9
     r = (instruction & 0o000700) >> 6
     dest = instruction & 0o000077
-    print(f'{oct(pc)} rssoperand{oct(instruction)} {oct(opcode)} {oct(r)} {oct(dest)}')
+    print(f'{oct(reg.getpc())} rssoperand{oct(instruction)} {oct(opcode)} {oct(r)} {oct(dest)}')
 
-    return pc + 2, psw
+    reg.incpc()
 
 
-def MOV(pc, psw, byte, sourceadd, source, destadd, dest):
+def MOV(byte, sourceadd, source, destadd, dest):
     """move 4-23"""
-    print(f'{oct(pc)} MOV{byte} {oct(sourceadd)}:{oct(source)} {oct(destadd)}:{oct(dest)}')
+    print(f'{oct(reg.getpc())} MOV{byte} {oct(sourceadd)}:{oct(source)} {oct(destadd)}:{oct(dest)}')
     if byte == "B":
-        writememorybyte(destadd, source)
+        ram.writebyte(destadd, source)
     else:
-        writememoryword(destadd, source)
-    return pc + 2, psw
+        ram.writeword(destadd, source)
+    reg.incpc()
 
 
-def CMP(pc, psw, byte, sourceadd, source, destadd, dest):
+def CMP(byte, sourceadd, source, destadd, dest):
     """compare 4-24"""
-    print(f'{oct(pc)} CMP{byte} {oct(source)} {oct(dest)}')
+    print(f'{oct(reg.getpc())} CMP{byte} {oct(source)} {oct(dest)}')
     result = source - dest
     N = 0
     if result < 0:
@@ -487,40 +379,40 @@ def CMP(pc, psw, byte, sourceadd, source, destadd, dest):
         if result != 0o200000:
             c = 0o1
     newpsw = psw & 0o177760 + N + Z + V + C
-    return pc + 2, newpsw
+    reg.incpc(), newpsw
 
 
-def BIT(pc, psw, byte, sourceadd, source, destadd, dest):
+def BIT(byte, sourceadd, source, destadd, dest):
     """bit test 4-28"""
-    print(f'{oct(pc)} BIT{byte} {oct(source)} {oct(dest)}')
+    print(f'{oct(reg.getpc())} BIT{byte} {oct(source)} {oct(dest)}')
     if byte == "B":
-        writememorybyte(dest, readmemorybyte(source))
+        ram.writebyte(dest, ram.readbyte(source))
     else:
-        writememoryword(dest, readmemoryword(source))
-    return pc + 2, psw
+        ram.writeword(dest, ram.readword(source))
+    reg.incpc()
 
 
-def BIC(pc, psw, byte, sourceadd, source, destadd, dest):
+def BIC(byte, sourceadd, source, destadd, dest):
     """bit clear 4-29"""
-    print(f'{oct(pc)} BIC{byte} {oct(source)} {oct(dest)}')
+    print(f'{oct(reg.getpc())} BIC{byte} {oct(source)} {oct(dest)}')
     if byte == "B":
-        writememorybyte(dest, readmemorybyte(source))
+        ram.writebyte(dest, ram.readbyte(source))
     else:
-        writememoryword(dest, readmemoryword(source))
-    return pc + 2, psw
+        ram.writeword(dest, ram.readword(source))
+    reg.incpc()
 
 
-def BIS(pc, psw, byte, sourceadd, source, destadd, dest):
+def BIS(byte, sourceadd, source, destadd, dest):
     """bit set 4-30"""
-    print(f'{oct(pc)} BIS{byte} {oct(source)} {oct(dest)}')
+    print(f'{oct(reg.getpc())} BIS{byte} {oct(source)} {oct(dest)}')
     if byte == "B":
-        writememorybyte(dest, readmemorybyte(source))
+        ram.writebyte(dest, ram.readbyte(source))
     else:
-        writememoryword(dest, readmemoryword(source))
-    return pc + 2, psw
+        ram.writeword(dest, ram.readword(source))
+    reg.incpc()
 
 
-def doubleoperand(pc, psw, instruction):
+def doubleoperand(instruction):
     """dispatch a double-operand opcode.
     parameter: opcode of form * +++ *** *** *** ***
     where +++ = not 000 and not 111 and not 110 """
@@ -543,35 +435,32 @@ def doubleoperand(pc, psw, instruction):
 
     if instruction & 0o100000 == 0o100000:
         byte = "B"
-        source = readmemorybyte(sourceadd)
-        dest = readmemorybyte(destadd)
+        source = ram.readbyte(sourceadd)
+        dest = ram.readbyte(destadd)
     else:
         byte = ""
-        source = readmemoryword(sourceadd)
-        dest = readmemoryword(destadd)
+        source = ram.readword(sourceadd)
+        dest = ram.readword(destadd)
 
     if opcode == 0o1:
-        pc, psw = MOV(pc, psw, byte, sourceadd, source, destadd, dest)
+        MOV(byte, sourceadd, source, destadd, dest)
     elif opcode == 0o2:
-        pc, psw = CMP(pc, psw, byte, sourceadd, source, destadd, dest)
+        CMP(byte, sourceadd, source, destadd, dest)
     elif opcode == 0o3:
-        pc, psw = BIT(pc, psw, byte, sourceadd, source, destadd, dest)
+        BIT(byte, sourceadd, source, destadd, dest)
     elif opcode == 0o4:
-        pc, psw = BIC(pc, psw, byte, sourceadd, source, destadd, dest)
+        BIC(byte, sourceadd, source, destadd, dest)
     elif opcode == 0o5:
-        pc, psw = BIS(pc, psw, byte, sourceadd, source, destadd, dest)
+        BIS(byte, sourceadd, source, destadd, dest)
     else:
-        pc = 0
-        psw = 0
-
-    return pc, psw
+        print(f'{oct(reg.getpc())} {oct(instruction)} is not a double operand instruction')
 
 
-def otheropcode(pc, psw, instruction):
+def otheropcode(instruction):
     """dispatch a leftover opcode
     parameter: opcode of form that doesn't fit the rest """
-    print(f'{oct(pc)} otheropcode {oct(instruction)}')
-    return pc + 2, psw
+    print(f'{oct(reg.getpc())} otheropcode {oct(instruction)}')
+    reg.incpc()
 
 
 def issingleoperand(instruction):
@@ -599,9 +488,8 @@ def isdoubleoperand(instruction):
     bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
 
 
-def dispatchopcode(pc, psw, instruction):
+def dispatchopcode(instruction):
     """ top-level dispatch"""
-    # print (f'dispatchopcode({oct(instruction)})')
     # Patterns
     # 0 000 000 *** *** *** branch
     # * 000 0** *** *** *** no operands
@@ -614,52 +502,48 @@ def dispatchopcode(pc, psw, instruction):
     # dictionary of callables
     # https://softwareengineering.stackexchange.com/questions/182093/why-store-a-function-inside-a-python-dictionary
 
+    #print(f'{oct(reg.getpc())} {oct(instruction)}')
     if isbranch(instruction):
-        pc, psw = branch(instruction)
+        branch(instruction)
     elif instruction & 0o074000 == 0o000000:
-        pc, psw = nooperand(pc, psw, instruction)
+        nooperand(instruction)
     elif issingleoperand(instruction):
-        pc, psw = singleoperand(pc, psw, instruction)
+        singleoperand(instruction)
     elif isrssoperand(instruction):
-        pc, psw = rssoperand(pc, psw, instruction)
+        rssoperand(instruction)
     elif isdoubleoperand(instruction):
-        pc, psw = doubleoperand(pc, psw, instruction)
+        doubleoperand(instruction)
     else:
-        pc, psw = otheropcode(pc, psw, instruction)
-    return pc, psw
+        otheropcode(instruction)
 
 
 print('begin PDP11 emulator')
 
 print('init')
-pc = 0o000744
-psw = 0o000000
+reg.setpc(0o000744)
 setupmethods()
 
+# salt memory to help with debugging
+ram.writeword(0o6700, 0o1444444)
+ram.writeword(0o2700, 0o1555555)
+
+# put the boot loader into memory
+# from pdp-11/40 book
+bootaddress = 0o000744
 bootstraploader = [0o016701, 0o000240, 0o012702, 0o000352,
                    0o005211, 0o105711, 0o100476, 0o116162,
                    0o000002, 0o000400, 0o005267, 0o177756,
                    0o000765, 0o177560]
-# from pdp-11/40 book
-bootaddress = 0o000744
-
-# salt memory to help with debugging
-writememoryword(0o6700, 0o1444444)
-writememoryword(0o2700, 0o1555555)
-
-# put the boot loader into memory
 for instruction in bootstraploader:
     # print()
     # print(f'bootaddress:{oct(bootaddress)}  instruction: {oct(instruction)}')
-    writememoryword(bootaddress, instruction)
-    # print(f'{oct(bootaddress)}:{oct(readmemoryword(bootaddress))}')
+    ram.writeword(bootaddress, instruction)
+    # print(f'{oct(bootaddress)}:{oct(ram.readword(bootaddress))}')
     bootaddress = bootaddress + 2
 
 # start the processor
-run = 1
-psw = 1
+run = True
 while run:
-    instruction = readmemoryword(pc)
-    # print(f'run {oct(pc)} {oct(psw)} {oct(instruction)}')
-    pc, psw = dispatchopcode(pc, psw, instruction)
-    run = psw != 0
+    instruction = ram.readword(reg.getpc())
+    # print(f'run {oct(reg.getpc())} {oct(psw)} {oct(instruction)}')
+    dispatchopcode(instruction)
