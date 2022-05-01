@@ -1,12 +1,12 @@
 """PDP11 PSW"""
 
 
-class Psw:
+class psw:
     """PDP11 PSW"""
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
-        print('initializing pdp11psw')
+        #print('initializing pdp11psw')
         # 104000-104377 EMT (trap & interrupt)
         # 104400-104777 TRAP (trap & interrupt)
 

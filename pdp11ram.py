@@ -3,7 +3,7 @@
 
 class ram:
     def __init__(self):
-        print('initializing pdp11ram')
+        #print('initializing pdp11ram')
         self.topofmemory = 0o377777  # 0xFFFF which is 16 bits
         self.iospace = self.topofmemory - 0o27777
         self.memory = bytearray(self.topofmemory)
