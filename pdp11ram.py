@@ -1,5 +1,11 @@
 """PDP11 RAM"""
 
+TKS = 0o177560
+TKB = 0o177562
+TPS = 0o177564
+TPB = 0o177566
+
+
 
 class ram:
     def __init__(self):
@@ -31,7 +37,14 @@ class ram:
         hi = self.memory[address + 1]
         low = self.memory[address]
         # print(f'{oct(hi)} {oct(low)}')
-        return (hi << 8) + low
+        if address < self.iospace:
+            return (hi << 8) + low
+        if address == TKS:
+            return 0o000000
+        if address == TKB:
+            return 0o000000
+        if address == TPS:
+            return 0o000000
 
     def writeword(self, address, data):
         """write a two-word data chunk to self.memory.
@@ -44,7 +57,15 @@ class ram:
         self.memory[address] = lo
         # print(f'hi:{oct(self.memory[address])} lo:{oct(self.memory[address-1])}')
 
+        # serial output
+        if address == 177566:
+            print(f'print:{data}')
+
     def writebyte(self, address, data):
         """write a byte to self.memory.
         address can be even or odd"""
         self.memory[address] = data
+
+        # serial output
+        if address == 177566:
+            print(f'print:{data}')

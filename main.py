@@ -21,6 +21,60 @@ double_operand_RSS_instructions = {}
 
 run = True
 
+# from pdp-11/40 book
+bootstrap_loader = [0o016701, # MOV 0o67:0o0 0o1:0o0
+                    0o000240, # 0o000026
+                    0o012702, # MOV 0o27:0o0 0o2:0o0
+                    0o000240, # 0o000352
+                    0o005211, # INC 0o0 0o0 incomplete
+                    0o105711, # CLR 0o0 0o1
+                    0o100376, # BPL 0o376
+                    0o116162, # MOVB 0o61:0o377 0o62:0o377
+                    0o000240, # 0o000002 RTI
+                    0o000240, # BR 0o0
+                    0o005267, # INC 0o770 0o5267
+                    0o177756,
+                    0o000765, # BR 0o365
+                    0o177560, # 0o177560
+                    0o000000] #
+# NOP 0o000240
+# 0o000400 BR 00 - what's at 00 now?
+bootaddress = 0o000744
+
+
+# http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
+hello_world = [0o012702,
+               0o177564,
+               0o012701,
+               0o002032,
+               0o112100,
+               0o001405,
+               0o110062,
+               0o000002,
+               0o105712,
+               0o100376,
+               0o000771,
+               0o000000,
+               0o000763,
+               0o110,     0o145,     0o154,
+               0o154,     0o157,     0o054,
+               0o040,     0o167,     0o157,
+               0o162,     0o154,     0o144,
+               0o012,     0o000]
+hello_address = 0o2000
+
+def load_machine_code(code, base):
+    address = base
+    for instruction in code:
+        # print()
+        #print(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
+        ram.writeword(address, instruction)
+        #print(f'{oct(address)}:{oct(ram.readword(address))}')
+        address = address + 2
+    reg.setpc(base)
+
+
+
 # ****************************************************
 # stack methods for use by instructions
 # ****************************************************
@@ -663,10 +717,19 @@ def set_condition_codes(source, dest, result):
 
 def MOV(b, read, write, source, dest):
     """01 SS DD move 4-23"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} MOV{b} {oct(sourceadd)}:{oct(source)} {oct(destadd)}:{oct(dest)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} MOV{b} {oct(source)} {oct(dest)}')
     write(dest, read(source))
     reg.incpc()
-
+    # code in example is
+    # 002000 012702  177564 -> mov     #177564,r2
+    # we interpret this as
+    # 0o2000 0o12702 MOV 0o27 0o2
+    # 01 SS DD: SS = 0o27   DD = 0o02
+    # that means R7 which is special. That's the PC
+    # that 2 means it's an immediate-mode instruction:
+    # operand follows the instruction
+    # Page 3-3 makes it clear.
+    # O have to generalize the mode thing somehow.
 
 def CMP(b, read, write, source, dest):
     """compare 4-24"""
@@ -929,43 +992,19 @@ def dispatch_opcode(instruction):
 
 print('begin PDP11 emulator')
 
-reg.setpc(0o000744)
 setup_branch_instructions()
 setup_no_operand_instructions()
 setup_single_operand_instructions()
 setup_double_operand_SSDD_instructions()
 setup_double_operand_RSS_instructions()
 
-# put the boot loader into memory
-# from pdp-11/40 book
-bootstraploader = [0o016701, # MOV 0o67:0o0 0o1:0o0
-                   0o000240, # 0o000026
-                   0o012702, # MOV 0o27:0o0 0o2:0o0
-                   0o000240, # 0o000352
-                   0o005211, # INC 0o0 0o0 incomplete
-                   0o105711, # CLR 0o0 0o1
-                   0o100376, # BPL 0o376
-                   0o116162, # MOVB 0o61:0o377 0o62:0o377
-                   0o000240, # 0o000002 RTI
-                   0o000240, # BR 0o0
-                   0o005267, # INC 0o770 0o5267
-                   0o177756,
-                   0o000765, # BR 0o365
-                   0o177560]
+#load_machine_code(bootstrap_loader, bootaddress)
 
-# NOP 0o000240
-# 0o000400 BR 00 - what's at 00 now?
-
-bootaddress = 0o000744
-for instruction in bootstraploader:
-    # print()
-    # print(f'bootaddress:{oct(bootaddress)}  instruction: {oct(instruction)}')
-    ram.writeword(bootaddress, instruction)
-    # print(f'{oct(bootaddress)}:{oct(ram.readword(bootaddress))}')
-    bootaddress = bootaddress + 2
+load_machine_code(hello_world, hello_address)
 
 # start the processor loop
 run = True
+
 while run:
     instruction = ram.readword(reg.getpc())
     dispatch_opcode(instruction)
