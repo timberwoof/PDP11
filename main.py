@@ -17,10 +17,12 @@ reg = reg()
 ram = ram()
 psw = psw(ram)
 
+
 def JMP(offset):
     """jump 0001DD 4-56"""
     run = reg.getpc() != 0
     reg.setpc(offset)
+
 
 def JSR(offset):
     """jump to subroutine 004RDD 4-58"""
@@ -46,6 +48,7 @@ def MFPI(offset):
 def MTPI(offset):
     """move to previous instruction space 4-78"""
     reg.incpc()
+
 
 def BR(offset):  # Branch
     global run
@@ -208,6 +211,7 @@ def BCS(offset):  # Branch if Carry is set C=1
     else:
         reg.incpc()
 
+
 def setupbranchmethods():
     branchmethods[0o000400] = BR
     branchmethods[0o001000] = BNE
@@ -250,39 +254,46 @@ def branch(instruction):
         print(f'branch not found in dictionary')
 
 
-
 def HALT(instruction):  # Halt
-    print (f'{oct(reg.getpc())} {oct(instruction)} HALT')
+    print(f'{oct(reg.getpc())} {oct(instruction)} HALT')
     global run
     run = False
 
+
 def WAIT(instruction):  # Wait 4-75
-    print (f'{oct(reg.getpc())} {oct(instruction)} WAIT unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} WAIT unimplemented')
     reg.incpc()
+
 
 def RTI(instruction):  # RTI 4-69
-    print (f'{oct(reg.getpc())} {oct(instruction)} RTI unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} RTI unimplemented')
     reg.incpc()
+
 
 def BPT(instruction):  # BPT 4-67
-    print (f'{oct(reg.getpc())} {oct(instruction)} BPT unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} BPT unimplemented')
     reg.incpc()
+
 
 def IOT(instruction):  # IOT 4-68
-    print (f'{oct(reg.getpc())} {oct(instruction)} IOT unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} IOT unimplemented')
     reg.incpc()
+
 
 def RESET(instruction):  # RESET 4-76
-    print (f'{oct(reg.getpc())} {oct(instruction)} RESET unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} RESET unimplemented')
     reg.incpc()
+
 
 def RTT(instruction):  # RTT 4-70
-    print (f'{oct(reg.getpc())} {oct(instruction)} RTT unimplemented')
+    print(f'{oct(reg.getpc())} {oct(instruction)} RTT unimplemented')
     reg.incpc()
 
+
 def NOP(instruction):  # no operation 000240
-    print (f'{oct(reg.getpc())} {oct(instruction)} NOP')
+    print(f'{oct(reg.getpc())} {oct(instruction)} NOP')
     reg.incpc()
+
 
 def setupnooperandmethods():
     nooperandmethods[0o000000] = HALT
@@ -294,13 +305,15 @@ def setupnooperandmethods():
     nooperandmethods[0o000006] = RTT
     nooperandmethods[0o000240] = NOP
 
+
 def isnooperand(instruction):
     return instruction & 0o074000 == 0o000000
+
 
 def nooperand(instruction):
     """dispatch a no-operand opcode
     parameter: opcode of form * 000 0** *** *** *** """
-    #print(f'{oct(reg.getpc())} {oct(instruction)} nooperand {oct(instruction)}')
+    # print(f'{oct(reg.getpc())} {oct(instruction)} nooperand {oct(instruction)}')
     try:
         method = nooperandmethods[instruction]
         nooperandmethods[instruction](instruction)
@@ -314,6 +327,7 @@ def CLR(instruction, dest, operand):
     psw.setPSW(N=0, Z=1, V=0, C=0)
     return result
 
+
 def COM(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} COM {oct(dest)} {oct(operand)}')
     result = ~operand & maskword
@@ -325,6 +339,7 @@ def COM(instruction, dest, operand):
         z = 1
     psw.setPSW(N=n, Z=z, V=0, C=1)
     return result
+
 
 def COMB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} COMB {oct(dest)} {oct(operand)}')
@@ -338,10 +353,11 @@ def COMB(instruction, dest, operand):
     psw.setPSW(N=n, Z=z, V=0, C=1)
     return result
 
+
 def INC(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} INC {oct(dest)} {oct(operand)} incomplete')
     # *** this is incomplete as words need their own special little operators
-    result = operand+1 & maskword
+    result = operand + 1 & maskword
     n = 0
     if result < 0:
         n = 1
@@ -353,11 +369,12 @@ def INC(instruction, dest, operand):
         v = 1
     psw.setPSW(N=n, Z=z, V=v)
     return result
+
 
 def INCB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} INCB {oct(dest)} {oct(operand)} incomplete')
     # *** this is incomplete as bytes need their own special little operators
-    result = operand+1 & maskbyte
+    result = operand + 1 & maskbyte
     n = 0
     if result < 0:
         n = 1
@@ -370,10 +387,11 @@ def INCB(instruction, dest, operand):
     psw.setPSW(N=n, Z=z, V=v)
     return result
 
+
 def DEC(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} DEC {oct(dest)} {oct(operand)} incomplete')
     # *** this is incomplete as words need their own special little operators
-    result = operand-1 & maskbyte
+    result = operand - 1 & maskbyte
     n = 0
     if result < 0:
         n = 1
@@ -386,10 +404,11 @@ def DEC(instruction, dest, operand):
     psw.setPSW(N=n, Z=z, V=v)
     return result
 
+
 def DECB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} DECB {oct(dest)} {oct(operand)} incomplete')
     # *** this is incomplete as bytes need their own special little operators
-    result = operand-1 & maskbyte
+    result = operand - 1 & maskbyte
     n = 0
     if result < 0:
         n = 1
@@ -401,16 +420,19 @@ def DECB(instruction, dest, operand):
         v = 1
     psw.setPSW(N=n, Z=z, V=v)
     return result
+
 
 def NEG(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
     result = -operand & maskword
     return result
 
+
 def NEGB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} NEGB {oct(dest)} {oct(operand)}')
     result = -operand & maskbyte
     return result
+
 
 def SXT(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} SXT {oct(dest)} {oct(operand)} incomplete')
@@ -425,57 +447,41 @@ def SXT(instruction, dest, operand):
     psw.setPSW(Z=z)
     return result
 
+
 def setupsingleoperand():
-    singleoperandmethods[0o00050] = CLR
-    singleoperandmethods[0o00051] = COM
-    singleoperandmethods[0o00052] = INC
-    singleoperandmethods[0o00053] = DEC
-    singleoperandmethods[0o00054] = NEG
-    singleoperandmethods[0o00055] = CLR  #ADC
-    singleoperandmethods[0o00056] = CLR  #SBC
-    singleoperandmethods[0o00057] = CLR  #TST
-    singleoperandmethods[0o00060] = CLR  #ROR
-    singleoperandmethods[0o00061] = CLR  #ROL
-    singleoperandmethods[0o00062] = CLR  #ASR
-    singleoperandmethods[0o00063] = CLR  #ASL
-    singleoperandmethods[0o00064] = CLR  #MARK
-    singleoperandmethods[0o00065] = MFPI
-    singleoperandmethods[0o00066] = MTPI
-    singleoperandmethods[0o00067] = SXT  #SXT
-    singleoperandmethods[0o10050] = CLR
-    singleoperandmethods[0o10051] = COM
-    singleoperandmethods[0o10052] = INCB
-    singleoperandmethods[0o10053] = DECB
-    singleoperandmethods[0o10054] = NEGB
-    singleoperandmethods[0o10055] = CLR  #ADCB
-    singleoperandmethods[0o10056] = CLR  #SBCB
-    singleoperandmethods[0o10057] = CLR  #TSTB
-    singleoperandmethods[0o10060] = CLR  #RORB
-    singleoperandmethods[0o10061] = CLR  #ROLB
-    singleoperandmethods[0o10062] = CLR  #ASRB
-    singleoperandmethods[0o10063] = CLR  #ASLB
-    singleoperandmethods[0o10065] = CLR  #MFPD
-    singleoperandmethods[0o10066] = CLR  #MTPD
+    singleoperandmethods[0o005000] = CLR
+    singleoperandmethods[0o005100] = COM
+    singleoperandmethods[0o005200] = INC
+    singleoperandmethods[0o005300] = DEC
+    singleoperandmethods[0o005400] = NEG
+    singleoperandmethods[0o005500] = CLR  # ADC
+    singleoperandmethods[0o005600] = CLR  # SBC
+    singleoperandmethods[0o005700] = CLR  # TST
+    singleoperandmethods[0o006000] = CLR  # ROR
+    singleoperandmethods[0o006100] = CLR  # ROL
+    singleoperandmethods[0o006200] = CLR  # ASR
+    singleoperandmethods[0o006300] = CLR  # ASL
+    singleoperandmethods[0o006400] = CLR  # MARK
+    singleoperandmethods[0o006500] = MFPI
+    singleoperandmethods[0o006600] = MTPI
+    singleoperandmethods[0o006700] = SXT  # SXT
+    singleoperandmethods[0o105000] = CLR
+    singleoperandmethods[0o105100] = COM
+    singleoperandmethods[0o105200] = INCB
+    singleoperandmethods[0o105300] = DECB
+    singleoperandmethods[0o105400] = NEGB
+    singleoperandmethods[0o105500] = CLR  # ADCB
+    singleoperandmethods[0o105600] = CLR  # SBCB
+    singleoperandmethods[0o105700] = CLR  # TSTB
+    singleoperandmethods[0o106000] = CLR  # RORB
+    singleoperandmethods[0o106100] = CLR  # ROLB
+    singleoperandmethods[0o106200] = CLR  # ASRB
+    singleoperandmethods[0o106300] = CLR  # ASLB
+    singleoperandmethods[0o106500] = CLR  # MFPD
+    singleoperandmethods[0o106600] = CLR  # MTPD
+
 
 def issingleoperand(instruction):
-    # bits 14-12 = 0
-    # bit 11 = 1
-    # bits 10-9 in [1, 2]
-    bits14_12 = instruction & 0o070000 == 0o000000
-    bit11 = instruction & 0o006000 == 0o006000
-    bits10_9 = instruction & 0o003000 in [0o001000, 0o002000]
-    return bits14_12 and bit11 and bits10_9
-
-
-def singleoperand(instruction):
-    """dispatch a single-operand opcode
-    parameter: opcode of form * 000 1** *** *** *** """
-    # single operands
-    # 15-6 opcode
-    # 15 is 1 to indicate a byte instruction
-    # 15 is 0 to indicate a word instruction
-    # 5-0 dst
-
     #        * 000 1** *** *** ***
     # •050DD * 000 101 000 *** *** CLR clear (single)
     # •051DD * 000 101 001 *** *** COM complement (single)
@@ -491,56 +497,99 @@ def singleoperand(instruction):
     # •063DD * 000 110 011 *** *** ASL arithmetic shift left (single)
     # •067DD * 000 110 111 *** *** SXT sign extent (single)
 
-    opcode = (instruction & 0o107700) >> 6
+    # 15  12 10  876 543 210
+    #  * 000 101 *** *** ***
+    #  * 000 110 *** *** ***
+
+    # bit 15 can be 1 or 0
+    # bits 14,13,12 must be 0
+    # bits 11,10,9 must be 5 or 6
+    # bits 8,7,6 can be anything
+    # bits 5-0 can be anything
+    bits_14_13_12 = instruction & 0o070000 == 0o000000
+    bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
+    return bits_14_13_12 and bits_11_10_9
+
+
+def singleoperand(instruction):
+    """dispatch a single-operand opcode
+    parameter: opcode of form * 000 1** *** *** *** """
+    # single operands
+    # 15-6 opcode
+    # 15 is 1 to indicate a byte instruction
+    # 15 is 0 to indicate a word instruction
+    # 5-0 dst
+
+    #print(f'{oct(reg.getpc())} decoding {oct(instruction)}')
+
     byte = (instruction & 0o100000) >> 16
+    opcode = (instruction & 0o107700)
     addressmode = (instruction & 0o000070) >> 3
     register = instruction & 0o000007
-    address = 0o0
 
-    if addressmode == 0:  # register
+    #print(f'byte:{byte} opcode:{oct(opcode)} addressmode:{oct(addressmode)} register:{oct(register)}')
+
+    if byte == 1:
+        read = ram.readbyte
+        write = ram.writebyte
+        crement = 1
+    else:
+        read = ram.readword
+        write = ram.writeword
+        crement = 2
+    if register == 6 or register == 7:
+        crement = 2
+
+    if addressmode == 0:  # register direct
+        #print('register direct')
         operand = reg.get(register)
-    elif addressmode == 2:  # autoincrement
+        operandaddress = 0o0
+    elif addressmode == 1:  # register deferred
+        #print('register deferred')
         operandaddress = reg.get(register)
-        if byte == 1:
-            operand = ram.readbyte(operandaddress)
-        else:
-            operand = ram.readword(operandaddress)
-        reg.set(register, reg.get(register)+1)
-    elif addressmode == 4:  # autodecrement
-        reg.set(register, reg.get(register)-1)
-        if byte == 1:
-            operand = ram.readbyte(reg.get(register))
-        else:
-            operand = ram.readword(reg.get(register))
-    elif addressmode == 6:  # index
-        operandaddress = reg.get(register) + ram.readword(reg.getpc()+2)
-        if byte == 1:
-            operand = ram.readbyte(reg.get(operandaddress))
-        else:
-            operand = ram.readword(reg.get(operandaddress))
+        operand = read(operandaddress)
+    elif addressmode == 2:  # autoincrement direct
+        #print('autoincrement direct')
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 3:  # autoincrement deferred
+        #print('autoincrement deferred')
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 4:  # autodecrement direct
+        #print('autodecrement direct')
+        reg.set(register, reg.get(register) - crement)
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 5:  # autodecrement deferred
+        #print('autodecrement deferred')
+        reg.set(register, reg.get(register) - 2)
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
 
     try:
-        result = singleoperandmethods[opcode](instruction, operand)
+        #print(f'calling opcode:{oct(opcode)} operandaddress:{oct(operandaddress)} operand:{oct(operand)}')
+        result = singleoperandmethods[opcode](instruction, operandaddress, operand)
     except KeyError:
         print(f'{oct(reg.getpc())} {oct(instruction)} singleoperandmethod {oct(opcode)} was not implemented')
-        result = 0
+        result = operand
 
-    if addressmode == 0:  # register
+    if addressmode == 0:  # register direct
         reg.set(register, result)
-        reg.incpc()
-    elif addressmode == 2 or addressmode == 4:  # auto__crement
-        if byte == 1:
-            ram.writebyte(operandaddress, result)
-        else:
-            ram.writeword(operandaddress, result)
-        reg.incpc()
-    elif addressmode == 6:  # index
-        if byte == 1:
-            ram.writebyte(operandaddress, result)
-        else:
-            ram.writeword(operandaddress, result)
-        reg.incpc()
-        reg.incpc()
+    if addressmode == 1:  # register deferred
+        write(operandaddress, result)
+    elif addressmode == 2:  # autoincrement direct
+        write(operandaddress, result)
+        reg.set(register, reg.get(register) + crement)
+    elif addressmode == 3:  # autoincrement deferred
+        write(operandaddress, result)
+        reg.set(register, reg.get(register) + 2)
+    elif addressmode == 4:  # autodecrement direct
+        write(operandaddress, result)
+    elif addressmode == 5:  # autodecrement deferred
+        write(operandaddress, result)
+
+    reg.incpc()
 
 
 def isrssoperand(instruction):
@@ -714,7 +763,7 @@ def dispatchopcode(instruction):
     # dictionary of callables
     # https://softwareengineering.stackexchange.com/questions/182093/why-store-a-function-inside-a-python-dictionary
 
-    #print(f'{oct(reg.getpc())} {oct(instruction)}')
+    # print(f'{oct(reg.getpc())} {oct(instruction)}')
     if isbranch(instruction):
         branch(instruction)
     elif isnooperand(instruction):
@@ -734,6 +783,7 @@ print('begin PDP11 emulator')
 reg.setpc(0o000744)
 setupbranchmethods()
 setupnooperandmethods()
+setupsingleoperand()
 
 # salt memory to help with debugging
 ram.writeword(0o6700, 0o1444444)

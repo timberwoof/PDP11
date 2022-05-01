@@ -55,7 +55,7 @@ class psw:
             nowpsw = nowpsw & ~self.Vmask | V << 1
         if C > -1:
             nowpsw = nowpsw & ~self.Cmask | C
-        ram.writeword(self.PSWaddress, nowpsw)
+        self.ram.writeword(self.PSWaddress, nowpsw)
 
     def N(self):
         """negative status bit of PSW"""
