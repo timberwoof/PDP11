@@ -43,7 +43,7 @@ class psw:
         """return PSW"""
         return self.ram.readword(self.PSWaddress)
 
-    def setpsw(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1):
+    def setpsw(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1, PSW=-1):
         """set any PSW bits"""
         nowpsw = self.psw()
         if mode > -1:
@@ -61,6 +61,8 @@ class psw:
             nowpsw = nowpsw & ~self.Vmask | V << 1
         if C > -1:
             nowpsw = nowpsw & ~self.Cmask | C
+        if PSW > -1:
+            nowpsw = PSW
         self.ram.writeword(self.PSWaddress, nowpsw)
 
     def n(self):

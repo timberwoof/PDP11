@@ -3,22 +3,27 @@ from pdp11psw import psw
 from pdp11ram import ram
 from pdp11reg import reg
 
+reg = reg()
+ram = ram()
+psw = psw(ram)
+
 maskbyte = 0o000377
 maskword = 0o177777
 maskwordmsb = 0o100000
 maskbytemsb = 0o000200
 
-no_operandmethods = {}
-branchmethods = {}
-single_operandmethods = {}
-double_operand_methods = {}
-rss_operandmethods = {}
+# instruction dispatch tables
+no_operand_instructions = {}
+branch_instructions = {}
+single_operand_instructions = {}
+double_operand_SSDD_instructions = {}
+double_operand_RSS_instructions = {}
+
 run = True
 
-reg = reg()
-ram = ram()
-psw = psw(ram)
-
+# ****************************************************
+# stack methods for use by instructions
+# ****************************************************
 def pushstack(value):
     """push the value onto the stack
 
@@ -39,7 +44,7 @@ def popstack():
 
 
 # ****************************************************
-# No-Operand Methods - 00 00 00 through 00 00 06
+# No-Operand instructions - 00 00 00 through 00 00 06
 # ****************************************************
 
 def HALT(instruction):
@@ -60,8 +65,9 @@ def RTI(instruction):
     PC < (SP)^; PS< (SP)^
     *** need to implement the stack
     """
-    print(f'{oct(reg.getpc())} {oct(instruction)} RTI unimplemented')
-    reg.incpc()
+    print(f'{oct(reg.getpc())} {oct(instruction)} RTI')
+    reg.setpc(popstack())
+    psw.setpsw(PSW=popstack())
 
 
 def BPT(instruction):
@@ -94,16 +100,16 @@ def NOP(instruction):
     reg.incpc()
 
 
-def setup_no_operand_methods():
+def setup_no_operand_instructions():
     """populate array of no-operand methods"""
-    no_operandmethods[0o000000] = HALT
-    no_operandmethods[0o000001] = WAIT
-    no_operandmethods[0o000002] = RTI
-    no_operandmethods[0o000003] = BPT
-    no_operandmethods[0o000004] = IOT
-    no_operandmethods[0o000005] = RESET
-    no_operandmethods[0o000006] = RTT
-    no_operandmethods[0o000240] = NOP
+    no_operand_instructions[0o000000] = HALT
+    no_operand_instructions[0o000001] = WAIT
+    no_operand_instructions[0o000002] = RTI
+    no_operand_instructions[0o000003] = BPT
+    no_operand_instructions[0o000004] = IOT
+    no_operand_instructions[0o000005] = RESET
+    no_operand_instructions[0o000006] = RTT
+    no_operand_instructions[0o000240] = NOP
 
 
 def is_no_operand(instruction):
@@ -111,13 +117,13 @@ def is_no_operand(instruction):
     return instruction & 0o074000 == 0o000000
 
 
-def no_operand(instruction):
+def do_no_operand(instruction):
     """dispatch a no-operand opcode"""
     # parameter: opcode of form * 000 0** *** *** ***
     # print(f'{oct(reg.getpc())} {oct(instruction)} no_operand {oct(instruction)}')
     try:
-        method = no_operandmethods[instruction]
-        no_operandmethods[instruction](instruction)
+        method = no_operand_instructions[instruction]
+        no_operand_instructions[instruction](instruction)
     except KeyError:
         print(f'{oct(instruction)} is not a no_operand')
 
@@ -126,7 +132,7 @@ def no_operand(instruction):
 
 
 # ****************************************************
-# Branch Methods
+# Branch instructions
 # 00 04 XXX - 00 34 XXX
 # 10 00 XXX - 10 34 XXX
 # ****************************************************
@@ -285,22 +291,22 @@ def BCS(offset):
     else:
         reg.incpc()
 
-def setup_branch_methods():
-    branchmethods[0o000400] = BR
-    branchmethods[0o001000] = BNE
-    branchmethods[0o001400] = BEQ
-    branchmethods[0o002000] = BGE
-    branchmethods[0o002400] = BLT
-    branchmethods[0o003000] = BGT
-    branchmethods[0o003400] = BLE
-    branchmethods[0o100000] = BPL
-    branchmethods[0o100400] = BMI
-    branchmethods[0o101000] = BHI
-    branchmethods[0o101400] = BLOS
-    branchmethods[0o102000] = BVC
-    branchmethods[0o102400] = BVS
-    branchmethods[0o103000] = BCC  # BHIS
-    branchmethods[0o103400] = BCS  # BLO
+def setup_branch_instructions():
+    branch_instructions[0o000400] = BR
+    branch_instructions[0o001000] = BNE
+    branch_instructions[0o001400] = BEQ
+    branch_instructions[0o002000] = BGE
+    branch_instructions[0o002400] = BLT
+    branch_instructions[0o003000] = BGT
+    branch_instructions[0o003400] = BLE
+    branch_instructions[0o100000] = BPL
+    branch_instructions[0o100400] = BMI
+    branch_instructions[0o101000] = BHI
+    branch_instructions[0o101400] = BLOS
+    branch_instructions[0o102000] = BVC
+    branch_instructions[0o102400] = BVS
+    branch_instructions[0o103000] = BCC  # BHIS
+    branch_instructions[0o103400] = BCS  # BLO
 
 def is_branch(instruction):
     """Using instruction bit pattern, determine whether it's a branch instruction"""
@@ -315,20 +321,20 @@ def is_branch(instruction):
     return (highbits and lowbits) or bpl
 
 
-def branch(instruction):
+def do_branch(instruction):
     """dispatch a branch opcode"""
     #parameter: opcode of form 0 000 000 *** *** ***
     opcode = (instruction & 0o177400)
     offset = instruction & maskbyte
     #print(f'{oct(reg.getpc())} {oct(instruction)} branch opcode:{oct(opcode)} offset:{oct(offset)}')
     try:
-        branchmethods[opcode](offset)
+        branch_instructions[opcode](offset)
     except KeyError:
         print(f'branch not found in dictionary')
 
 
 # ****************************************************
-# Single-Operand Methods -
+# Single-Operand instructions -
 # 00 50 DD - 00 77 DD
 # 10 50 DD - 10 77 DD
 # ****************************************************
@@ -380,7 +386,7 @@ def COMB(instruction, dest, operand):
 
 
 def INC(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} INC {oct(dest)} {oct(operand)} incomplete')
+    print(f'{oct(reg.getpc())} {oct(instruction)} INC {oct(dest)} {oct(operand)}')
     # *** this is incomplete as words need their own special little operators
     result = operand + 1 & maskword
     n = 0
@@ -397,7 +403,7 @@ def INC(instruction, dest, operand):
 
 
 def INCB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} INCB {oct(dest)} {oct(operand)} incomplete')
+    print(f'{oct(reg.getpc())} {oct(instruction)} INCB {oct(dest)} {oct(operand)}')
     # *** this is incomplete as bytes need their own special little operators
     result = operand + 1 & maskbyte
     n = 0
@@ -414,7 +420,7 @@ def INCB(instruction, dest, operand):
 
 
 def DEC(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} DEC {oct(dest)} {oct(operand)} incomplete')
+    print(f'{oct(reg.getpc())} {oct(instruction)} DEC {oct(dest)} {oct(operand)}')
     # *** this is incomplete as words need their own special little operators
     result = operand - 1 & maskbyte
     n = 0
@@ -431,7 +437,7 @@ def DEC(instruction, dest, operand):
 
 
 def DECB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} DECB {oct(dest)} {oct(operand)} incomplete')
+    print(f'{oct(reg.getpc())} {oct(instruction)} DECB {oct(dest)} {oct(operand)}')
     # *** this is incomplete as bytes need their own special little operators
     result = operand - 1 & maskbyte
     n = 0
@@ -458,11 +464,8 @@ def NEGB(instruction, dest, operand):
     result = -operand & maskbyte
     return result
 
-
-
-
 def SXT(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} SXT {oct(dest)} {oct(operand)} incomplete')
+    print(f'{oct(reg.getpc())} {oct(instruction)} SXT {oct(dest)} {oct(operand)}')
     # *** this is incomplete as words need their own special little operators
     if psw.n() == 0:
         result = 0
@@ -475,39 +478,39 @@ def SXT(instruction, dest, operand):
     return result
 
 
-def setup_single_operand_methods():
+def setup_single_operand_instructions():
     """set up table of single-operand instructions"""
-    single_operandmethods[0o001000] = JMP
-    single_operandmethods[0o005000] = CLR
-    single_operandmethods[0o005100] = COM
-    single_operandmethods[0o005200] = INC
-    single_operandmethods[0o005300] = DEC
-    single_operandmethods[0o005400] = NEG
-    single_operandmethods[0o005500] = CLR  # ADC
-    single_operandmethods[0o005600] = CLR  # SBC
-    single_operandmethods[0o005700] = CLR  # TST
-    single_operandmethods[0o006000] = CLR  # ROR
-    single_operandmethods[0o006100] = CLR  # ROL
-    single_operandmethods[0o006200] = CLR  # ASR
-    single_operandmethods[0o006300] = CLR  # ASL
-    single_operandmethods[0o006400] = CLR  # MARK
-    single_operandmethods[0o006500] = MFPI
-    single_operandmethods[0o006600] = MTPI
-    single_operandmethods[0o006700] = SXT  # SXT
-    single_operandmethods[0o105000] = CLR
-    single_operandmethods[0o105100] = COM
-    single_operandmethods[0o105200] = INCB
-    single_operandmethods[0o105300] = DECB
-    single_operandmethods[0o105400] = NEGB
-    single_operandmethods[0o105500] = CLR  # ADCB
-    single_operandmethods[0o105600] = CLR  # SBCB
-    single_operandmethods[0o105700] = CLR  # TSTB
-    single_operandmethods[0o106000] = CLR  # RORB
-    single_operandmethods[0o106100] = CLR  # ROLB
-    single_operandmethods[0o106200] = CLR  # ASRB
-    single_operandmethods[0o106300] = CLR  # ASLB
-    single_operandmethods[0o106500] = CLR  # MFPD
-    single_operandmethods[0o106600] = CLR  # MTPD
+    single_operand_instructions[0o001000] = JMP
+    single_operand_instructions[0o005000] = CLR
+    single_operand_instructions[0o005100] = COM
+    single_operand_instructions[0o005200] = INC
+    single_operand_instructions[0o005300] = DEC
+    single_operand_instructions[0o005400] = NEG
+    single_operand_instructions[0o005500] = CLR  # ADC
+    single_operand_instructions[0o005600] = CLR  # SBC
+    single_operand_instructions[0o005700] = CLR  # TST
+    single_operand_instructions[0o006000] = CLR  # ROR
+    single_operand_instructions[0o006100] = CLR  # ROL
+    single_operand_instructions[0o006200] = CLR  # ASR
+    single_operand_instructions[0o006300] = CLR  # ASL
+    single_operand_instructions[0o006400] = CLR  # MARK
+    single_operand_instructions[0o006500] = MFPI
+    single_operand_instructions[0o006600] = MTPI
+    single_operand_instructions[0o006700] = SXT  # SXT
+    single_operand_instructions[0o105000] = CLR
+    single_operand_instructions[0o105100] = COM
+    single_operand_instructions[0o105200] = INCB
+    single_operand_instructions[0o105300] = DECB
+    single_operand_instructions[0o105400] = NEGB
+    single_operand_instructions[0o105500] = CLR  # ADCB
+    single_operand_instructions[0o105600] = CLR  # SBCB
+    single_operand_instructions[0o105700] = CLR  # TSTB
+    single_operand_instructions[0o106000] = CLR  # RORB
+    single_operand_instructions[0o106100] = CLR  # ROLB
+    single_operand_instructions[0o106200] = CLR  # ASRB
+    single_operand_instructions[0o106300] = CLR  # ASLB
+    single_operand_instructions[0o106500] = CLR  # MFPD
+    single_operand_instructions[0o106600] = CLR  # MTPD
 
 
 def is_single_operand(instruction):
@@ -524,7 +527,7 @@ def is_single_operand(instruction):
     bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
     return bits_14_13_12 and bits_11_10_9
 
-def single_operand(instruction):
+def do_single_operand(instruction):
     """dispatch a single-operand opcode"""
     # parameter: opcode of form * 000 1** *** *** ***
     # single operands
@@ -539,6 +542,8 @@ def single_operand(instruction):
     opcode = (instruction & 0o107700)
     addressmode = (instruction & 0o000070) >> 3
     register = instruction & 0o000007
+    operandaddress = 0o177776
+    operand = 0o177776
 
     #print(f'byte:{byte} opcode:{oct(opcode)} addressmode:{oct(addressmode)} register:{oct(register)}')
 
@@ -579,10 +584,17 @@ def single_operand(instruction):
         reg.set(register, reg.get(register) - 2)
         operandaddress = reg.get(register)
         operand = read(operandaddress)
+    elif addressmode == 6: # index
+        operandaddress = reg.get(register)
+        operand = read(operandaddress) + read(reg.getpc()+2)
+    elif addressmode == 7: # index deferred
+        operandaddress = reg.get(register)
+        operandaddress = read(operandaddress) + read(reg.getpc()+2)
+        operand = read(operandaddress)
 
     try:
-        #print(f'calling opcode:{oct(opcode)} operandaddress:{oct(operandaddress)} operand:{oct(operand)}')
-        result = single_operandmethods[opcode](instruction, operandaddress, operand)
+        #print(f'{oct(reg.getpc())} {oct(instruction)} single_operand opcode:{oct(opcode)} mode:{addressmode} @operand:{oct(operandaddress)} operand:{oct(operand)}')
+        result = single_operand_instructions[opcode](instruction, operandaddress, operand)
     except KeyError:
         print(f'{oct(reg.getpc())} {oct(instruction)} single_operandmethod {oct(opcode)} was not implemented')
         result = operand
@@ -601,20 +613,183 @@ def single_operand(instruction):
         write(operandaddress, result)
     elif addressmode == 5:  # autodecrement deferred
         write(operandaddress, result)
+    elif addressmode == 6:  # index
+        write(operandaddress, result)
+        reg.incpc()
+    elif addressmode == 7:  # index deferred
+        write(operandaddress, result)
+        reg.incpc()
 
     reg.incpc()
 
 # ****************************************************
-# RSS-Operand Methods - 07 0R SS through 07 7R SS
+# Double-Operand SSDD instructions
+# 01 SS DD through 06 SS DD
+# 11 SS DD through 16 SS DD
+# ****************************************************
+
+def set_condition_codes(source, dest, result):
+    if result < 0:
+        N = 1
+    else:
+        N = 0
+
+    if result == 0:
+        Z = 1
+    else:
+        Z = 0
+
+    signsource = source > 0
+    signdest = dest > 0
+    signresult = result > 0
+    if (signsource != signdest) and (signdest == signresult):
+        V = 1
+    else:
+        V = 0
+
+    if byte:
+        if result != 0o400:
+            C = 1
+        else:
+            C = 0
+    else:
+        if result != 0o200000:
+            C = 1
+        else:
+            C = 0
+
+    psw.setpsw(N=N, Z=Z, V=V, C=C)
+    reg.incpc()
+
+def MOV(b, read, write, source, dest):
+    """01 SS DD move 4-23"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} MOV{b} {oct(sourceadd)}:{oct(source)} {oct(destadd)}:{oct(dest)}')
+    write(dest, read(source))
+    reg.incpc()
+
+
+def CMP(b, read, write, source, dest):
+    """compare 4-24"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} CMP{b} {oct(source)} {oct(dest)}')
+    result = read(source) - read(dest)
+    set_condition_codes(result)
+
+def BIT(b, read, write, source, dest):
+    """bit test 4-28"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} BIT{b} {oct(source)} {oct(dest)}')
+    souce = read(src)
+    dest = read(dest)
+    result = source & dest
+    write(dest, result)
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+
+
+def BIC(b, read, write, source, dest):
+    """bit clear 4-29"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} BIC{b} {oct(source)} {oct(dest)}')
+    souce = read(src)
+    dest = read(dest)
+    result = ~source & dest
+    write(dest, result)
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+
+
+def BIS(b, read, write, source, dest):
+    """bit set 4-30"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} BIS{b} {oct(source)} {oct(dest)}')
+    souce = read(src)
+    dest = read(dest)
+    result = source | dest
+    write(dest, result)
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+
+def ADD(b, read, write, source, dest):
+    """06 SS DD ADD add 4-25"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ADD{b} {oct(source)} {oct(dest)}')
+    souce = read(src)
+    dest = read(dest)
+    result = source + dest
+    write(dest, result)
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+
+def SUB(b, read, write, source, dest):
+    """06 SS DD SUB add 4-25"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} SUB{b} {oct(source)} {oct(dest)}')
+    souce = read(src)
+    dest = read(dest)
+    result = source + ~dest + 1
+    write(dest, result)
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+
+def setup_double_operand_SSDD_instructions():
+    double_operand_SSDD_instructions[0o010000] = MOV;
+    double_operand_SSDD_instructions[0o020000] = CMP;
+    double_operand_SSDD_instructions[0o030000] = BIT;
+    double_operand_SSDD_instructions[0o040000] = BIC;
+    double_operand_SSDD_instructions[0o050000] = BIS;
+    double_operand_SSDD_instructions[0o060000] = ADD;
+    double_operand_SSDD_instructions[0o160000] = SUB;
+
+
+def is_double_operand_SSDD(instruction):
+    """Using instruction bit pattern, determine whether it's a souble operand instruction"""
+    # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
+    bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
+    return bits14_12
+
+def do_double_operand_SSDD(instruction):
+    """dispatch a double-operand opcode.
+    parameter: opcode of form * +++ *** *** *** ***
+    where +++ = not 000 and not 111 and not 110 """
+    # print(f'double_operand_SSDD{oct(instruction)}')
+    # double operands
+    # 15-12 opcode
+    # 11-6 src
+    # 5-0 dst
+
+    #        * +++ *** *** *** *** double operands
+    # •1SSDD * 001 *** *** *** *** MOV move source to destination (double)
+    # •2SSDD * 010 *** *** *** *** CMP compare src to dst (double)
+    # •3SSDD * 011 *** *** *** *** BIT bit test (double)
+    # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
+    # •5SSDD * 101 *** *** *** *** BIS bit set (double)
+
+    byte = (instruction & 0o100000) >> 16
+    opcode = (instruction & 0o070000)
+    source = (instruction & 0o007700) >> 6
+    dest = instruction & 0o000077
+
+    if byte == 1:
+        read = ram.readbyte
+        write = ram.writebyte
+        b = 'B'
+    else:
+        read = ram.readword
+        write = ram.writeword
+        b = ''
+
+    try:
+        double_operand_SSDD_instructions[opcode](b, read, write, source, dest)
+    except KeyError:
+        print(f'{oct(reg.getpc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
+
+
+# ****************************************************
+# Double-Operand RSS instructions - 07 0R SS through 07 7R SS
 # ****************************************************
 
 def MUL(register, source):
-    """07 0R SS MUL"""
+    """07 0R SS MUL 4-31"""
     print(f'{oct(reg.getpc())} {oct(instruction)} MUL unimplemented')
     reg.incpc()
 
 def DIV(register, source):
-    """07 1R SS DIV"""
+    """07 1R SS DIV 4-32"""
     print(f'{oct(reg.getpc())} {oct(instruction)} DIV unimplemented')
     reg.incpc()
 
@@ -638,16 +813,16 @@ def SOB(register, source):
     print(f'{oct(reg.getpc())} {oct(instruction)} SOB unimplemented')
     reg.incpc()
 
-def setup_rss_operand_methods():
+def setup_double_operand_RSS_instructions():
     """Set up jump table for RSS RDD RNN instructions"""
-    rss_operandmethods[0o070000] = MUL
-    rss_operandmethods[0o071000] = DIV
-    rss_operandmethods[0o072000] = ASH
-    rss_operandmethods[0o073000] = ASHC
-    rss_operandmethods[0o074000] = XOR
-    rss_operandmethods[0o077000] = SOB
+    double_operand_RSS_instructions[0o070000] = MUL
+    double_operand_RSS_instructions[0o071000] = DIV
+    double_operand_RSS_instructions[0o072000] = ASH
+    double_operand_RSS_instructions[0o073000] = ASHC
+    double_operand_RSS_instructions[0o074000] = XOR
+    double_operand_RSS_instructions[0o077000] = SOB
 
-def is_rss_operand(instruction):
+def is_double_operand_RSS(instruction):
     """Using instruction bit pattern, determine whether it's an RSS RDD RNN instruction"""
     # 077R00 0 111 111 *** 000 000 SOB (jump & subroutine)
     # bit 15 = 0
@@ -658,7 +833,7 @@ def is_rss_operand(instruction):
     bits11_9 = instruction & 0o077000 in [0o070000, 0o071000, 0o072000, 0o073000, 0o074000, 0o077000]
     return bit15 and bits14_12 and bits11_9
 
-def rss_operand(instruction):
+def do_double_operand_RSS(instruction):
     """dispatch an RSS opcode"""
     # parameter: opcode of form 0 111 *** *** *** ***
     # register source or destination
@@ -669,133 +844,14 @@ def rss_operand(instruction):
     register = (instruction & 0o000700) >> 6
     dest = instruction & 0o000077
     try:
-        rss_operandmethods[opcode](instruction, register, dest)
+        double_operand_RSS_instructions[opcode](instruction, register, dest)
     except KeyError:
-        print(f'{oct(reg.getpc())} rss_operand {oct(instruction)} {oct(opcode)} {oct(register)} {oct(dest)} KeyError')
+        print(f'{oct(reg.getpc())} double_operand_RSS {oct(instruction)} {oct(opcode)} {oct(register)} {oct(dest)} KeyError')
     reg.incpc()
 
 
 # ****************************************************
-# double operand Methods
-# 01 SS DD through 06 SS DD
-# 11 SS DD through 16 SS DD
-# ****************************************************
-def MOV(byte, sourceadd, source, destadd, dest):
-    """01 SS DD move 4-23"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} MOV{byte} {oct(sourceadd)}:{oct(source)} {oct(destadd)}:{oct(dest)}')
-    if byte == "B":
-        ram.writebyte(destadd, source)
-    else:
-        ram.writeword(destadd, source)
-    reg.incpc()
-
-
-def CMP(byte, sourceadd, source, destadd, dest):
-    """compare 4-24"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} CMP{byte} {oct(source)} {oct(dest)}')
-    result = source - dest
-    N = 0
-    if result < 0:
-        N = 0o10
-    Z = 0
-    if result == 0:
-        Z = 0o4
-    signsource = source > 0
-    signdest = dest > 0
-    signresult = result > 0
-    V = 0
-    if (signsource != signdest) and (signdest == signresult):
-        V = 0o2
-    C = 0
-    if byte:
-        if result != 0o400:
-            c = 0o1
-    else:
-        if result != 0o200000:
-            c = 0o1
-    newpsw = psw & 0o177760 + N + Z + V + C
-    reg.incpc(), newpsw
-
-
-def BIT(byte, sourceadd, source, destadd, dest):
-    """bit test 4-28"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} BIT{byte} {oct(source)} {oct(dest)}')
-    if byte == "B":
-        ram.writebyte(dest, ram.readbyte(source))
-    else:
-        ram.writeword(dest, ram.readword(source))
-    reg.incpc()
-
-
-def BIC(byte, sourceadd, source, destadd, dest):
-    """bit clear 4-29"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} BIC{byte} {oct(source)} {oct(dest)}')
-    if byte == "B":
-        ram.writebyte(dest, ram.readbyte(source))
-    else:
-        ram.writeword(dest, ram.readword(source))
-    reg.incpc()
-
-
-def BIS(byte, sourceadd, source, destadd, dest):
-    """bit set 4-30"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} BIS{byte} {oct(source)} {oct(dest)}')
-    if byte == "B":
-        ram.writebyte(dest, ram.readbyte(source))
-    else:
-        ram.writeword(dest, ram.readword(source))
-    reg.incpc()
-
-def setup_double_operand_methods():
-    double_operand_methods[0o10000] = MOV;
-    double_operand_methods[0o20000] = CMP;
-    double_operand_methods[0o30000] = BIT;
-    double_operand_methods[0o40000] = BIC;
-    double_operand_methods[0o50000] = BIS;
-
-def is_double_operand(instruction):
-    """Using instruction bit pattern, determine whether it's a souble operand instruction"""
-    # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
-    bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
-    return bits14_12
-
-def double_operand(instruction):
-    """dispatch a double-operand opcode.
-    parameter: opcode of form * +++ *** *** *** ***
-    where +++ = not 000 and not 111 and not 110 """
-    # print(f'double_operand{oct(instruction)}')
-    # double operands
-    # 15-12 opcode
-    # 11-6 src
-    # 5-0 dst
-
-    #        * +++ *** *** *** *** double operands
-    # •1SSDD * 001 *** *** *** *** MOV move source to destination (double)
-    # •2SSDD * 010 *** *** *** *** CMP compare src to dst (double)
-    # •3SSDD * 011 *** *** *** *** BIT bit test (double)
-    # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
-    # •5SSDD * 101 *** *** *** *** BIS bit set (double)
-
-    opcode = (instruction & 0o070000)
-    sourceadd = (instruction & 0o007700) >> 6
-    destadd = instruction & 0o000077
-
-    if instruction & 0o100000 == 0o100000:
-        byte = "B"
-        source = ram.readbyte(sourceadd)
-        dest = ram.readbyte(destadd)
-    else:
-        byte = ""
-        source = ram.readword(sourceadd)
-        dest = ram.readword(destadd)
-    try:
-        double_operand_methods[opcode](byte, sourceadd, source, destadd, dest)
-    except KeyError:
-        print(f'{oct(reg.getpc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
-
-
-# ****************************************************
-# Other Methods
+# Other instructions
 # ****************************************************
 
 def RTS(instruction):
@@ -853,15 +909,20 @@ def dispatch_opcode(instruction):
     """ top-level dispatch"""
     # print(f'{oct(reg.getpc())} {oct(instruction)}')
     if is_branch(instruction):
-        branch(instruction)
+        do_branch(instruction)
+
     elif is_no_operand(instruction):
-        no_operand(instruction)
+        do_no_operand(instruction)
+
     elif is_single_operand(instruction):
-        single_operand(instruction)
-    elif is_rss_operand(instruction):
-        rss_operand(instruction)
-    elif is_double_operand(instruction):
-        double_operand(instruction)
+        do_single_operand(instruction)
+
+    elif is_double_operand_RSS(instruction):
+        do_double_operand_RSS(instruction)
+
+    elif is_double_operand_SSDD(instruction):
+        do_double_operand_SSDD(instruction)
+
     else:
         other_opcode(instruction)
 
@@ -869,24 +930,33 @@ def dispatch_opcode(instruction):
 print('begin PDP11 emulator')
 
 reg.setpc(0o000744)
-setup_branch_methods()
-setup_no_operand_methods()
-setup_single_operand_methods()
-setup_double_operand_methods()
-setup_rss_operand_methods()
+setup_branch_instructions()
+setup_no_operand_instructions()
+setup_single_operand_instructions()
+setup_double_operand_SSDD_instructions()
+setup_double_operand_RSS_instructions()
 
 # put the boot loader into memory
 # from pdp-11/40 book
-bootaddress = 0o000744
-bootstraploader = [0o016701, 0o000240, 0o012702, 0o000240,
-                   0o005211, 0o105711, 0o100476, 0o116162,
-                   0o000002, 0o000400, 0o005267, 0o177756,
-                   0o000765, 0o177560]
+bootstraploader = [0o016701, # MOV 0o67:0o0 0o1:0o0
+                   0o000240, # 0o000026
+                   0o012702, # MOV 0o27:0o0 0o2:0o0
+                   0o000240, # 0o000352
+                   0o005211, # INC 0o0 0o0 incomplete
+                   0o105711, # CLR 0o0 0o1
+                   0o100376, # BPL 0o376
+                   0o116162, # MOVB 0o61:0o377 0o62:0o377
+                   0o000240, # 0o000002 RTI
+                   0o000240, # BR 0o0
+                   0o005267, # INC 0o770 0o5267
+                   0o177756,
+                   0o000765, # BR 0o365
+                   0o177560]
 
 # NOP 0o000240
-# RTI unimplemented 0o000002 came after 0o116162 MOVB
 # 0o000400 BR 00 - what's at 00 now?
 
+bootaddress = 0o000744
 for instruction in bootstraploader:
     # print()
     # print(f'bootaddress:{oct(bootaddress)}  instruction: {oct(instruction)}')
