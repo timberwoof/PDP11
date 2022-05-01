@@ -1,11 +1,12 @@
 """PDP11 PSW"""
 
-from pdp11ram import ram
 
+class Psw:
+    """PDP11 PSW"""
 
-class psw:
     def __init__(self, ram):
-        print('initializing psw')
+        """initialize PDP11 PSW"""
+        print('initializing pdp11psw')
         # 104000-104377 EMT (trap & interrupt)
         # 104400-104777 TRAP (trap & interrupt)
 
@@ -30,16 +31,21 @@ class psw:
         self.modemask = 0o170000
         self.prioritymask = 0o000340
         self.trapmask = 0o000020
-        self.Nmask = 0o000010
-        self.Zmask = 0o000004
-        self.Vmask = 0o000002
-        self.Cmask = 0o000001
+        self.Nmask = 0o000010  # Negative
+        self.Zmask = 0o000004  # Zero
+        self.Vmask = 0o000002  # Overflow
+        self.Cmask = 0o000001  # Carry
 
-    def PSW(self):
+        self.bytemask = 0o377
+        self.wordmask = 0o177777
+
+    def psw(self):
+        """return PSW"""
         return self.ram.readword(self.PSWaddress)
 
-    def setPSW(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1):
-        nowpsw = self.PSW()
+    def setpsw(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1):
+        """set any PSW bits"""
+        nowpsw = self.psw()
         if mode > -1:
             oldmode = nowpsw & self.modemask
             nowpsw = nowpsw & ~self.cmodemask | mode << 14 | oldmode >> 2
@@ -57,18 +63,54 @@ class psw:
             nowpsw = nowpsw & ~self.Cmask | C
         self.ram.writeword(self.PSWaddress, nowpsw)
 
-    def N(self):
+    def n(self):
         """negative status bit of PSW"""
-        return self.PSW() & ~self.Nmask >> 3
+        return self.psw() & ~self.Nmask >> 3
 
-    def Z(self):
+    def z(self):
         """zero status bit of PSW"""
-        return self.PSW() & ~self.Zmask >> 2
+        return self.psw() & ~self.Zmask >> 2
 
-    def V(self):
+    def v(self):
         """overflow status bit of PSW"""
-        return self.PSW() & ~self.Vmask >> 1
+        return self.psw() & ~self.Vmask >> 1
 
-    def C(self):
+    def c(self):
         """carry status bit of PSW"""
-        return self.PSW() & ~self.Cmask
+        return self.psw() & ~self.Cmask
+
+    def addb(self, b1, b2):
+        """add byte, limit to 8 bits, set PSW"""
+        result = b1 + b2
+        if result > result & self.bytemask:
+            self.setpsw(V=1)
+        if result == 0:
+            self.setpsw(Z=1)
+        result = result & self.bytemask
+        return result
+
+    def subb(self, b1, b2):
+        """subtract bytes b1 - b2, limit to 8 bits, set PSW"""
+        result = b1 - b2
+        if result < 0:
+            self.setpsw(N=1)
+        result = result & self.bytemask
+        return result
+
+    def addw(self, b1, b2):
+        """add words, limit to 16 bits, set PSW"""
+        result = b1 + b2
+        if result > result & self.wordmask:
+            self.setpsw(V=1)
+        if result == 0:
+            self.setpsw(Z=1)
+        result = result & self.wordmask
+        return result
+
+    def subw(self, b1, b2):
+        """subtract words b1 - b2, limit to 16 bits, set PSW"""
+        result = b1 - b2
+        if result < 0:
+            self.setpsw(N=1)
+        result = result & self.wordmask
+        return result

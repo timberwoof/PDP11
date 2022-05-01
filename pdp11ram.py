@@ -1,7 +1,9 @@
 """PDP11 RAM"""
+
+
 class ram:
     def __init__(self):
-        print('initializing ram')
+        print('initializing pdp11ram')
         self.topofmemory = 0o377777  # 0xFFFF which is 16 bits
         self.iospace = self.topofmemory - 0o27777
         self.memory = bytearray(self.topofmemory)
@@ -46,5 +48,3 @@ class ram:
         """write a byte to self.memory.
         address can be even or odd"""
         self.memory[address] = data
-
-

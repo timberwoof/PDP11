@@ -1,5 +1,5 @@
 """PDP-11 Emulator"""
-from pdp11psw import psw
+from pdp11psw import Psw
 from pdp11ram import ram
 from pdp11reg import reg
 
@@ -15,7 +15,7 @@ run = True
 
 reg = reg()
 ram = ram()
-psw = psw(ram)
+psw = Psw(ram)
 
 
 def JMP(offset):
@@ -50,7 +50,8 @@ def MTPI(offset):
     reg.incpc()
 
 
-def BR(offset):  # Branch
+def BR(offset):
+    """Branch"""
     global run
     oldpc = reg.getpc()
     newpc = reg.getpc() + 2 * offset
@@ -63,17 +64,19 @@ def BR(offset):  # Branch
     # with the Branch instruction at location 500 see p. 4-37
 
 
-def BNE(offset):  # branch if not equal Z=0
+def BNE(offset):
+    """branch if not equal Z=0"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BNE {oct(offset)}')
-    if psw.Z() == 0:
+    if psw.z() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BEQ(offset):  # branch if equal Z=1
+def BEQ(offset):
+    """branch if equal Z=1"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BEQ {oct(offset)}')
-    if psw.Z() == 1:
+    if psw.z() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
@@ -85,128 +88,141 @@ def BEQ(offset):  # branch if equal Z=1
 # -v = exclusive OR = ^
 # ~ = boolean NOT = ~
 
-def BGE(offset):  # branch if greater than or equal 4-47
+def BGE(offset):
+    """branch if greater than or equal 4-47"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BGE {oct(offset)}')
-    if psw.N() | psw.V() == 0:
+    if psw.n() | psw.v() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BLT(offset):  # branch if less thn zero
+def BLT(offset):
+    """"branch if less thn zero"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BLT {oct(offset)}')
-    if psw.N() ^ psw.V() == 1:
+    if psw.n() ^ psw.v() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BGT(offset):  # branch if equal Z=1
+def BGT(offset):
+    """branch if equal Z=1"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BGT {oct(offset)}')
-    if psw.Z() | (psw.N() ^ psw.V()) == 0:
+    if psw.z() | (psw.n() ^ psw.v()) == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BLE(offset):  # branch if equal Z=1
+def BLE(offset):
+    """branch if equal Z=1"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BLE {oct(offset)}')
-    if psw.Z() | (psw.N() ^ psw.V()) == 1:
+    if psw.z() | (psw.n() ^ psw.v()) == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BHI(offset):  # branch if higher 101000
+def BHI(offset):
+    """branch if higher 101000"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BHI {oct(offset)}')
-    if psw.C() == 0 and psw.Z() == 0:
+    if psw.c() == 0 and psw.z() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BLOS(offset):  # branch if lower or same 101400
+def BLOS(offset):
+    """branch if lower or same 101400"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BLOS {oct(offset)}')
-    if psw.C() | psw.Z() == 1:
+    if psw.c() | psw.z() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BHIS(offset):  # branch if higher or same 103000
+def BHIS(offset):
+    """branch if higher or same 103000"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BHIS {oct(offset)}')
-    if psw.C() == 0:
+    if psw.c() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BLO(offset):  # branch if lower 103400
-    """BLO is the same as BCS"""
+def BLO(offset):
+    """branch if lower 103400. BLO is the same as BCS"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BLO {oct(offset)}')
-    if psw.C() == 1:
+    if psw.c() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BPL(offset):  # branch if positive N=0
+def BPL(offset):
+    """branch if positive N=0"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BPL {oct(offset)}')
-    if psw.N() == 0:
+    if psw.n() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BMI(offset):  # branch if negative N=1
+def BMI(offset):
+    """branch if negative N=1"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BMI {oct(offset)}')
-    if psw.N() == 1:
+    if psw.n() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BVC(offset):  # Branch if overflow is clear V=0
+def BVC(offset):
+    """Branch if overflow is clear V=0"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BVC {oct(offset)}')
-    if psw.V() == 0:
+    if psw.v() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BVS(offset):  # Branch if overflow is set V=1
+def BVS(offset):
+    """Branch if overflow is set V=1"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BVS {oct(offset)}')
-    if psw.V() == 1:
+    if psw.v() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BCC(offset):  # Branch if Carry is clear C=0
+def BCC(offset):
+    """Branch if Carry is clear C=0"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BCC {oct(offset)}')
-    if psw.C() == 0:
+    if psw.c() == 0:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
 
 
-def BCS(offset):  # Branch if Carry is set C=1
+def BCS(offset):
+    """Branch if Carry is set C=1"""
     global pc
     print(f'{oct(reg.getpc())} {oct(instruction)} BCS {oct(offset)}')
-    if psw.C() == 1:
+    if psw.c() == 1:
         reg.setpc(reg.getpc() + 2 * offset)
     else:
         reg.incpc()
@@ -231,6 +247,7 @@ def setupbranchmethods():
 
 
 def isbranch(instruction):
+    """Using instruction bit pattern, determine whether it's a branch instruction"""
     # *0 ** xxx
     # bit 15 can be 1 or 0;mask = 0o100000
     # bits 14-12 = 0; mask = 0o070000
@@ -254,48 +271,57 @@ def branch(instruction):
         print(f'branch not found in dictionary')
 
 
-def HALT(instruction):  # Halt
+def HALT(instruction):
+    """Halt"""
     print(f'{oct(reg.getpc())} {oct(instruction)} HALT')
     global run
     run = False
 
 
-def WAIT(instruction):  # Wait 4-75
+def WAIT(instruction):
+    """Wait 4-75"""
     print(f'{oct(reg.getpc())} {oct(instruction)} WAIT unimplemented')
     reg.incpc()
 
 
-def RTI(instruction):  # RTI 4-69
+def RTI(instruction):
+    """RTI 4-69"""
     print(f'{oct(reg.getpc())} {oct(instruction)} RTI unimplemented')
     reg.incpc()
 
 
-def BPT(instruction):  # BPT 4-67
+def BPT(instruction):
+    """BPT 4-67"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BPT unimplemented')
     reg.incpc()
 
 
-def IOT(instruction):  # IOT 4-68
+def IOT(instruction):
+    """IOT 4-68"""
     print(f'{oct(reg.getpc())} {oct(instruction)} IOT unimplemented')
     reg.incpc()
 
 
-def RESET(instruction):  # RESET 4-76
+def RESET(instruction):
+    """RESET 4-76"""
     print(f'{oct(reg.getpc())} {oct(instruction)} RESET unimplemented')
     reg.incpc()
 
 
-def RTT(instruction):  # RTT 4-70
+def RTT(instruction):
+    """RTT 4-70"""
     print(f'{oct(reg.getpc())} {oct(instruction)} RTT unimplemented')
     reg.incpc()
 
 
-def NOP(instruction):  # no operation 000240
+def NOP(instruction):
+    """no operation 000240"""
     print(f'{oct(reg.getpc())} {oct(instruction)} NOP')
     reg.incpc()
 
 
 def setupnooperandmethods():
+    """populate array of no-operand methods"""
     nooperandmethods[0o000000] = HALT
     nooperandmethods[0o000001] = WAIT
     nooperandmethods[0o000002] = RTI
@@ -307,6 +333,7 @@ def setupnooperandmethods():
 
 
 def isnooperand(instruction):
+    """Using instruction bit pattern, determine whether it's a no-operand instruction"""
     return instruction & 0o074000 == 0o000000
 
 
@@ -324,7 +351,7 @@ def nooperand(instruction):
 def CLR(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} CLR {oct(dest)} {oct(operand)}')
     result = 0o0
-    psw.setPSW(N=0, Z=1, V=0, C=0)
+    psw.setpsw(N=0, Z=1, V=0, C=0)
     return result
 
 
@@ -337,7 +364,7 @@ def COM(instruction, dest, operand):
     z = 0
     if result == 0:
         z = 1
-    psw.setPSW(N=n, Z=z, V=0, C=1)
+    psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
 
@@ -350,7 +377,7 @@ def COMB(instruction, dest, operand):
     z = 0
     if result == 0:
         z = 1
-    psw.setPSW(N=n, Z=z, V=0, C=1)
+    psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
 
@@ -367,7 +394,7 @@ def INC(instruction, dest, operand):
     v = 0
     if dest == 0o077777:
         v = 1
-    psw.setPSW(N=n, Z=z, V=v)
+    psw.setpsw(N=n, Z=z, V=v)
     return result
 
 
@@ -384,7 +411,7 @@ def INCB(instruction, dest, operand):
     v = 0
     if dest == 0o077777:
         v = 1
-    psw.setPSW(N=n, Z=z, V=v)
+    psw.setpsw(N=n, Z=z, V=v)
     return result
 
 
@@ -401,7 +428,7 @@ def DEC(instruction, dest, operand):
     v = 0
     if dest == 0o100000:
         v = 1
-    psw.setPSW(N=n, Z=z, V=v)
+    psw.setpsw(N=n, Z=z, V=v)
     return result
 
 
@@ -418,7 +445,7 @@ def DECB(instruction, dest, operand):
     v = 0
     if dest == 0o100000:
         v = 1
-    psw.setPSW(N=n, Z=z, V=v)
+    psw.setpsw(N=n, Z=z, V=v)
     return result
 
 
@@ -437,18 +464,19 @@ def NEGB(instruction, dest, operand):
 def SXT(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} SXT {oct(dest)} {oct(operand)} incomplete')
     # *** this is incomplete as words need their own special little operators
-    if psw.N() == 0:
+    if psw.n() == 0:
         result = 0
     else:
         result = -1
     z = 0
     if result == 0:
         z = 1
-    psw.setPSW(Z=z)
+    psw.setpsw(Z=z)
     return result
 
 
 def setupsingleoperand():
+    """set up table of single-operand instructions"""
     singleoperandmethods[0o005000] = CLR
     singleoperandmethods[0o005100] = COM
     singleoperandmethods[0o005200] = INC
@@ -482,6 +510,7 @@ def setupsingleoperand():
 
 
 def issingleoperand(instruction):
+    """Using instruction bit pattern, determine whether it's a single-operand instruction"""
     #        * 000 1** *** *** ***
     # •050DD * 000 101 000 *** *** CLR clear (single)
     # •051DD * 000 101 001 *** *** COM complement (single)
@@ -593,6 +622,7 @@ def singleoperand(instruction):
 
 
 def isrssoperand(instruction):
+    """Using instruction bit pattern, determine whether it's an RSS instruction"""
     # 077R00 0 111 111 *** 000 000 SOB (jump & subroutine)
     # bit 15 = 0
     # bits 14-12 = 7
@@ -659,7 +689,7 @@ def CMP(byte, sourceadd, source, destadd, dest):
     else:
         if result != 0o200000:
             c = 0o1
-    newpsw = psw & 0o177760 + N + Z + V + C
+    newpsw = Psw & 0o177760 + N + Z + V + C
     reg.incpc(), newpsw
 
 
@@ -694,6 +724,7 @@ def BIS(byte, sourceadd, source, destadd, dest):
 
 
 def isdoubleoperand(instruction):
+    """Using instruction bit pattern, determine whether it's a souble operand instruction"""
     # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
     bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
 
