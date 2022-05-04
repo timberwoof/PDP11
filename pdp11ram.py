@@ -33,23 +33,24 @@ class ram:
         Low bytes are stored at even-numbered self.memory locations
         and high bytes at odd-numbered self.memory locations.
         Returns two bytes."""
-        # print(f'readword({oct(address)})')
         hi = self.memory[address + 1]
         low = self.memory[address]
-        # print(f'{oct(hi)} {oct(low)}')
+        result = 0o177777
         if address < self.iospace:
-            return (hi << 8) + low
+            result = (hi << 8) + low
         if address == TKS:
-            return 0o000000
+            result = 0o000000
         if address == TKB:
-            return 0o000000
+            result = 0o000000
         if address == TPS:
-            return 0o000000
+            result = 0o000000
+        #print(f'readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
+        return result
 
     def writeword(self, address, data):
         """write a two-word data chunk to self.memory.
         address needs to be even"""
-        # print(f'writeword({oct(address)}, {oct(data)})')
+        print(f'writeword({oct(address)}, {oct(data)})')
         hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
         lo = data & 0o000377  # 0 000 000 011 111 111
         # print(f'hi:{oct(hi)} lo:{oct(lo)}')
@@ -64,6 +65,7 @@ class ram:
     def writebyte(self, address, data):
         """write a byte to self.memory.
         address can be even or odd"""
+        print(f'writebyte({oct(address)}, {oct(data)})')
         self.memory[address] = data
 
         # serial output

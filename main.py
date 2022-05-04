@@ -41,19 +41,18 @@ bootstrap_loader = [0o016701, # MOV 0o67:0o0 0o1:0o0
 # 0o000400 BR 00 - what's at 00 now?
 bootaddress = 0o000744
 
-
 # http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
-hello_world = [0o012702,
-               0o177564,
-               0o012701,
-               0o002032,
-               0o112100,
-               0o001405,
-               0o110062,
+hello_world = [0o012702, # MOV 0o27 0o2
+               0o177564, # io page
+               0o012701, # MOV 0o27 0o1
+               0o002032, # first character in table
+               0o112100, # MOVB 0o21 0o0
+               0o001405, # BEQ 0o5
+               0o110062, # MOVB 0o0 0o62
                0o000002,
-               0o105712,
-               0o100376,
-               0o000771,
+               0o105712, # CLR 0o177776 0o177776 - no , shoud be tstb (r2)
+               0o100376, # BPL 0o376
+               0o000771, # BR 0o371
                0o000000,
                0o000763,
                0o110,     0o145,     0o154,
@@ -72,8 +71,6 @@ def load_machine_code(code, base):
         #print(f'{oct(address)}:{oct(ram.readword(address))}')
         address = address + 2
     reg.setpc(base)
-
-
 
 # ****************************************************
 # stack methods for use by instructions
@@ -96,7 +93,6 @@ def popstack():
     reg.setsp(stack +2)
     return result
 
-
 # ****************************************************
 # No-Operand instructions - 00 00 00 through 00 00 06
 # ****************************************************
@@ -107,12 +103,10 @@ def HALT(instruction):
     global run
     run = False
 
-
 def WAIT(instruction):
     """00 00 01 Wait 4-75"""
     print(f'{oct(reg.getpc())} {oct(instruction)} WAIT unimplemented')
     reg.incpc()
-
 
 def RTI(instruction):
     """00 00 02 RTI return from interrupt 4-69
@@ -123,36 +117,30 @@ def RTI(instruction):
     reg.setpc(popstack())
     psw.setpsw(PSW=popstack())
 
-
 def BPT(instruction):
     """00 00 03 BPT breakpoint trap 4-67"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BPT unimplemented')
     reg.incpc()
-
 
 def IOT(instruction):
     """00 00 04 IOT input/output trap 4-68"""
     print(f'{oct(reg.getpc())} {oct(instruction)} IOT unimplemented')
     reg.incpc()
 
-
 def RESET(instruction):
     """00 00 05 RESET reset external bus 4-76"""
     print(f'{oct(reg.getpc())} {oct(instruction)} RESET unimplemented')
     reg.incpc()
-
 
 def RTT(instruction):
     """00 00 06 RTT return from interrupt 4-70"""
     print(f'{oct(reg.getpc())} {oct(instruction)} RTT unimplemented')
     reg.incpc()
 
-
 def NOP(instruction):
     """00 02 40 NOP no operation"""
     print(f'{oct(reg.getpc())} {oct(instruction)} NOP')
     reg.incpc()
-
 
 def setup_no_operand_instructions():
     """populate array of no-operand methods"""
@@ -165,11 +153,9 @@ def setup_no_operand_instructions():
     no_operand_instructions[0o000006] = RTT
     no_operand_instructions[0o000240] = NOP
 
-
 def is_no_operand(instruction):
     """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-    return instruction & 0o074000 == 0o000000
-
+    return instruction in no_operand_instructions.keys()
 
 def do_no_operand(instruction):
     """dispatch a no-operand opcode"""
@@ -180,10 +166,8 @@ def do_no_operand(instruction):
         no_operand_instructions[instruction](instruction)
     except KeyError:
         print(f'{oct(instruction)} is not a no_operand')
-
-
-
-
+        global run
+        run = False
 
 # ****************************************************
 # Branch instructions
@@ -199,17 +183,19 @@ def do_no_operand(instruction):
 
 def BR(offset):
     """00 04 XXX Branch"""
-    global run
+    print(f'{oct(reg.getpc())} {oct(instruction)} BR {oct(offset)}')
+    if offset & 0o200 == 0o200:
+        # offset is negative, say 0o0371 0o11111001
+        offset = offset - 0o377
     oldpc = reg.getpc()
     newpc = reg.getpc() + 2 * offset
     if oldpc == newpc:
         print(f'{oct(reg.getpc())} {oct(instruction)} BR {oct(offset)} halts')
+        global run
         run = False
     else:
-        print(f'{oct(reg.getpc())} {oct(instruction)} BR {oct(offset)}')
         reg.setpc(newpc)
     # with the Branch instruction at location 500 see p. 4-37
-
 
 def BNE(offset):
     """00 10 XXX branch if not equal Z=0"""
@@ -218,7 +204,6 @@ def BNE(offset):
         reg.setpcoffset(offset)
     else:
         reg.incpc()
-
 
 def BEQ(offset):
     """00 14 XXX branch if equal Z=1"""
@@ -237,7 +222,6 @@ def BGE(offset):
     else:
         reg.incpc()
 
-
 def BLT(offset):
     """"00 24 XXX branch if less thn zero"""
     global pc
@@ -247,7 +231,6 @@ def BLT(offset):
     else:
         reg.incpc()
 
-
 def BGT(offset):
     """00 30 XXX branch if equal Z=1"""
     global pc
@@ -256,7 +239,6 @@ def BGT(offset):
         reg.setpcoffset(offset)
     else:
         reg.incpc()
-
 
 def BLE(offset):
     """00 34 XXX branch if equal Z=1"""
@@ -276,7 +258,6 @@ def BPL(offset):
     else:
         reg.incpc()
 
-
 def BMI(offset):
     """10 04 XXX branch if negative N=1"""
     global pc
@@ -295,7 +276,6 @@ def BHI(offset):
     else:
         reg.incpc()
 
-
 def BLOS(offset):
     """10 14 XXX branch if lower or same"""
     global pc
@@ -304,7 +284,6 @@ def BLOS(offset):
         reg.setpcoffset(offset)
     else:
         reg.incpc()
-
 
 def BVC(offset):
     """10 20 XXX Branch if overflow is clear V=0"""
@@ -315,7 +294,6 @@ def BVC(offset):
     else:
         reg.incpc()
 
-
 def BVS(offset):
     """10 24 XXX Branch if overflow is set V=1"""
     global pc
@@ -325,7 +303,6 @@ def BVS(offset):
     else:
         reg.incpc()
 
-
 def BCC(offset):
     """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
     global pc
@@ -334,7 +311,6 @@ def BCC(offset):
         reg.setpcoffset(offset)
     else:
         reg.incpc()
-
 
 def BCS(offset):
     """10 34 XXX branch if lower. BCS is the same as BLO"""
@@ -369,11 +345,11 @@ def is_branch(instruction):
     # bits 14-12 = 0; mask = 0o070000
     # bit 11,10,9,8; mask = 0o007400
     # bits 7,6, 5,4,3, 2,1,0 are the offset; mask = 0o000377
-    highbits = instruction & 0o070000 == 0o000000
-    lowbits = instruction & 0o007400 in [0o0400, 0o1000, 0o1400, 0o2000, 0o2400, 0o3000, 0o3400]
-    bpl = instruction & 0o107400 == 0o100000
-    return (highbits and lowbits) or bpl
-
+    blankbits = instruction & 0o070000 == 0o000000
+    lowbits0 = instruction & 0o107400 in [          0o000400, 0o001000, 0o001400, 0o002000, 0o002400, 0o003000, 0o003400]
+    lowbits1 = instruction & 0o107400 in [0o100000, 0o100400, 0o101000, 0o101400, 0o102000, 0o102400, 0o103000, 0o103400]
+    #print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
+    return blankbits and (lowbits0 or lowbits1)
 
 def do_branch(instruction):
     """dispatch a branch opcode"""
@@ -384,8 +360,9 @@ def do_branch(instruction):
     try:
         branch_instructions[opcode](offset)
     except KeyError:
-        print(f'branch not found in dictionary')
-
+        print(f'{oct(reg.getpc())} {oct(instruction)} branch not found in dictionary')
+        global run
+        run = False
 
 # ****************************************************
 # Single-Operand instructions -
@@ -396,22 +373,22 @@ def do_branch(instruction):
 def JMP(instruction, dest, operand):
     """00 01 DD JMP jump 4-56"""
     print(f'{oct(reg.getpc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
+    global run
     run = reg.getpc() != 0 # *** only for development
-    reg.setpc(dest)
+    reg.setpc(operand)
 
 def SWAB(instruction, dest, operand):
     """00 03 DD Swap Bytes 4-17"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} SWAB {oct(dest)} {oct(operand)}')
+    global run
     run = reg.getpc() != 0 # *** only for development
-    reg.setpc(dest)
-
+    reg.setpc(operand)
 
 def CLR(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} CLR {oct(dest)} {oct(operand)}')
     result = 0o0
     psw.setpsw(N=0, Z=1, V=0, C=0)
     return result
-
 
 def COM(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} COM {oct(dest)} {oct(operand)}')
@@ -425,7 +402,6 @@ def COM(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-
 def COMB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} COMB {oct(dest)} {oct(operand)}')
     result = ~operand & maskbyte
@@ -438,7 +414,6 @@ def COMB(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-
 def INC(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} INC {oct(dest)} {oct(operand)}')
     # *** this is incomplete as words need their own special little operators
@@ -450,11 +425,10 @@ def INC(instruction, dest, operand):
     if result == 0:
         z = 1
     v = 0
-    if dest == 0o077777:
+    if dest == 0o077777: # what the fuck am I doing here?
         v = 1
     psw.setpsw(N=n, Z=z, V=v)
     return result
-
 
 def INCB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} INCB {oct(dest)} {oct(operand)}')
@@ -467,11 +441,10 @@ def INCB(instruction, dest, operand):
     if result == 0:
         z = 1
     v = 0
-    if dest == 0o077777:
+    if dest == 0o077777: # what the fuck am I doing here?
         v = 1
     psw.setpsw(N=n, Z=z, V=v)
     return result
-
 
 def DEC(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} DEC {oct(dest)} {oct(operand)}')
@@ -484,11 +457,10 @@ def DEC(instruction, dest, operand):
     if result == 0:
         z = 1
     v = 0
-    if dest == 0o100000:
+    if dest == 0o100000: # what the fuck am I doing here?
         v = 1
     psw.setpsw(N=n, Z=z, V=v)
     return result
-
 
 def DECB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} DECB {oct(dest)} {oct(operand)}')
@@ -501,21 +473,43 @@ def DECB(instruction, dest, operand):
     if result == 0:
         z = 1
     v = 0
-    if dest == 0o100000:
+    if dest == 0o100000: # what the fuck am I doing here?
         v = 1
     psw.setpsw(N=n, Z=z, V=v)
     return result
-
 
 def NEG(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
     result = -operand & maskword
     return result
 
-
 def NEGB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} NEGB {oct(dest)} {oct(operand)}')
     result = -operand & maskbyte
+    return result
+
+def TST(instruction, dest, operand):
+    print(f'{oct(reg.getpc())} {oct(instruction)} TST {oct(dest)} {oct(operand)}')
+    result = operand
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def TSTB(instruction, dest, operand):
+    print(f'{oct(reg.getpc())} {oct(instruction)} TSTB {oct(dest)} {oct(operand)}')
+    result = operand
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
 def SXT(instruction, dest, operand):
@@ -531,6 +525,122 @@ def SXT(instruction, dest, operand):
     psw.setpsw(Z=z)
     return result
 
+def addressing_mode_get(byte, mode_register):
+    """copy the value from the location indicated by byte_register"""
+    addressmode = (mode_register & 0o70) >> 3
+    register = mode_register & 0o07
+
+    print(f'addressing_mode_get {byte} mode:{oct(addressmode)} reg:{oct(register)}')
+
+    if byte == 'B':
+        read = ram.readbyte
+        increment = 1
+        b = 'B'
+    else:
+        read = ram.readword
+        increment = 2
+        b = ''
+    if register == 6 or register == 7:
+        increment = 2
+
+    if addressmode == 0:  # register direct
+        print('register direct')
+        # register contains operand
+        operand = reg.get(register)
+    elif addressmode == 1:  # register deferred
+        print('register deferred')
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 2:  # autoincrement direct
+        print('autoincrement direct')
+        # register is pointer then incremented
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+        reg.set(register, reg.get(register) + increment)
+    elif addressmode == 3:  # autoincrement deferred
+        print('autoincrement deferred')
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 4:  # autodecrement direct
+        print('autodecrement direct')
+        # register is decremented, then used as pointer
+        reg.set(register, reg.get(register) - increment)
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 5:  # autodecrement deferred
+        print('autodecrement deferred')
+        reg.set(register, reg.get(register) - 2)
+        operandaddress = reg.get(register)
+        operand = read(operandaddress)
+    elif addressmode == 6: # index
+        print('index')
+        # value X is added to Register to produce address of operand.
+        operandaddress = reg.get(register)
+        operand = read(operandaddress) + read(reg.getpc()+2)
+    elif addressmode == 7: # index deferred
+        print('index deferred')
+        operandaddress = reg.get(register)
+        operandaddress = read(operandaddress) + read(reg.getpc()+2)
+        operand = read(operandaddress)
+    print(f'operand:{oct(operand)}')
+    return operand
+
+def addressing_mode_set(byte, mode_register, result):
+    """copy the result into the place indicated by mode_register
+
+    Parameters:
+        byte: 'B' or ''
+        mode_register: SS or DD
+        result: what to store there
+    """
+    addressmode = (mode_register & 0o70) >> 3
+    register = mode_register & 0o07
+
+    print(f'addressing_mode_set {byte} mode:{oct(addressmode)} reg:{oct(register)} result:{oct(result)}')
+
+    if byte == 'B':
+        write = ram.writebyte
+        increment = 1
+    else:
+        write = ram.writeword
+        increment = 2
+    if register == 6 or register == 7:
+        increment = 2
+
+    if addressmode == 0:  # register direct
+        print('register direct')
+        reg.set(register, result)
+    if addressmode == 1:  # register deferred
+        print('register deferred')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+    elif addressmode == 2:  # autoincrement direct
+        print('autoincrement direct')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+    elif addressmode == 3:  # autoincrement deferred
+        print('autoincrement deferred')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+        reg.set(register, reg.get(register) + 2)
+    elif addressmode == 4:  # autodecrement direct
+        print('autodecrement direct')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+    elif addressmode == 5:  # autodecrement deferred
+        print('autodecrement deferred')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+    elif addressmode == 6:  # index
+        print('index')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+        reg.incpc()
+    elif addressmode == 7:  # index deferred
+        print('index deferred')
+        operandaddress = reg.get(register)
+        write(operandaddress, result)
+        reg.incpc()
 
 def setup_single_operand_instructions():
     """set up table of single-operand instructions"""
@@ -542,7 +652,7 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o005400] = NEG
     single_operand_instructions[0o005500] = CLR  # ADC
     single_operand_instructions[0o005600] = CLR  # SBC
-    single_operand_instructions[0o005700] = CLR  # TST
+    single_operand_instructions[0o005700] = TST  # TST
     single_operand_instructions[0o006000] = CLR  # ROR
     single_operand_instructions[0o006100] = CLR  # ROL
     single_operand_instructions[0o006200] = CLR  # ASR
@@ -558,14 +668,13 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o105400] = NEGB
     single_operand_instructions[0o105500] = CLR  # ADCB
     single_operand_instructions[0o105600] = CLR  # SBCB
-    single_operand_instructions[0o105700] = CLR  # TSTB
+    single_operand_instructions[0o105700] = TSTB  # TSTB
     single_operand_instructions[0o106000] = CLR  # RORB
     single_operand_instructions[0o106100] = CLR  # ROLB
     single_operand_instructions[0o106200] = CLR  # ASRB
     single_operand_instructions[0o106300] = CLR  # ASLB
     single_operand_instructions[0o106500] = CLR  # MFPD
     single_operand_instructions[0o106600] = CLR  # MTPD
-
 
 def is_single_operand(instruction):
     """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -589,90 +698,21 @@ def do_single_operand(instruction):
     # 15 is 1 to indicate a byte instruction
     # 15 is 0 to indicate a word instruction
     # 5-0 dst
-
     #print(f'{oct(reg.getpc())} decoding {oct(instruction)}')
-
-    byte = (instruction & 0o100000) >> 16
-    opcode = (instruction & 0o107700)
-    addressmode = (instruction & 0o000070) >> 3
-    register = instruction & 0o000007
-    operandaddress = 0o177776
-    operand = 0o177776
-
-    #print(f'byte:{byte} opcode:{oct(opcode)} addressmode:{oct(addressmode)} register:{oct(register)}')
-
-    if byte == 1:
-        read = ram.readbyte
-        write = ram.writebyte
-        crement = 1
+    if (instruction & 0o100000) >> 16:
+        b = 'B'
     else:
-        read = ram.readword
-        write = ram.writeword
-        crement = 2
-    if register == 6 or register == 7:
-        crement = 2
-
-    if addressmode == 0:  # register direct
-        #print('register direct')
-        operand = reg.get(register)
-        operandaddress = 0o0
-    elif addressmode == 1:  # register deferred
-        #print('register deferred')
-        operandaddress = reg.get(register)
-        operand = read(operandaddress)
-    elif addressmode == 2:  # autoincrement direct
-        #print('autoincrement direct')
-        operandaddress = reg.get(register)
-        operand = read(operandaddress)
-    elif addressmode == 3:  # autoincrement deferred
-        #print('autoincrement deferred')
-        operandaddress = reg.get(register)
-        operand = read(operandaddress)
-    elif addressmode == 4:  # autodecrement direct
-        #print('autodecrement direct')
-        reg.set(register, reg.get(register) - crement)
-        operandaddress = reg.get(register)
-        operand = read(operandaddress)
-    elif addressmode == 5:  # autodecrement deferred
-        #print('autodecrement deferred')
-        reg.set(register, reg.get(register) - 2)
-        operandaddress = reg.get(register)
-        operand = read(operandaddress)
-    elif addressmode == 6: # index
-        operandaddress = reg.get(register)
-        operand = read(operandaddress) + read(reg.getpc()+2)
-    elif addressmode == 7: # index deferred
-        operandaddress = reg.get(register)
-        operandaddress = read(operandaddress) + read(reg.getpc()+2)
-        operand = read(operandaddress)
+        b = ''
+    opcode = (instruction & 0o107700)
+    source = instruction & 0o000077
+    source_value = addressing_mode_get(b, source)
 
     try:
-        #print(f'{oct(reg.getpc())} {oct(instruction)} single_operand opcode:{oct(opcode)} mode:{addressmode} @operand:{oct(operandaddress)} operand:{oct(operand)}')
-        result = single_operand_instructions[opcode](instruction, operandaddress, operand)
+        print(f'{oct(reg.getpc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
+        result = single_operand_instructions[opcode](instruction, source_value, source_value)
     except KeyError:
         print(f'{oct(reg.getpc())} {oct(instruction)} single_operandmethod {oct(opcode)} was not implemented')
         result = operand
-
-    if addressmode == 0:  # register direct
-        reg.set(register, result)
-    if addressmode == 1:  # register deferred
-        write(operandaddress, result)
-    elif addressmode == 2:  # autoincrement direct
-        write(operandaddress, result)
-        reg.set(register, reg.get(register) + crement)
-    elif addressmode == 3:  # autoincrement deferred
-        write(operandaddress, result)
-        reg.set(register, reg.get(register) + 2)
-    elif addressmode == 4:  # autodecrement direct
-        write(operandaddress, result)
-    elif addressmode == 5:  # autodecrement deferred
-        write(operandaddress, result)
-    elif addressmode == 6:  # index
-        write(operandaddress, result)
-        reg.incpc()
-    elif addressmode == 7:  # index deferred
-        write(operandaddress, result)
-        reg.incpc()
 
     reg.incpc()
 
@@ -715,79 +755,75 @@ def set_condition_codes(source, dest, result):
     psw.setpsw(N=N, Z=Z, V=V, C=C)
     reg.incpc()
 
-def MOV(b, read, write, source, dest):
-    """01 SS DD move 4-23"""
+def MOV(instruction, b, source, dest):
+    """01 SS DD move 4-23
+
+    (dst) < (src)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} MOV{b} {oct(source)} {oct(dest)}')
-    write(dest, read(source))
-    reg.incpc()
-    # code in example is
-    # 002000 012702  177564 -> mov     #177564,r2
-    # we interpret this as
-    # 0o2000 0o12702 MOV 0o27 0o2
-    # 01 SS DD: SS = 0o27   DD = 0o02
-    # that means R7 which is special. That's the PC
-    # that 2 means it's an immediate-mode instruction:
-    # operand follows the instruction
-    # Page 3-3 makes it clear.
-    # O have to generalize the mode thing somehow.
+    source_value = addressing_mode_get(b, source)
+    addressing_mode_set(b, dest, source_value)
+    return source
 
-def CMP(b, read, write, source, dest):
-    """compare 4-24"""
+def CMP(instruction, b, source, dest):
+    """compare 4-24
+
+    (src)-(dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} CMP{b} {oct(source)} {oct(dest)}')
-    result = read(source) - read(dest)
-    set_condition_codes(result)
+    source_value = addressing_mode_get(b, source)
+    dest_value = addressing_mode_get(b, dest)
+    result = source_value - dest_value
+    set_condition_codes(source, dest, result)
+    reg.incpc()
+    return result
 
-def BIT(b, read, write, source, dest):
-    """bit test 4-28"""
+def BIT(instruction, b, source, dest):
+    """bit test 4-28
+
+    (src) ^ (dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BIT{b} {oct(source)} {oct(dest)}')
-    souce = read(src)
-    dest = read(dest)
     result = source & dest
-    write(dest, result)
     set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
+def BIC(instruction, b, source, dest):
+    """bit clear 4-29
 
-def BIC(b, read, write, source, dest):
-    """bit clear 4-29"""
+    (dst) < ~(src)&(dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BIC{b} {oct(source)} {oct(dest)}')
-    souce = read(src)
-    dest = read(dest)
     result = ~source & dest
-    write(dest, result)
     set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-
-def BIS(b, read, write, source, dest):
-    """bit set 4-30"""
+def BIS(instruction, b, source, dest):
+    """bit set 4-30
+    (dst) < (src) v (dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} BIS{b} {oct(source)} {oct(dest)}')
-    souce = read(src)
-    dest = read(dest)
     result = source | dest
-    write(dest, result)
     set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def ADD(b, read, write, source, dest):
-    """06 SS DD ADD add 4-25"""
+def ADD(instruction, b, source, dest):
+    """06 SS DD ADD add 4-25
+
+    (dst) < (src) + (dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} ADD{b} {oct(source)} {oct(dest)}')
-    souce = read(src)
-    dest = read(dest)
     result = source + dest
-    write(dest, result)
     set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def SUB(b, read, write, source, dest):
-    """06 SS DD SUB add 4-25"""
+def SUB(instruction, b, source, dest):
+    """06 SS DD SUB add 4-25
+
+    (dst) < (dst) + ~(src) + 1"""
     print(f'{oct(reg.getpc())} {oct(instruction)} SUB{b} {oct(source)} {oct(dest)}')
-    souce = read(src)
-    dest = read(dest)
     result = source + ~dest + 1
-    write(dest, result)
     set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
 def setup_double_operand_SSDD_instructions():
     double_operand_SSDD_instructions[0o010000] = MOV;
@@ -797,7 +833,6 @@ def setup_double_operand_SSDD_instructions():
     double_operand_SSDD_instructions[0o050000] = BIS;
     double_operand_SSDD_instructions[0o060000] = ADD;
     double_operand_SSDD_instructions[0o160000] = SUB;
-
 
 def is_double_operand_SSDD(instruction):
     """Using instruction bit pattern, determine whether it's a souble operand instruction"""
@@ -809,7 +844,7 @@ def do_double_operand_SSDD(instruction):
     """dispatch a double-operand opcode.
     parameter: opcode of form * +++ *** *** *** ***
     where +++ = not 000 and not 111 and not 110 """
-    # print(f'double_operand_SSDD{oct(instruction)}')
+    #print(f'double_operand_SSDD {oct(instruction)}')
     # double operands
     # 15-12 opcode
     # 11-6 src
@@ -822,59 +857,91 @@ def do_double_operand_SSDD(instruction):
     # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
     # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
-    byte = (instruction & 0o100000) >> 16
-    opcode = (instruction & 0o070000)
-    source = (instruction & 0o007700) >> 6
-    dest = instruction & 0o000077
-
-    if byte == 1:
-        read = ram.readbyte
-        write = ram.writebyte
+    if (instruction & 0o100000) >> 15 == 1:
         b = 'B'
     else:
-        read = ram.readword
-        write = ram.writeword
         b = ''
+    opcode = (instruction & 0o070000)
+    source = (instruction & 0o007700) >> 6
+    dest = (instruction & 0o000077)
 
     try:
-        double_operand_SSDD_instructions[opcode](b, read, write, source, dest)
+        result = double_operand_SSDD_instructions[opcode](instruction, b, source, dest)
     except KeyError:
         print(f'{oct(reg.getpc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
-
+    reg.incpc()
 
 # ****************************************************
 # Double-Operand RSS instructions - 07 0R SS through 07 7R SS
 # ****************************************************
 
-def MUL(register, source):
-    """07 0R SS MUL 4-31"""
+def MUL(instruction, register, source):
+    """07 0R SS MUL 4-31
+
+    (R, R+1) < (R, R+1) * (src)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} MUL unimplemented')
+    source_value = addressing_mode_get(source)
+    result = register * source_value
+    set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def DIV(register, source):
-    """07 1R SS DIV 4-32"""
+def DIV(instruction, register, source):
+    """07 1R SS DIV 4-32
+
+    (R, R+1) < (R, R+1) / (src)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} DIV unimplemented')
+    source_value = addressing_mode_get(source)
+    # *** needs to get word from register and its neighbor
+    # *** needs to get word from source
+    result = register / source_value
+    set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def ASH(register, source):
-    """07 2R SS ASH"""
+def ASH(instruction, register, source):
+    """07 2R SS ASH arithmetic shift 4-33
+
+    R < R >> NN """
     print(f'{oct(reg.getpc())} {oct(instruction)} ASH unimplemented')
+    result = register >> source
+    set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def ASHC(register, source):
-    """07 3R SS ASHC"""
+def ASHC(instruction, register, source):
+    """07 3R SS ASHC arithmetic shift combined 4-34
+
+    (R, R+1) < (R, R+1) >> N"""
     print(f'{oct(reg.getpc())} {oct(instruction)} ASHC unimplemented')
+    source_value = addressing_mode_get(source)
+    result = register >> source
+    set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def XOR(register, dest):
-    """07 4R DD XOR"""
+def XOR(instruction, register, source):
+    """07 4R DD XOR 4-35
+
+    (dst) < R ^ (dst)"""
     print(f'{oct(reg.getpc())} {oct(instruction)} XOR unimplemented')
+    source_value = addressing_mode_get(source)
+    result = register ^ source_value
+    set_condition_codes(source, dest, result)
     reg.incpc()
+    return result
 
-def SOB(register, source):
-    """07 7R NN SOB"""
+def SOB(instruction, register, source):
+    """07 7R NN SOB sutract one and branch 4-63
+
+    R < R -1, then maybe branch"""
     print(f'{oct(reg.getpc())} {oct(instruction)} SOB unimplemented')
+    source_value = addressing_mode_get(source)
+    result = register * source_value
+    set_condition_codes(source, dest, result)
+    # *** set PC appropriately
     reg.incpc()
+    return result
 
 def setup_double_operand_RSS_instructions():
     """Set up jump table for RSS RDD RNN instructions"""
@@ -905,13 +972,13 @@ def do_double_operand_RSS(instruction):
     # 5-0 src or dst
     opcode = (instruction & 0o077000)
     register = (instruction & 0o000700) >> 6
-    dest = instruction & 0o000077
+    source = instruction & 0o000077
+
     try:
-        double_operand_RSS_instructions[opcode](instruction, register, dest)
+        double_operand_RSS_instructions[opcode](instruction, register, source)
     except KeyError:
         print(f'{oct(reg.getpc())} double_operand_RSS {oct(instruction)} {oct(opcode)} {oct(register)} {oct(dest)} KeyError')
     reg.incpc()
-
 
 # ****************************************************
 # Other instructions
@@ -964,13 +1031,16 @@ def other_opcode(instruction):
         MFPI(instruction)
     elif instruction & 0o177700 == 0o006600:
         MTPI(instruction)
+    else:
+        print(f'{oct(instruction)} is an unknown instruction')
+        reg.setpc(0o0)
 
 # ****************************************************
 # General Instruction Dispatch
 # ****************************************************
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
-    # print(f'{oct(reg.getpc())} {oct(instruction)}')
+    #print(f'{oct(reg.getpc())} {oct(instruction)}')
     if is_branch(instruction):
         do_branch(instruction)
 
@@ -988,7 +1058,6 @@ def dispatch_opcode(instruction):
 
     else:
         other_opcode(instruction)
-
 
 print('begin PDP11 emulator')
 
