@@ -499,6 +499,79 @@ def NEGB(instruction, dest, operand):
     result = -operand & maskbyte
     return result
 
+def ADC(instruction, dest, operand):
+    """Add Carry"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
+    result = dst + psw.c()
+    n = 0
+    if result < 0:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    v = 0
+    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
+        v = 1
+    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
+        c = 1
+    psw.setpsw(N=n, Z=z, V=v, C=c)
+    return result
+
+def ADCB(instruction, dest, operand):
+    """Add Carry Byte"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
+    result = dst + psw.c()
+    n = 0
+    if result < 0:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    v = 0
+    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
+        v = 1
+    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
+        c = 1
+    psw.setpsw(N=n, Z=z, V=v, C=c)
+    return result
+
+def SBC(instruction, dest, operand):
+    """subtract Carry"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
+    result = dest - psw.c()
+    n = 0
+    if result < 0:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    v = 0
+    if dest == 0o1000000 and psw.c() == 1: # what the fuck am I doing here?
+        v = 1
+    c = 0
+    if dest == 0o0 and psw.c() == 1: # what the fuck am I doing here?
+        c = 1
+    psw.setpsw(N=n, Z=z, V=v, C=c)
+    return result
+
+def SBCB(instruction, dest, operand):
+    """Subtract Carry Byte"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
+    result = dst + psw.c()
+    n = 0
+    if result < 0:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    v = 0
+    if dest == 0o1000000 and psw.c() == 1: # what the fuck am I doing here?
+        v = 1
+    if dest == 0o0 and psw.c() == 1: # what the fuck am I doing here?
+        c = 1
+    psw.setpsw(N=n, Z=z, V=v, C=c)
+    return result
+
 def TST(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} TST {oct(dest)} {oct(operand)}')
     reg.incpc()
@@ -516,6 +589,118 @@ def TSTB(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} TSTB {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ROR(instruction, dest, operand):
+    """ROR rotate right"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ROR {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand >> 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def RORB(instruction, dest, operand):
+    """RORB rotate right"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} RORB {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand >> 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ROL(instruction, dest, operand):
+    """ROL rotate left"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ROR {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand << 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ROLB(instruction, dest, operand):
+    """ROLB rotate left"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} RORB {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand << 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ASR(instruction, dest, operand):
+    """ASR arithmetic shift right"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASR {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand >> 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ASRB(instruction, dest, operand):
+    """ASRB arithmetic shift right byte"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASRB {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand >> 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ASL(instruction, dest, operand):
+    """ASL arithmetic shift left"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASR {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand << 1
+    n = 0
+    if result & maskwordmsb == maskwordmsb:
+        n = 1
+    z = 0
+    if result == 0:
+        z = 1
+    psw.setpsw(N=n, Z=z, V=0, C=1)
+    return result
+
+def ASLB(instruction, dest, operand):
+    """ASLB arithmetic shift left byte"""
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASLB {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = operand >> 1
     n = 0
     if result & maskwordmsb == maskwordmsb:
         n = 1
@@ -671,17 +856,17 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o005200] = INC
     single_operand_instructions[0o005300] = DEC
     single_operand_instructions[0o005400] = NEG
-    single_operand_instructions[0o005500] = CLR  # ADC
-    single_operand_instructions[0o005600] = CLR  # SBC
-    single_operand_instructions[0o005700] = TST  # TST
-    single_operand_instructions[0o006000] = CLR  # ROR
-    single_operand_instructions[0o006100] = CLR  # ROL
-    single_operand_instructions[0o006200] = CLR  # ASR
-    single_operand_instructions[0o006300] = CLR  # ASL
-    single_operand_instructions[0o006400] = CLR  # MARK
+    single_operand_instructions[0o005500] = ADC
+    single_operand_instructions[0o005600] = SBC
+    single_operand_instructions[0o005700] = TST
+    single_operand_instructions[0o006000] = ROR
+    single_operand_instructions[0o006100] = ROL
+    single_operand_instructions[0o006200] = ASR
+    single_operand_instructions[0o006300] = ASL
+    single_operand_instructions[0o006400] = MARK
     single_operand_instructions[0o006500] = MFPI
     single_operand_instructions[0o006600] = MTPI
-    single_operand_instructions[0o006700] = SXT  # SXT
+    single_operand_instructions[0o006700] = SXT
     single_operand_instructions[0o105000] = CLR
     single_operand_instructions[0o105100] = COM
     single_operand_instructions[0o105200] = INCB
