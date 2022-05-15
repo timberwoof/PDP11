@@ -374,7 +374,6 @@ def JMP(instruction, dest, operand):
     """00 01 DD JMP jump 4-56"""
     print(f'{oct(reg.getpc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
     global run
-    run = reg.getpc() != 0 # *** only for development
     reg.setpc(operand, 'JMP')
     return reg.getpc()
 
@@ -382,15 +381,16 @@ def SWAB(instruction, dest, operand):
     """00 03 DD Swap Bytes 4-17"""
     print(f'{oct(reg.getpc())} {oct(instruction)} SWAB {oct(dest)} {oct(operand)}')
     reg.incpc()
-    global run
-    run = reg.getpc() != 0 # *** only for development
-    reg.setpc(operand, 'SWAB')
+    result = (operand & 0xFF00) << 8 + (operand & 0x00FF) >> 8
+    reg.incpc()
+    return result
 
 def CLR(instruction, dest, operand):
     print(f'{oct(reg.getpc())} {oct(instruction)} CLR {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = 0o0
     psw.setpsw(N=0, Z=1, V=0, C=0)
+    reg.incpc()
     return result
 
 def COM(instruction, dest, operand):
@@ -501,8 +501,9 @@ def NEGB(instruction, dest, operand):
 
 def ADC(instruction, dest, operand):
     """Add Carry"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
-    result = dst + psw.c()
+    print(f'{oct(reg.getpc())} {oct(instruction)} ADC {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = dest + psw.c()
     n = 0
     if result < 0:
         n = 1
@@ -512,6 +513,7 @@ def ADC(instruction, dest, operand):
     v = 0
     if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
         v = 1
+    c = 0
     if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
         c = 1
     psw.setpsw(N=n, Z=z, V=v, C=c)
@@ -519,7 +521,8 @@ def ADC(instruction, dest, operand):
 
 def ADCB(instruction, dest, operand):
     """Add Carry Byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ADCB {oct(dest)} {oct(operand)}')
+    reg.incpc()
     result = dst + psw.c()
     n = 0
     if result < 0:
@@ -537,8 +540,9 @@ def ADCB(instruction, dest, operand):
 
 def SBC(instruction, dest, operand):
     """subtract Carry"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
-    result = dest - psw.c()
+    print(f'{oct(reg.getpc())} {oct(instruction)} SBC {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = dest - operand
     n = 0
     if result < 0:
         n = 1
@@ -556,8 +560,9 @@ def SBC(instruction, dest, operand):
 
 def SBCB(instruction, dest, operand):
     """Subtract Carry Byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
-    result = dst + psw.c()
+    print(f'{oct(reg.getpc())} {oct(instruction)} SBCB {oct(dest)} {oct(operand)}')
+    reg.incpc()
+    result = dst + operand
     n = 0
     if result < 0:
         n = 1
@@ -684,7 +689,7 @@ def ASRB(instruction, dest, operand):
 
 def ASL(instruction, dest, operand):
     """ASL arithmetic shift left"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ASR {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASL {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand << 1
     n = 0
@@ -803,6 +808,7 @@ def addressing_mode_set(byte, mode_register, result):
     register = mode_register & 0o07
 
     #print(f'    addressing_mode_set {byte} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
+    #print(f'    addressing_mode_set {byte} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
 
     if byte == 'B':
         write = ram.writebyte
@@ -850,6 +856,7 @@ def addressing_mode_set(byte, mode_register, result):
 
 def setup_single_operand_instructions():
     """set up table of single-operand instructions"""
+    single_operand_instructions[0o000300] = SWAB
     single_operand_instructions[0o001000] = JMP
     single_operand_instructions[0o005000] = CLR
     single_operand_instructions[0o005100] = COM
@@ -872,13 +879,13 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o105200] = INCB
     single_operand_instructions[0o105300] = DECB
     single_operand_instructions[0o105400] = NEGB
-    single_operand_instructions[0o105500] = CLR  # ADCB
-    single_operand_instructions[0o105600] = CLR  # SBCB
+    single_operand_instructions[0o105500] = ADCB  # ADCB
+    single_operand_instructions[0o105600] = SBCB  # SBCB
     single_operand_instructions[0o105700] = TSTB  # TSTB
-    single_operand_instructions[0o106000] = CLR  # RORB
-    single_operand_instructions[0o106100] = CLR  # ROLB
-    single_operand_instructions[0o106200] = CLR  # ASRB
-    single_operand_instructions[0o106300] = CLR  # ASLB
+    single_operand_instructions[0o106000] = RORB  # RORB
+    single_operand_instructions[0o106100] = ROLB  # ROLB
+    single_operand_instructions[0o106200] = ASRB  # ASRB
+    single_operand_instructions[0o106300] = ASLB  # ASLB
     single_operand_instructions[0o106500] = CLR  # MFPD
     single_operand_instructions[0o106600] = CLR  # MTPD
 
@@ -892,9 +899,12 @@ def is_single_operand(instruction):
     # bits 11,10,9 must be 5 or 6
     # bits 8,7,6 can be anything
     # bits 5-0 can be anything
+    # 0o000301 is one of these
+    # 0 000 000 101 *** ***
     bits_14_13_12 = instruction & 0o070000 == 0o000000
     bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
-    return bits_14_13_12 and bits_11_10_9
+    isSWAB = instruction & 0o000300 == 0o000300
+    return (bits_14_13_12 and bits_11_10_9) or isSWAB
 
 def do_single_operand(instruction):
     """dispatch a single-operand opcode"""
