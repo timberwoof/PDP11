@@ -70,3 +70,11 @@ class reg:
         self.registers[self.pc] = newsp
         #print(f'{oct(wassp)} setpc {oct(newsp)}')
         return newsp
+
+    def logRegisters(self):
+        index = 0
+        report = ''
+        for register in self.registers:
+            report = report + f'R{index}: {oct(register)}  '
+            index = index + 1
+        print (report)
