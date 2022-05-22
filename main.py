@@ -93,6 +93,13 @@ def popstack():
     reg.setsp(stack +2)
     return result
 
+def byte_instruction(instruction):
+    """if it's a byte instruction, return 'B'"""
+    if instruction & 0o100000 == 0o100000:
+        return 'B'
+    else:
+        return ''
+
 # ****************************************************
 # No-Operand instructions - 00 00 00 through 00 00 06
 # ****************************************************
@@ -370,14 +377,14 @@ def do_branch(instruction):
 # 10 50 DD - 10 77 DD
 # ****************************************************
 
-def JMP(instruction, dest, operand):
+def JMP(instruction, dest, operand, B, mask, maskmsb):
     """00 01 DD JMP jump 4-56"""
     print(f'{oct(reg.getpc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
     global run
     reg.setpc(operand, 'JMP')
     return reg.getpc()
 
-def SWAB(instruction, dest, operand):
+def SWAB(instruction, dest, operand, B, mask, maskmsb):
     """00 03 DD Swap Bytes 4-17"""
     print(f'{oct(reg.getpc())} {oct(instruction)} SWAB {oct(dest)} {oct(operand)}')
     reg.incpc()
@@ -385,20 +392,20 @@ def SWAB(instruction, dest, operand):
     reg.incpc()
     return result
 
-def CLR(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} CLR {oct(dest)} {oct(operand)}')
+def CLR(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} CLR{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = 0o0
     psw.setpsw(N=0, Z=1, V=0, C=0)
     reg.incpc()
     return result
 
-def COM(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} COM {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = ~operand & maskword
+def COM(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} COM{B} {oct(dest)} {oct(operand)}')
+    reg.incpc("COM{B}")
+    result = ~operand & mask
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskmsb == maskmsb:
         n = 1
     z = 0
     if result == 0:
@@ -406,21 +413,9 @@ def COM(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def COMB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} COMB {oct(dest)} {oct(operand)}')
-    reg.incpc('COMB')
-    result = ~operand & maskbyte
-    n = 0
-    if result & maskbytemsb == maskbytemsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def INC(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} INC {oct(dest)} {oct(operand)}')
+def INC(instruction, dest, operand, B, mask, maskmsb):
+    instructionname = f'INC{byte_instruction(instruction)}'
+    print(f'{oct(reg.getpc())} {oct(instruction)} {instructionname} {oct(dest)} {oct(operand)}')
     reg.incpc()
     # *** this is incomplete as words need their own special little operators
     result = operand + 1 & maskword
@@ -436,25 +431,8 @@ def INC(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=v)
     return result
 
-def INCB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} INCB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    # *** this is incomplete as bytes need their own special little operators
-    result = operand + 1 & maskbyte
-    n = 0
-    if result < 0:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    v = 0
-    if dest == 0o077777: # what the fuck am I doing here?
-        v = 1
-    psw.setpsw(N=n, Z=z, V=v)
-    return result
-
-def DEC(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} DEC {oct(dest)} {oct(operand)}')
+def DEC(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} DEC{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     # *** this is incomplete as words need their own special little operators
     result = operand - 1 & maskbyte
@@ -470,38 +448,15 @@ def DEC(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=v)
     return result
 
-def DECB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} DECB {oct(dest)} {oct(operand)}')
+def NEG(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} NEG{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
-    # *** this is incomplete as bytes need their own special little operators
-    result = operand - 1 & maskbyte
-    n = 0
-    if result < 0:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    v = 0
-    if dest == 0o100000: # what the fuck am I doing here?
-        v = 1
-    psw.setpsw(N=n, Z=z, V=v)
+    result = -operand & mask
     return result
 
-def NEG(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEG {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = -operand & maskword
-    return result
-
-def NEGB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} NEGB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = -operand & maskbyte
-    return result
-
-def ADC(instruction, dest, operand):
+def ADC(instruction, dest, operand, B, mask, maskmsb):
     """Add Carry"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ADC {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ADC{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = dest + psw.c()
     n = 0
@@ -519,28 +474,9 @@ def ADC(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=v, C=c)
     return result
 
-def ADCB(instruction, dest, operand):
-    """Add Carry Byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ADCB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = dst + psw.c()
-    n = 0
-    if result < 0:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    v = 0
-    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
-        v = 1
-    if dest == 0o077777 and psw.c() == 1: # what the fuck am I doing here?
-        c = 1
-    psw.setpsw(N=n, Z=z, V=v, C=c)
-    return result
-
-def SBC(instruction, dest, operand):
+def SBC(instruction, dest, operand, B, mask, maskmsb):
     """subtract Carry"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} SBC {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} SBC{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = dest - operand
     n = 0
@@ -558,31 +494,12 @@ def SBC(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=v, C=c)
     return result
 
-def SBCB(instruction, dest, operand):
-    """Subtract Carry Byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} SBCB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = dst + operand
-    n = 0
-    if result < 0:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    v = 0
-    if dest == 0o1000000 and psw.c() == 1: # what the fuck am I doing here?
-        v = 1
-    if dest == 0o0 and psw.c() == 1: # what the fuck am I doing here?
-        c = 1
-    psw.setpsw(N=n, Z=z, V=v, C=c)
-    return result
-
-def TST(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} TST {oct(dest)} {oct(operand)}')
+def TST(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskword == maskword:
         n = 1
     z = 0
     if result == 0:
@@ -590,26 +507,13 @@ def TST(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def TSTB(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} TSTB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = operand
-    n = 0
-    if result & maskwordmsb == maskwordmsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def ROR(instruction, dest, operand):
+def ROR(instruction, dest, operand, B, mask, maskmsb):
     """ROR rotate right"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ROR {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand >> 1
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskmsb == maskmsb:
         n = 1
     z = 0
     if result == 0:
@@ -617,27 +521,13 @@ def ROR(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def RORB(instruction, dest, operand):
-    """RORB rotate right"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} RORB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = operand >> 1
-    n = 0
-    if result & maskwordmsb == maskwordmsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def ROL(instruction, dest, operand):
+def ROL(instruction, dest, operand, B, mask, maskmsb):
     """ROL rotate left"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ROR {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand << 1
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskmsb == maskmsb:
         n = 1
     z = 0
     if result == 0:
@@ -645,27 +535,13 @@ def ROL(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def ROLB(instruction, dest, operand):
-    """ROLB rotate left"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} RORB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = operand << 1
-    n = 0
-    if result & maskwordmsb == maskwordmsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def ASR(instruction, dest, operand):
+def ASR(instruction, dest, operand, B, mask, maskmsb):
     """ASR arithmetic shift right"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ASR {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASR{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand >> 1
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskmsb == maskmsb:
         n = 1
     z = 0
     if result == 0:
@@ -673,27 +549,13 @@ def ASR(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def ASRB(instruction, dest, operand):
-    """ASRB arithmetic shift right byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ASRB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = operand >> 1
-    n = 0
-    if result & maskwordmsb == maskwordmsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def ASL(instruction, dest, operand):
+def ASL(instruction, dest, operand, B, mask, maskmsb):
     """ASL arithmetic shift left"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ASL {oct(dest)} {oct(operand)}')
+    print(f'{oct(reg.getpc())} {oct(instruction)} ASL{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     result = operand << 1
     n = 0
-    if result & maskwordmsb == maskwordmsb:
+    if result & maskmsb == maskmsb:
         n = 1
     z = 0
     if result == 0:
@@ -701,22 +563,8 @@ def ASL(instruction, dest, operand):
     psw.setpsw(N=n, Z=z, V=0, C=1)
     return result
 
-def ASLB(instruction, dest, operand):
-    """ASLB arithmetic shift left byte"""
-    print(f'{oct(reg.getpc())} {oct(instruction)} ASLB {oct(dest)} {oct(operand)}')
-    reg.incpc()
-    result = operand >> 1
-    n = 0
-    if result & maskwordmsb == maskwordmsb:
-        n = 1
-    z = 0
-    if result == 0:
-        z = 1
-    psw.setpsw(N=n, Z=z, V=0, C=1)
-    return result
-
-def SXT(instruction, dest, operand):
-    print(f'{oct(reg.getpc())} {oct(instruction)} SXT {oct(dest)} {oct(operand)}')
+def SXT(instruction, dest, operand, B, mask, maskmsb):
+    print(f'{oct(reg.getpc())} {oct(instruction)} SXT{B} {oct(dest)} {oct(operand)}')
     reg.incpc()
     # *** this is incomplete as words need their own special little operators
     if psw.n() == 0:
@@ -729,14 +577,14 @@ def SXT(instruction, dest, operand):
     psw.setpsw(Z=z)
     return result
 
-def addressing_mode_get(byte, mode_register):
+def addressing_mode_get(B, mode_register):
     """copy the value from the location indicated by byte_register"""
     addressmode = (mode_register & 0o70) >> 3
     register = mode_register & 0o07
 
-    #print(f'    addressing_mode_get {byte} mode:{oct(addressmode)} reg:{oct(register)}')
+    print(f'    addressing_mode_get {B} mode:{oct(addressmode)} reg:{oct(register)}')
 
-    if byte == 'B':
+    if B == 'B':
         read = ram.readbyte
         increment = 1
         b = 'B'
@@ -753,10 +601,11 @@ def addressing_mode_get(byte, mode_register):
         operand = reg.get(register)
         #print(f'    R{oct(register)} = operand:{oct(operand)}')
     elif addressmode == 1:  # register deferred
-        #print('    register deferred')
+        print('    register deferred')
         operandaddress = reg.get(register)
-        operand = read(operandaddress)
-        #print(f'    @{oct(operandaddress)} = operand:{oct(operand)}')
+        #operand = read(operandaddress)
+        operand = operandaddress
+        print(f'    @{oct(operandaddress)} = operand:{oct(operand)}')
     elif addressmode == 2:  # autoincrement direct
         #print('    autoincrement direct')
         # register is pointer then incremented
@@ -796,11 +645,11 @@ def addressing_mode_get(byte, mode_register):
         #print(f'    @R{register}={oct(operandaddress)} = operand:{oct(operand)}')
     return operand
 
-def addressing_mode_set(byte, mode_register, result):
+def addressing_mode_set(B, mode_register, result):
     """copy the result into the place indicated by mode_register
 
     Parameters:
-        byte: 'B' or ''
+        B: 'B' or ''
         mode_register: SS or DD
         result: what to store there
     """
@@ -810,7 +659,7 @@ def addressing_mode_set(byte, mode_register, result):
     #print(f'    addressing_mode_set {byte} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
     #print(f'    addressing_mode_set {byte} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
 
-    if byte == 'B':
+    if B == 'B':
         write = ram.writebyte
         increment = 1
     else:
@@ -856,8 +705,8 @@ def addressing_mode_set(byte, mode_register, result):
 
 def setup_single_operand_instructions():
     """set up table of single-operand instructions"""
+    single_operand_instructions[0o000100] = JMP
     single_operand_instructions[0o000300] = SWAB
-    single_operand_instructions[0o001000] = JMP
     single_operand_instructions[0o005000] = CLR
     single_operand_instructions[0o005100] = COM
     single_operand_instructions[0o005200] = INC
@@ -874,20 +723,20 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o006500] = MFPI
     single_operand_instructions[0o006600] = MTPI
     single_operand_instructions[0o006700] = SXT
-    single_operand_instructions[0o105000] = CLR
-    single_operand_instructions[0o105100] = COM
-    single_operand_instructions[0o105200] = INCB
-    single_operand_instructions[0o105300] = DECB
-    single_operand_instructions[0o105400] = NEGB
-    single_operand_instructions[0o105500] = ADCB  # ADCB
-    single_operand_instructions[0o105600] = SBCB  # SBCB
-    single_operand_instructions[0o105700] = TSTB  # TSTB
-    single_operand_instructions[0o106000] = RORB  # RORB
-    single_operand_instructions[0o106100] = ROLB  # ROLB
-    single_operand_instructions[0o106200] = ASRB  # ASRB
-    single_operand_instructions[0o106300] = ASLB  # ASLB
-    single_operand_instructions[0o106500] = CLR  # MFPD
-    single_operand_instructions[0o106600] = CLR  # MTPD
+    single_operand_instructions[0o105000] = CLR # CLRB
+    single_operand_instructions[0o105100] = COM # COMB
+    single_operand_instructions[0o105200] = INC # INCB
+    single_operand_instructions[0o105300] = DEC # DECB
+    single_operand_instructions[0o105400] = NEG # NEGB
+    single_operand_instructions[0o105500] = ADC  # ADCB
+    single_operand_instructions[0o105600] = SBC  # SBCB
+    single_operand_instructions[0o105700] = TST  # TSTB
+    single_operand_instructions[0o106000] = ROR  # RORB
+    single_operand_instructions[0o106100] = ROL  # ROLB
+    single_operand_instructions[0o106200] = ASR  # ASRB
+    single_operand_instructions[0o106300] = ASL  # ASLB
+    single_operand_instructions[0o106500] = NOP  # MFPD
+    single_operand_instructions[0o106600] = NOP  # MTPD
 
 def is_single_operand(instruction):
     """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -901,10 +750,13 @@ def is_single_operand(instruction):
     # bits 5-0 can be anything
     # 0o000301 is one of these
     # 0 000 000 101 *** ***
+    #print(f'is_single_operand({type(instruction)} {oct(instruction)})')
     bits_14_13_12 = instruction & 0o070000 == 0o000000
     bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
-    isSWAB = instruction & 0o000300 == 0o000300
-    return (bits_14_13_12 and bits_11_10_9) or isSWAB
+    isJMP = instruction & 0o000700 == 0o000100
+    isSWAB = instruction & 0o000700 == 0o000300
+    #print(f'is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}')
+    return (bits_14_13_12 and bits_11_10_9) or isSWAB or isJMP
 
 def do_single_operand(instruction):
     """dispatch a single-operand opcode"""
@@ -915,21 +767,27 @@ def do_single_operand(instruction):
     # 15 is 0 to indicate a word instruction
     # 5-0 dst
     if (instruction & 0o100000) >> 16:
-        b = 'B'
+        B = 'B'
+        mask = maskbyte
+        maskmsb = maskbytemsb
     else:
-        b = ''
+        B = ''
+        mask = maskword
+        maskmsb = maskwordmsb
     opcode = (instruction & 0o107700)
     source = instruction & 0o000077
-    source_value = addressing_mode_get(b, source)
+    source_value = addressing_mode_get(B, source)
+
+    reg.logRegisters()
 
     try:
-        #print(f'{oct(reg.getpc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
-        result = single_operand_instructions[opcode](instruction, source_value, source_value)
+        print(f'{oct(reg.getpc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
+        result = single_operand_instructions[opcode](instruction, source_value, source_value, B, mask, maskmsb)
     except KeyError:
         print(f'{oct(reg.getpc())} {oct(instruction)} single_operandmethod {oct(opcode)} was not implemented')
         result = operand
 
-    addressing_mode_set(b, source_value, result)
+    addressing_mode_set(B, source_value, result)
 
 # ****************************************************
 # Double-Operand SSDD instructions
@@ -956,6 +814,7 @@ def set_condition_codes(source, dest, result):
     else:
         V = 0
 
+    byte = False # *** this needs to be set up right
     if byte:
         if result != 0o400:
             C = 1
@@ -1053,6 +912,7 @@ def setup_double_operand_SSDD_instructions():
 def is_double_operand_SSDD(instruction):
     """Using instruction bit pattern, determine whether it's a souble operand instruction"""
     # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
+    #print (f'is_double_operand_SSDD {oct(instruction)}&0o070000={instruction & 0o070000}')
     bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
     return bits14_12
 
@@ -1256,7 +1116,7 @@ def other_opcode(instruction):
 # ****************************************************
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
-    #print(f'{oct(reg.getpc())} {oct(instruction)}')
+    #print(f'    dispatch_opcode {oct(reg.getpc())} {oct(instruction)}')
     if is_branch(instruction):
         do_branch(instruction)
 
