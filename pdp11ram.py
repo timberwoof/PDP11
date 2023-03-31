@@ -3,11 +3,14 @@
 
 
 class ram:
+    topofmemory = 0o377777  # 0o377777 = 0xFFFF which is 16 bits
+    iospace = topofmemory - 0o27777
+    memory = bytearray(topofmemory)
+
     def __init__(self):
         print('initializing pdp11ram')
-        self.topofmemory = 0o377777  # 0o377777 = 0xFFFF which is 16 bits
-        self.iospace = self.topofmemory - 0o27777
-        self.memory = bytearray(self.topofmemory)
+
+        self.PSW_address = self.topofmemory - 3
 
         # set up the serial interface addresses
         self.TKS = self.iospace + 0o27560 # reader status register 177560
@@ -16,6 +19,7 @@ class ram:
         self.TPB = self.iospace + 0o27566 # bunch buffer register
         self.TPbuffer = bytearray("", encoding="utf-8")
 
+        print (f'    i/o devices:')
         print (f'    TKS:{oct(self.TKS)}')
         print (f'    TKB:{oct(self.TKB)}')
         print (f'    TPS:{oct(self.TPS)}')
@@ -23,8 +27,9 @@ class ram:
 
 
 
+
     def read_byte(self, address):
-        """Read a byte of self.memory.
+        """Read a byte of memory.
         Return 0o377 for anything in the vector space.
         Return 0o111 for anything in the iospace.
         Return 0 for anything else."""
@@ -38,9 +43,9 @@ class ram:
             return 0o222
 
     def read_word(self, address):
-        """Read a word of self.memory.
-        Low bytes are stored at even-numbered self.memory locations
-        and high bytes at odd-numbered self.memory locations.
+        """Read a word of memory.
+        Low bytes are stored at even-numbered memory locations
+        and high bytes at odd-numbered memory locations.
         Returns two bytes."""
         hi = self.memory[address + 1]
         low = self.memory[address]
@@ -55,7 +60,7 @@ class ram:
         return result
 
     def write_word(self, address, data):
-        """write a two-word data chunk to self.memory.
+        """write a two-word data chunk to memory.
         address needs to be even"""
         #print(f'    writeword({oct(address)}, {oct(data)})')
         hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
@@ -63,14 +68,14 @@ class ram:
         # print(f'hi:{oct(hi)} lo:{oct(lo)}')
         self.memory[address + 1] = hi
         self.memory[address] = lo
-        # print(f'hi:{oct(self.memory[address])} lo:{oct(self.memory[address-1])}')
+        # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
 
         # serial output
         #if address > self.iospace:
             #print(f'    iopage @{oct(address)}')
 
     def write_byte(self, address, data):
-        """write a byte to self.memory.
+        """write a byte to memory.
         address can be even or odd"""
         data = data & 0o000377
         print(f'    writebyte({oct(address)}, {oct(data)})')
@@ -86,5 +91,10 @@ class ram:
                 print (self.TPbuffer.decode('utf-8'))
                 #self.TPbuffer = bytearray("test", encoding="utf-8")
 
+    def set_PSW(self, new_PSW):
+        self.write_byte(self.PSW_address, new_PSW)
+
+    def get_PSW(self):
+        return self.read_byte(self.PSW_address)
 
 
