@@ -86,51 +86,5 @@ class ram:
                 print (self.TPbuffer.decode('utf-8'))
                 #self.TPbuffer = bytearray("test", encoding="utf-8")
 
-    def octal_to_decimal(self, octal_value):
-        decimal_value = 0
-        base = 1
-        while (octal_value):
-            last_digit = octal_value % 10
-            octal_value = int(octal_value / 10)
-            decimal_value += last_digit * base
-            base = base * 8
-        return decimal_value
 
-    def read_PDP11_assembly_file(self, file):
-        print (f'read_PDP11_assembly_file "{file}"')
-        base = 0
-        text = open(file, 'r')
-        for line in text:
-            #if line.strip() != "":
-            #    print (line.strip())
-            parts = line.split()
-
-            # if the line is empty, slip it
-            if len(parts) == 0:
-                continue
-            part0 = parts[0]
-
-            # if the line starts with ;, skip it
-            if part0 == ';':
-                continue
-
-            # first item is the address
-            if part0.isnumeric():
-                address = self.octal_to_decimal(int(part0))
-                # the first address is the base address
-                if base == 0:
-                    base = address
-
-            # if it doesn't make sense, skip it
-            else:
-                continue
-
-            # get the next value
-            part1 = parts[1]
-            if part1.isnumeric():
-                value1 = self.octal_to_decimal(int(part1))
-                # log what we got. octal, octal, decimal, decimal
-                #print(part0, part1, address, value1)
-                ram.write_word(self, address, value1)
-        return base
 
