@@ -2,10 +2,11 @@
 from pdp11psw import psw
 from pdp11ram import ram
 from pdp11reg import reg
-
+from pdp11boot import boot
 reg = reg()
 ram = ram()
 psw = psw(ram)
+boot = boot(ram)
 
 # masks for accessing words and buyes
 mask_byte = 0o000377
@@ -30,63 +31,6 @@ double_operand_SSDD_instructions = {}
 double_operand_RSS_instructions = {}
 
 run = True
-
-# from pdp-11/40 book
-bootstrap_loader = [0o016701, # MOV 0o67:0o0 0o1:0o0
-                    0o000240, # 0o000026
-                    0o012702, # MOV 0o27:0o0 0o2:0o0
-                    0o000240, # 0o000352
-                    0o005211, # INC 0o0 0o0 incomplete
-                    0o105711, # CLR 0o0 0o1
-                    0o100376, # BPL 0o376
-                    0o116162, # MOVB 0o61:0o377 0o62:0o377
-                    0o000240, # 0o000002 RTI
-                    0o000240, # BR 0o0
-                    0o005267, # INC 0o770 0o5267
-                    0o177756,
-                    0o000765, # BR 0o365
-                    0o177560, # 0o177560
-                    0o000000] #
-# NOP 0o000240
-# 0o000400 BR 00 - what's at 00 now?
-bootaddress = 0o000744
-
-# http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
-hello_world = [0o012702, # MOV 0o27 0o2
-               0o177566, # serial port+4
-               0o012701, # MOV 0o27 0o1
-               0o002032, # first character in table
-               0o112100, # MOVB 0o21 0o0
-               0o001405, # BEQ 0o5
-               0o110062, # MOVB 0o0 0o62
-               0o000002, #
-               0o105712, # TSTB 0o0 0o0
-               0o100376, # BPL 0o376
-               0o000771, # 0o000771, # BR 0o371 ; transmit next charager
-               0o000000, # halt
-               0o000763, # br start
-               0o110,     0o145,     0o154,
-               0o154,     0o157,     0o054,
-               0o040,     0o167,     0o157,
-               0o162,     0o154,     0o144,
-               0o012,     0o000]
-hello_address = 0o2000
-
-def load_machine_code(code, base):
-    """Copy the pdp-11 machine code found at code into the address in base
-
-    :param code:
-    :param base:
-    :return:
-    """
-    address = base
-    for instruction in code:
-        # print()
-        #print(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
-        ram.write_word(address, instruction)
-        #print(f'{oct(address)}:{oct(ram.readword(address))}')
-        address = address + 2
-    reg.set_pc(base, "load_machine_code")
 
 # ****************************************************
 # stack methods for use by instructions
@@ -1165,10 +1109,11 @@ setup_single_operand_instructions()
 setup_double_operand_SSDD_instructions()
 setup_double_operand_RSS_instructions()
 
-#load_machine_code(bootstrap_loader, bootaddress)
-#load_machine_code(hello_world, hello_address)
+#boot.load_machine_code(boot.bootstrap_loader, bootaddress)
+#boot.load_machine_code(boot.hello_world, hello_address)
 
-reg.set_pc(ram.read_PDP11_assembly_file('source/M9301-YA.txt'), "load_machine_code")
+start_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
 run = True
