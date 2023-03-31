@@ -81,7 +81,7 @@ class noopr:
         # print(f'    {oct(self.reg.getpc())} {oct(instruction)} no_operand {oct(instruction)}')
         result = True
         try:
-            method = self.no_operand_instructions[instruction]
+            # method = self.no_operand_instructions[instruction]
             result = self.no_operand_instructions[instruction](instruction)
         except KeyError:
             #print(f'{oct(instruction)} is not a no_operand')
