@@ -4,20 +4,21 @@ from pdp11psw import psw
 from pdp11reg import reg
 from pdp11boot import boot
 from pdp11noopr import noopr
+from pdp11br import br
 reg = reg()
 ram = ram()
 psw = psw(ram)
 boot = boot(ram)
 noopr = noopr(psw, ram, reg)
+br = br(psw, ram, reg)
 
-# masks for accessing words and buyes
+# masks for accessing words and bytes
 mask_byte = 0o000377
 mask_word = 0o177777
 mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 
 # instruction dispatch tables
-branch_instructions = {}
 single_operand_instructions = {}
 """single_operand_instructions
 
@@ -61,200 +62,6 @@ def is_byte_instruction(instruction):
     else:
         return ''
 
-# ****************************************************
-# Branch instructions
-# 00 04 XXX - 00 34 XXX
-# 10 00 XXX - 10 34 XXX
-# ****************************************************
-# Symbols in DEC book and Python operators
-# A = boolean AND = &
-# V = boolean OR = |
-# -v = exclusive OR = ^
-# ~ = boolean NOT = ~
-# ****************************************************
-
-def BR(offset):
-    """00 04 XXX Branch"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BR {oct(offset)}')
-    if offset & 0o200 == 0o200:
-        # offset is negative, say 0o0371 0o11111001
-        offset = offset - 0o377
-    oldpc = reg.get_pc()
-    newpc = reg.get_pc() + 2 * offset + 2
-    if oldpc == newpc:
-        print(f'    {oct(reg.get_pc())} {oct(instruction)} BR {oct(offset)} halts')
-        global run
-        run = False
-    else:
-        reg.set_pc(newpc, "BR")
-    # with the Branch instruction at location 500 see p. 4-37
-
-def BNE(offset):
-    """00 10 XXX branch if not equal Z=0"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BNE {oct(offset)}')
-    if psw.Z() == 0:
-        reg.set_pc_offset(offset, "BNE")
-    else:
-        reg.inc_pc('BNE')
-
-def BEQ(offset):
-    """00 14 XXX branch if equal Z=1"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BEQ {oct(offset)}')
-    if psw.Z() == 1:
-        reg.set_pc_offset(offset, "BEQ")
-    else:
-        reg.inc_pc('BEQ')
-
-def BGE(offset):
-    """00 20 XXX branch if greater than or equal 4-47"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BGE {oct(offset)}')
-    if psw.N() | psw.V() == 0:
-        reg.set_pc_offset(offset, "BGE")
-    else:
-        reg.inc_pc('BGE')
-
-def BLT(offset):
-    """"00 24 XXX branch if less thn zero"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BLT {oct(offset)}')
-    if psw.N() ^ psw.V() == 1:
-        reg.set_pc_offset(offset, "BLT")
-    else:
-        reg.inc_pc('BLT')
-
-def BGT(offset):
-    """00 30 XXX branch if equal Z=1"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BGT {oct(offset)}')
-    if psw.Z() | (psw.N() ^ psw.V()) == 0:
-        reg.set_pc_offset(offset, "BTG")
-    else:
-        reg.inc_pc('BGT')
-
-def BLE(offset):
-    """00 34 XXX branch if equal Z=1"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BLE {oct(offset)}')
-    if psw.Z() | (psw.N() ^ psw.V()) == 1:
-        reg.set_pc_offset(offset, "BLE")
-    else:
-        reg.inc_pc('BLE')
-
-def BPL(offset):
-    """10 00 XXX branch if positive N=0"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BPL {oct(offset)}')
-    if psw.N() == 0:
-        reg.set_pc_offset(offset, 'BPL')
-    else:
-        reg.inc_pc('BPL')
-
-def BMI(offset):
-    """10 04 XXX branch if negative N=1"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BMI {oct(offset)}')
-    if psw.N() == 1:
-        reg.set_pc_offset(offset, 'BMI')
-    else:
-        reg.inc_pc('BMI')
-
-def BHI(offset):
-    """10 10 XXX branch if higher"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BHI {oct(offset)}')
-    if psw.C() == 0 and psw.Z() == 0:
-        reg.set_pc_offset(offset, 'BHI')
-    else:
-        reg.inc_pc('BHI')
-
-def BLOS(offset):
-    """10 14 XXX branch if lower or same"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BLOS {oct(offset)}')
-    if psw.C() | psw.Z() == 1:
-        reg.set_pc_offset(offset, 'BLOS')
-    else:
-        reg.inc_pc('BLOS')
-
-def BVC(offset):
-    """10 20 XXX Branch if overflow is clear V=0"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BVC {oct(offset)}')
-    if psw.V() == 0:
-        reg.set_pc_offset(offset, 'BVC')
-    else:
-        reg.inc_pc('BVC')
-
-def BVS(offset):
-    """10 24 XXX Branch if overflow is set V=1"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BVS {oct(offset)}')
-    if psw.V() == 1:
-        reg.set_pc_offset(offset, 'BVS')
-    else:
-        reg.inc_pc('BVS')
-
-def BCC(offset):
-    """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BHIS {oct(offset)}')
-    if psw.C() == 0:
-        reg.set_pc_offset(offset, 'BCC')
-    else:
-        reg.inc_pc('BCC')
-
-def BCS(offset):
-    """10 34 XXX branch if lower. BCS is the same as BLO"""
-    global pc
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BLO {oct(offset)}')
-    if psw.C() == 1:
-        reg.set_pc_offset(offset, 'BCS')
-    else:
-        reg.inc_pc('BCS')
-
-def setup_branch_instructions():
-    branch_instructions[0o000400] = BR
-    branch_instructions[0o001000] = BNE
-    branch_instructions[0o001400] = BEQ
-    branch_instructions[0o002000] = BGE
-    branch_instructions[0o002400] = BLT
-    branch_instructions[0o003000] = BGT
-    branch_instructions[0o003400] = BLE
-    branch_instructions[0o100000] = BPL
-    branch_instructions[0o100400] = BMI
-    branch_instructions[0o101000] = BHI
-    branch_instructions[0o101400] = BLOS
-    branch_instructions[0o102000] = BVC
-    branch_instructions[0o102400] = BVS
-    branch_instructions[0o103000] = BCC  # BHIS
-    branch_instructions[0o103400] = BCS  # BLO
-
-def is_branch(instruction):
-    """Using instruction bit pattern, determine whether it's a branch instruction"""
-    # *0 ** xxx
-    # bit 15 can be 1 or 0; mask = 0o100000
-    # bits 14-12 = 0; mask = 0o070000
-    # bit 11,10,9,8; mask = 0o007400
-    # bits 7,6, 5,4,3, 2,1,0 are the offset; mask = 0o000377
-    blankbits = instruction & 0o070000 == 0o000000
-    lowbits0 = instruction & 0o107400 in [          0o000400, 0o001000, 0o001400, 0o002000, 0o002400, 0o003000, 0o003400]
-    lowbits1 = instruction & 0o107400 in [0o100000, 0o100400, 0o101000, 0o101400, 0o102000, 0o102400, 0o103000, 0o103400]
-    #print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
-    return blankbits and (lowbits0 or lowbits1)
-
-def do_branch(instruction):
-    """dispatch a branch opcode"""
-    #parameter: opcode of form 0 000 000 *** *** ***
-    opcode = (instruction & 0o177400)
-    offset = instruction & mask_byte
-    #print(f'    {oct(reg.getpc())} {oct(instruction)} branch opcode:{oct(opcode)} offset:{oct(offset)}')
-    try:
-        branch_instructions[opcode](offset)
-    except KeyError:
-        print(f'    {oct(reg.get_pc())} {oct(instruction)} branch not found in dictionary')
-        global run
-        run = False
 
 # ****************************************************
 # Single-Operand instructions -
@@ -1007,8 +814,8 @@ def dispatch_opcode(instruction):
     print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
     result = True
 
-    if is_branch(instruction):
-        do_branch(instruction)
+    if br.is_branch(instruction):
+        br.do_branch(instruction)
 
     elif noopr.is_no_operand(instruction):
         result = noopr.do_no_operand(instruction)
@@ -1032,7 +839,6 @@ def dispatch_opcode(instruction):
 # ****************************************************
 print('begin PDP11 emulator')
 
-setup_branch_instructions()
 setup_single_operand_instructions()
 setup_double_operand_SSDD_instructions()
 setup_double_operand_RSS_instructions()

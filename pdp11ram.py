@@ -16,7 +16,7 @@ class ram:
         self.TKS = self.iospace + 0o27560 # reader status register 177560
         self.TKB = self.iospace + 0o27562 # reader buffer register
         self.TPS = self.iospace + 0o27564 # punch status register
-        self.TPB = self.iospace + 0o27566 # bunch buffer register
+        self.TPB = self.iospace + 0o27566 # punch buffer register
         self.TPbuffer = bytearray("", encoding="utf-8")
 
         print (f'    i/o devices:')
