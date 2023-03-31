@@ -1,0 +1,58 @@
+timberwoof/PDP11
+
+Introduction
+============
+This document describes the timberwoof/PDP11 project.
+
+timberwoof/PDP11 is an attempt to write, independently of any existing code influencess,
+an emulator for the basic PDP/11 instruction set. The environment is Python 3. The initial
+test of the code is published PDP11 CPU test code.
+
+Modules
+=======
+pdp11psw.py
+-----------
+implements the Processtor Status Word.
+Does some initializations and provides access primitives.
+
+pdp11ram.py
+----------
+implements 64kB of byte-addressible RAM.
+Provides access primitives and two convenience functions,
+octal-to-decimal conversion and to read an assembled assembly file into RAM.
+
+pdp11.reg.py
+------------
+implements the register file.
+Provides access p[rimitives that implement various PDP11 ways of doing things.
+
+main.py
+-------
+everything. Probably needs to be split up.
+Imports psw, ram, and reg.
+Provides stack access methods. (Maybe this should be in ram.)
+Implements instructions in a typical pattern.
+no-operand instructions
+branch instructions
+single-operand instructions
+set up and take down addressing modes
+double-operand instructions
+double-operand RSS instructions
+other instructions
+instruction dispatch
+
+Sets up the instruction dispatch tables
+Reads the (hard-coded for now) assembly file into ram.
+Starts the processor loop.
+
+Installation
+============
+Grab the repository.
+Open it in your favorite IDE.
+Run.
+
+Current State of the Project
+============================
+The dispatchers and instructions log a lot of stuff.
+Presently it stops after 0o173372. There is an error in cleaning up the addressing mode.
+Not all instructions are implemented.

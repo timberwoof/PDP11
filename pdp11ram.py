@@ -16,14 +16,14 @@ class ram:
         self.TPB = self.iospace + 0o27566 # bunch buffer register
         self.TPbuffer = bytearray("", encoding="utf-8")
 
-        print (f'TKS:{oct(self.TKS)}')
-        print (f'TKB:{oct(self.TKB)}')
-        print (f'TPS:{oct(self.TPS)}')
-        print (f'TPB:{oct(self.TPB)}')
+        print (f'    TKS:{oct(self.TKS)}')
+        print (f'    TKB:{oct(self.TKB)}')
+        print (f'    TPS:{oct(self.TPS)}')
+        print (f'    TPB:{oct(self.TPB)}')
 
 
 
-    def readbyte(self, address):
+    def read_byte(self, address):
         """Read a byte of self.memory.
         Return 0o377 for anything in the vector space.
         Return 0o111 for anything in the iospace.
@@ -37,7 +37,7 @@ class ram:
         else:
             return 0o222
 
-    def readword(self, address):
+    def read_word(self, address):
         """Read a word of self.memory.
         Low bytes are stored at even-numbered self.memory locations
         and high bytes at odd-numbered self.memory locations.
@@ -54,7 +54,7 @@ class ram:
         #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
         return result
 
-    def writeword(self, address, data):
+    def write_word(self, address, data):
         """write a two-word data chunk to self.memory.
         address needs to be even"""
         #print(f'    writeword({oct(address)}, {oct(data)})')
@@ -69,14 +69,15 @@ class ram:
         #if address > self.iospace:
             #print(f'    iopage @{oct(address)}')
 
-    def writebyte(self, address, data):
+    def write_byte(self, address, data):
         """write a byte to self.memory.
         address can be even or odd"""
-        #print(f'    writebyte({oct(address)}, {oct(data)})')
+        data = data & 0o000377
+        print(f'    writebyte({oct(address)}, {oct(data)})')
         self.memory[address] = data
 
         #if address > self.iospace:
-            #print(f'    iopage @{oct(address)}')
+            #print(f'    iopage {oct(address)}')
         # serial output
         if address == self.TPB:
             #print(f'    TPB<-{data}')
@@ -85,37 +86,51 @@ class ram:
                 print (self.TPbuffer.decode('utf-8'))
                 #self.TPbuffer = bytearray("test", encoding="utf-8")
 
-    def OctalToDecimal(self,num):
+    def octal_to_decimal(self, octal_value):
         decimal_value = 0
         base = 1
-        while (num):
-            last_digit = num % 10
-            num = int(num / 10)
+        while (octal_value):
+            last_digit = octal_value % 10
+            octal_value = int(octal_value / 10)
             decimal_value += last_digit * base
             base = base * 8
         return decimal_value
 
-    def readPDP11(self, file):
-        print (f'readPDP11 file "{file}"')
+    def read_PDP11_assembly_file(self, file):
+        print (f'read_PDP11_assembly_file "{file}"')
         base = 0
         text = open(file, 'r')
         for line in text:
+            #if line.strip() != "":
+            #    print (line.strip())
             parts = line.split()
+
+            # if the line is empty, slip it
             if len(parts) == 0:
                 continue
             part0 = parts[0]
+
+            # if the line starts with ;, skip it
             if part0 == ';':
                 continue
+
+            # first item is the address
             if part0.isnumeric():
-                address = self.OctalToDecimal(int(part0))
+                address = self.octal_to_decimal(int(part0))
+                # the first address is the base address
                 if base == 0:
                     base = address
+
+            # if it doesn't make sense, skip it
             else:
                 continue
 
+            # get the next value
             part1 = parts[1]
-            value1 = self.OctalToDecimal(int(part1))
-            print(part0, part1, address, value1)
-            ram.writeword(self, address, value1)
+            if part1.isnumeric():
+                value1 = self.octal_to_decimal(int(part1))
+                # log what we got. octal, octal, decimal, decimal
+                #print(part0, part1, address, value1)
+                ram.write_word(self, address, value1)
         return base
 
