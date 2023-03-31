@@ -4,7 +4,7 @@ from pdp11ram import ram
 
 class boot:
     def __init__(self, ram):
-        print('initializing pdp11boot')
+        print('initializing pdp11Boot')
         self.ram = ram
 
     # from pdp-11/40 book

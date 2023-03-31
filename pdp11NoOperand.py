@@ -1,4 +1,4 @@
-"""pdp11noopr.py - no-operand instructions 00 00 00 through 00 00 06"""
+"""pdp11NoOperand.py - no-operand instructions 00 00 00 through 00 00 06"""
 
 from pdp11psw import psw
 from pdp11ram import ram

@@ -1,4 +1,4 @@
-"""pdp11br.py branch instructions"""
+"""pdp11Branch.py branch instructions"""
 
 from pdp11psw import psw
 from pdp11ram import ram

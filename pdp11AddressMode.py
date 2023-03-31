@@ -1,4 +1,4 @@
-"""pdp11addressmode - PDP11 address mode"""
+"""pdp11AddressMode - parameter preparation"""
 
 from pdp11psw import psw
 from pdp11ram import ram
@@ -6,7 +6,7 @@ from pdp11reg import reg
 
 class am:
     def __init__(self, psw, ram, reg):
-        print('initializing addressmode')
+        print('initializing pdp11AddressMode')
         self.psw = psw
         self.ram = ram
         self.reg = reg

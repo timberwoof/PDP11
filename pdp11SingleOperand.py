@@ -1,9 +1,9 @@
-"""pdp11sopr.py single oprand instructions"""
+"""pdp11SingleOperand.py single oprand instructions"""
 
 from pdp11psw import psw
 from pdp11ram import ram
 from pdp11reg import reg
-from pdp11addressmode import am
+from pdp11AddressMode import am
 
 # masks for accessing words and bytes
 mask_byte = 0o000377
@@ -43,9 +43,9 @@ class sopr:
         self.single_operand_instructions[0o006100] = self.ROL
         self.single_operand_instructions[0o006200] = self.ASR
         self.single_operand_instructions[0o006300] = self.ASL
-        self.single_operand_instructions[0o006400] = self.MARK
-        self.single_operand_instructions[0o006500] = self.MFPI
-        self.single_operand_instructions[0o006600] = self.MTPI
+        #self.single_operand_instructions[0o006400] = self.MARK
+        #self.single_operand_instructions[0o006500] = self.MFPI
+        #self.single_operand_instructions[0o006600] = self.MTPI
         self.single_operand_instructions[0o006700] = self.SXT
         self.single_operand_instructions[0o105000] = self.CLR # CLRB
         self.single_operand_instructions[0o105100] = self.COM # COMB
@@ -104,8 +104,7 @@ class sopr:
         return result
 
     def INC(self, instruction, dest, operand, B, mask, maskmsb):
-        instructionname = f'INC{is_byte_instruction(instruction)}'
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} {instructionname} {oct(dest)} {oct(operand)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} INC{B} {oct(dest)} {oct(operand)}')
         self.reg.inc_pc()
         # *** this is incomplete as words need their own special little operators
         result = operand + 1 & mask_word
@@ -267,21 +266,6 @@ class sopr:
         self.psw.set_PSW(Z=z)
         return result
 
-    def MARK(instruction):
-        """00 64 NN mark 46-1"""
-        print(f'    {oct(reg.get_pc())} {oct(instruction)} MARK unimplemented')
-        reg.inc_pc('MARK')
-
-    def MFPI(instruction):
-        """00 65 SS move from previous instruction space 4-77"""
-        print(f'    {oct(reg.get_pc())} {oct(instruction)} MFPI unimplemented')
-        reg.inc_pc('MFPI')
-
-    def MTPI(instruction, dest, operand):
-        """00 66 DD move to previous instruction space 4-78"""
-        print(f'    {oct(reg.get_pc())} {oct(instruction)} MTPI unimplemented')
-        reg.inc_pc('MTPI')
-
     def MFPD(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
         self.reg.inc_pc()
@@ -334,12 +318,14 @@ class sopr:
 
         self.reg.log_registers()
 
+        run = True
         try:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
             result = self.single_operand_instructions[opcode](instruction, source_value, source_value, B, mask, maskmsb)
+            self.am.addressing_mode_set(B, source_value, result)
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operandmethod {oct(opcode)} was not implemented')
-            result = source
+            result = 0
+            run = False
 
-        self.am.addressing_mode_set(B, source_value, result)
-
+        return run
