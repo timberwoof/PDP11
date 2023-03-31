@@ -1,12 +1,14 @@
 """PDP-11 Emulator"""
-from pdp11psw import psw
 from pdp11ram import ram
+from pdp11psw import psw
 from pdp11reg import reg
 from pdp11boot import boot
+from pdp11noopr import noopr
 reg = reg()
 ram = ram()
 psw = psw(ram)
 boot = boot(ram)
+noopr = noopr(psw, ram, reg)
 
 # masks for accessing words and buyes
 mask_byte = 0o000377
@@ -15,7 +17,6 @@ mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 
 # instruction dispatch tables
-no_operand_instructions = {}
 branch_instructions = {}
 single_operand_instructions = {}
 """single_operand_instructions
@@ -59,82 +60,6 @@ def is_byte_instruction(instruction):
         return 'B'
     else:
         return ''
-
-# ****************************************************
-# No-Operand instructions - 00 00 00 through 00 00 06
-# ****************************************************
-
-def HALT(instruction):
-    """00 00 00 Halt"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} HALT')
-    global run
-    run = False
-
-def WAIT(instruction):
-    """00 00 01 Wait 4-75"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} WAIT unimplemented')
-    reg.inc_pc('WAIT')
-
-def RTI(instruction):
-    """00 00 02 RTI return from interrupt 4-69
-    PC < (SP)^; PS< (SP)^
-    *** need to implement the stack
-    """
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} RTI')
-    reg.set_pc(popstack(), "RTI")
-    psw.set_PSW(PSW=popstack())
-
-def BPT(instruction):
-    """00 00 03 BPT breakpoint trap 4-67"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} BPT unimplemented')
-    reg.inc_pc('BPT')
-
-def IOT(instruction):
-    """00 00 04 IOT input/output trap 4-68"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} IOT unimplemented')
-    reg.inc_pc('IOT')
-
-def RESET(instruction):
-    """00 00 05 RESET reset external bus 4-76"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} RESET unimplemented')
-    reg.inc_pc('RESET')
-
-def RTT(instruction):
-    """00 00 06 RTT return from interrupt 4-70"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} RTT unimplemented')
-    reg.inc_pc('RTT')
-
-def NOP(instruction):
-    """00 02 40 NOP no operation"""
-    print(f'    {oct(reg.get_pc())} {oct(instruction)} NOP')
-    reg.inc_pc('NOP')
-
-def setup_no_operand_instructions():
-    """populate array of no-operand methods"""
-    no_operand_instructions[0o000000] = HALT
-    no_operand_instructions[0o000001] = WAIT
-    no_operand_instructions[0o000002] = RTI
-    no_operand_instructions[0o000003] = BPT
-    no_operand_instructions[0o000004] = IOT
-    no_operand_instructions[0o000005] = RESET
-    no_operand_instructions[0o000006] = RTT
-    no_operand_instructions[0o000240] = NOP
-
-def is_no_operand(instruction):
-    """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-    return instruction in no_operand_instructions.keys()
-
-def do_no_operand(instruction):
-    """dispatch a no-operand opcode"""
-    # parameter: opcode of form * 000 0** *** *** ***
-    # print(f'    {oct(reg.getpc())} {oct(instruction)} no_operand {oct(instruction)}')
-    try:
-        method = no_operand_instructions[instruction]
-        no_operand_instructions[instruction](instruction)
-    except KeyError:
-        #print(f'{oct(instruction)} is not a no_operand')
-        global run
-        run = False
 
 # ****************************************************
 # Branch instructions
@@ -698,8 +623,8 @@ def setup_single_operand_instructions():
     single_operand_instructions[0o106100] = ROL  # ROLB
     single_operand_instructions[0o106200] = ASR  # ASRB
     single_operand_instructions[0o106300] = ASL  # ASLB
-    single_operand_instructions[0o106500] = NOP  # MFPD
-    single_operand_instructions[0o106600] = NOP  # MTPD
+    single_operand_instructions[0o106500] = 0  # MFPD
+    single_operand_instructions[0o106600] = 0  # MTPD
 
 def is_single_operand(instruction):
     """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -1080,11 +1005,13 @@ def other_opcode(instruction):
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
     print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
+    result = True
+
     if is_branch(instruction):
         do_branch(instruction)
 
-    elif is_no_operand(instruction):
-        do_no_operand(instruction)
+    elif noopr.is_no_operand(instruction):
+        result = noopr.do_no_operand(instruction)
 
     elif is_single_operand(instruction):
         do_single_operand(instruction)
@@ -1098,13 +1025,14 @@ def dispatch_opcode(instruction):
     else:
         other_opcode(instruction)
 
+    return result
+
 # ****************************************************
 # main
 # ****************************************************
 print('begin PDP11 emulator')
 
 setup_branch_instructions()
-setup_no_operand_instructions()
 setup_single_operand_instructions()
 setup_double_operand_SSDD_instructions()
 setup_double_operand_RSS_instructions()
@@ -1121,4 +1049,4 @@ while run:
     # fetch opcode
     instruction = ram.read_word(reg.get_pc())
     # decode and execute opcode
-    dispatch_opcode(instruction)
+    run = dispatch_opcode(instruction)
