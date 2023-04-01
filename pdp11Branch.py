@@ -52,7 +52,7 @@ class br:
             # offset is negative, say 0o0371 0o11111001
             offset = offset - 0o377
         oldpc = self.reg.get_pc()
-        newpc = self.reg.get_pc() + 2 * offset + 2
+        newpc = self.reg.get_pc() + 2 * offset -2
         if oldpc == newpc:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BR {oct(offset)} halts')
             global run
@@ -75,84 +75,72 @@ class br:
 
     def BGE(self, instruction, offset):
         """00 20 XXX branch if greater than or equal 4-47"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BGE {oct(offset)}')
         if self.psw.N() | self.psw.V() == 0:
             self.reg.set_pc_offset(offset, "BGE")
 
     def BLT(self, instruction, offset):
         """"00 24 XXX branch if less thn zero"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLT {oct(offset)}')
         if self.psw.N() ^ self.psw.V() == 1:
             self.reg.set_pc_offset(offset, "BLT")
 
     def BGT(self, instruction, offset):
         """00 30 XXX branch if equal Z=1"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BGT {oct(offset)}')
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 0:
             self.reg.set_pc_offset(offset, "BTG")
 
     def BLE(self, instruction, offset):
         """00 34 XXX branch if equal Z=1"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLE {oct(offset)}')
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 1:
             self.reg.set_pc_offset(offset, "BLE")
 
     def BPL(self, instruction, offset):
         """01 00 XXX branch if positive N=0"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BPL {oct(offset)}')
-        if self.psw.N() == 0:
+        if self.psw.N() == 0 and self.psw.Z() == 0:
             self.reg.set_pc_offset(offset, 'BPL')
 
     def BMI(self, instruction, offset):
         """10 04 XXX branch if negative N=1"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BMI {oct(offset)}')
         if self.psw.N() == 1:
             self.reg.set_pc_offset(offset, 'BMI')
 
     def BHI(self, instruction, offset):
         """10 10 XXX branch if higher"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BHI {oct(offset)}')
         if self.psw.C() == 0 and self.psw.Z() == 0:
             self.reg.set_pc_offset(offset, 'BHI')
 
     def BLOS(self, instruction, offset):
         """10 14 XXX branch if lower or same"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLOS {oct(offset)}')
         if self.psw.C() | self.psw.Z() == 1:
             self.reg.set_pc_offset(offset, 'BLOS')
 
     def BVC(self, instruction, offset):
         """10 20 XXX Branch if overflow is clear V=0"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BVC {oct(offset)}')
         if self.psw.V() == 0:
             self.reg.set_pc_offset(offset, 'BVC')
 
     def BVS(self, instruction, offset):
         """10 24 XXX Branch if overflow is set V=1"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BVS {oct(offset)}')
         if self.psw.V() == 1:
             self.reg.set_pc_offset(offset, 'BVS')
 
     def BCC(self, instruction, offset):
         """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BHIS {oct(offset)}')
         if self.psw.C() == 0:
             self.reg.set_pc_offset(offset, 'BCC')
 
     def BCS(self, instruction, offset):
         """10 34 XXX branch if lower. BCS is the same as BLO"""
-        global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLO {oct(offset)}')
         if self.psw.C() == 1:
             self.reg.set_pc_offset(offset, 'BCS')

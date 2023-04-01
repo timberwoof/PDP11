@@ -63,7 +63,7 @@ ram.dump(0o2000, 0o2064)
 #reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
-limit = 40
+limit = 100
 instruction_count = 0
 run = True
 while run and instruction_count < limit:

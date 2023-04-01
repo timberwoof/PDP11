@@ -64,7 +64,6 @@ class sopr:
         """00 01 DD JMP jump 4-56"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
         self.reg.set_pc(operand, 'JMP')
-        return self.reg.get_pc()
 
     def SWAB(self, instruction, dest, operand, B):
         """00 03 DD Swap Bytes 4-17"""
@@ -72,7 +71,6 @@ class sopr:
         result = (operand & 0xFF00) << 8 + (operand & 0x00FF) >> 8
         self.psw.set_condition_codes(result, B, "**00")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def CLR(self, instruction, dest, operand, B):
         """00 50 DD Clear Destination"""
@@ -80,7 +78,6 @@ class sopr:
         result = 0o0
         self.psw.set_condition_codes(result, B, "0000")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def COM(self, instruction, dest, operand, B):
         """00 51 DD Complement Destination"""
@@ -88,7 +85,6 @@ class sopr:
         result = ~operand
         self.psw.set_condition_codes(result, B, "**01")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def INC(self, instruction, dest, operand, B):
         """00 52 DD Increment Destination"""
@@ -97,7 +93,6 @@ class sopr:
         result = operand + 1
         self.psw.set_condition_codes(result, B, "***-")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def DEC(self, instruction, dest, operand, B):
         """00 53 DD Decrement Destination"""
@@ -106,7 +101,6 @@ class sopr:
         result = operand - 1
         self.psw.set_condition_codes(result, B, "***-")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def NEG(self, instruction, dest, operand, B):
         """00 54 DD negate Destination"""
@@ -114,7 +108,6 @@ class sopr:
         result = -operand
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def ADC(self, instruction, dest, operand, B):
         """00 55 DD Add Carry"""
@@ -122,7 +115,6 @@ class sopr:
         result = dest + self.psw.C()
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def SBC(self, instruction, dest, operand, B):
         """00 56 DD Subtract Carry"""
@@ -130,14 +122,11 @@ class sopr:
         result = dest - operand
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def TST(self, instruction, dest, operand, B):
         """00 57 DD Test Destination"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
-        result = operand
-        self.psw.set_condition_codes(result, B, "**00")
-        return result
+        self.psw.set_condition_codes(dest, B, "**00")
 
     def ROR(self, instruction, dest, operand, B):
         """00 60 DD ROR rotate right"""
@@ -145,7 +134,6 @@ class sopr:
         result = operand >> 1
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def ROL(self, instruction, dest, operand, B):
         """00 61 DD ROL rotate left"""
@@ -153,7 +141,6 @@ class sopr:
         result = operand << 1
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def ASR(self, instruction, dest, operand, B):
         """00 62 DD ASR arithmetic shift right"""
@@ -161,7 +148,6 @@ class sopr:
         result = operand >> 1
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def ASL(self, instruction, dest, operand, B):
         """00 63 DD ASL arithmetic shift left"""
@@ -169,24 +155,20 @@ class sopr:
         result = operand << 1
         self.psw.set_condition_codes(result, B, "****")
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def SXT(self, instruction, dest, operand, B):
         """00 67 DD Sign Extend"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SXT{B} {oct(dest)} {oct(operand)}')
         self.psw.set_condition_codes(result, B, "****") # ****
         self.am.addressing_mode_set(B, source_value, result)
-        return result
 
     def MFPD(self, instruction, dest, operand, B):
         """10 65 SS Move from previous data space"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
-        result = 0
 
     def MTPD(self, instruction, dest, operand, B):
         """10 66 SS Move to previous data space"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MTPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
-        result = 0
 
     def is_single_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -228,10 +210,9 @@ class sopr:
         run = True
         try:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
-            result = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
+            self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand method {oct(opcode)} was not implemented')
-            result = 0
             run = False
 
         return run

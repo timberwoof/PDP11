@@ -225,7 +225,6 @@ class dopr:
             B = 'B'
         else:
             B = ''
-            self.reg.inc_pc('do_double_operand_SSDD')
         opcode = (instruction & 0o070000)
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
@@ -234,6 +233,8 @@ class dopr:
         try:
             result = self.double_operand_SSDD_instructions[opcode](instruction, B, source, dest)
             self.am.addressing_mode_set(B, dest, result)
+            #if B == '':
+            #    self.reg.inc_pc('do_double_operand_SSDD') # **** this is probably not quite right
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
             run = false

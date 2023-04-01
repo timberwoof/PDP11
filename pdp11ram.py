@@ -1,11 +1,5 @@
 """PDP11 RAM and i/o"""
 
-# masks for accessing words and bytes
-mask_byte = 0o000377
-mask_word = 0o177777
-mask_byte_msb = 0o000200
-mask_word_msb = 0o100000
-
 class ram:
     def __init__(self):
         print('initializing pdp11ram')
@@ -81,7 +75,7 @@ class ram:
         self.memory[address] = lo
         # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
 
-        if address > self.io_space:
+        if address > self.io_space and address < 0o177774:
             print(f'    write word to io_space {oct(address)}, {oct(data)}')
 
 
@@ -95,9 +89,10 @@ class ram:
         if address > self.io_space:
             print(f'    write byte to io_space {oct(address)}, {oct(data)}')
         # serial output
-        if address == self.TPB:
+        if address == self.TPS:
             #print(f'    TPB<-{data}')
             self.TPbuffer.append(data)
+            self.memory[self.TPS] = 0   # eat the character
             if data == 0:
                 print (f'TPbuffer:"{self.TPbuffer.decode("utf-8")}"')
 
@@ -112,5 +107,5 @@ class ram:
 
     def dump(self, start, stop):
         print(f'{oct(start)}:{oct(stop)}')
-        for address in range(start, stop, 2):
+        for address in range(start, stop+2, 2):
             print (f'{oct(address)}:{oct(self.read_word(address))}')

@@ -57,26 +57,30 @@ class psw:
         :param PSW:
         :return:
         """
-
-        PSW_now = self.ram.get_PSW()
+        print(f'set_PSW mode:{oct(mode)} Priority:{oct(priority)} {trap} NZVC: {N} {Z} {V} {C}  PSW:{oct(PSW)}  ')
+        new_PSW = PSW
+        PSW = self.ram.get_PSW()
         if mode > -1:
-            oldmode = PSW_now & self.mode_mask
-            new_PSW = PSW_now & ~self.c_mode_mask | mode << 14 | oldmode >> 2
+            oldmode = (PSW & self.mode_mask)
+            PSW = (PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
         if priority > -1:
-            new_PSW = PSW_now & ~self.priority_mask | priority << 5
+            PSW = (PSW & ~self.priority_mask) | (priority << 5)
         if trap > -1:
-            new_PSW = PSW_now & ~self.trap_mask | trap << 4
+            PSW = (PSW & ~self.trap_mask) | (trap << 4)
         if N > -1:
-            new_PSW = PSW_now & ~self.N_mask | N << 3
+            PSW = (PSW & ~self.N_mask) | (N << 3)
         if Z > -1:
-            new_PSW = PSW_now & ~self.Z_mask | Z << 2
+            print(f'PSW:{oct(PSW)}    self.Z_mask:{oct(self.Z_mask)}    ~self.Z_mask:{oct(~self.Z_mask)}   Z:{Z}')
+            print(f'PSW & ~self.Z_mask:{oct(PSW & ~self.Z_mask)}    Z<<2:{oct(Z<<2)}')
+            PSW = (PSW & ~self.Z_mask) | (Z << 2)
+            print(f'new_PSW:{oct(PSW)}')
         if V > -1:
-            new_PSW = PSW_now & ~self.V_mask | V << 1
+            PSW = (PSW & ~self.V_mask) | (V << 1)
         if C > -1:
-            new_PSW = PSW_now & ~self.C_mask | C
-        if PSW > -1:
-            new_PSW = PSW
-        self.ram.set_PSW(new_PSW)
+            PSW = (PSW & ~self.C_mask) | C
+        if new_PSW > -1:
+            PSW = new_PSW
+        self.ram.set_PSW(PSW)
 
     def set_condition_codes(self, value, B, pattern):
         """set condition codes based on value
@@ -111,9 +115,9 @@ class psw:
         codenames = "NZVC"
 
         # check each of the 4 characters
-        for i in range(0,3):
-            codename = codenames[i] # get the letter for convenience
+        for i in range(0,4):
             code = pattern[i]
+            codename = codenames[i] # get the letter for convenience
             # check for explicit setting
             if code == "0" or code == "1":
                 setting = int(code)
@@ -127,32 +131,46 @@ class psw:
                     C = setting
             # check for conditional value
             elif code == "*":
-                if codename == "N" and value & n_mask > 0:
-                    N = 1
-                elif codename == "Z"  and value & z_mask == 0:
-                    Z = 1
-                elif codename == "V"  and value & v_mask == v_mask:
-                    V = 1
-                elif codename == "C"  and value & c_mask == c_mask:# *** I'm not sure about this
-                    C = 1
+                if codename == "N":
+                    if (value & n_mask) > 0:
+                        N = 1
+                    else:
+                        N = 0
+                elif codename == "Z":
+                    if (value & z_mask) == 0:
+                        Z = 1
+                    else:
+                        Z = 0
+                elif codename == "V":
+                    if (value & v_mask) == v_mask:
+                        V = 1
+                    else:
+                        V = 0
+                elif codename == "C":
+                    if (value & c_mask) == c_mask:  # *** I'm not sure about this
+                        C = 1
+                    else:
+                        C = 0
 
+        print(f'    set NZVC: {N} {Z} {V} {C}')
         self.set_PSW(N=N, Z=Z, V=V, C=C)
+        print(f'    did set NZVC: {self.N()} {self.Z()} {self.V()} {self.C()}')
 
     def N(self):
         """negative status bit of PSW"""
-        return self.ram.get_PSW() & ~self.N_mask >> 3
+        return (self.ram.get_PSW() & self.N_mask) >> 3
 
     def Z(self):
         """zero status bit of PSW"""
-        return self.ram.get_PSW() & ~self.Z_mask >> 2
+        return (self.ram.get_PSW() & self.Z_mask) >> 2
 
     def V(self):
         """overflow status bit of PSW"""
-        return self.ram.get_PSW() & ~self.V_mask >> 1
+        return (self.ram.get_PSW() & self.V_mask) >> 1
 
     def C(self):
         """carry status bit of PSW"""
-        return self.ram.get_PSW() & ~self.C_mask
+        return (self.ram.get_PSW() & self.C_mask)
 
     def addb(self, b1, b2):
         """add byte, limit to 8 bits, set PSW"""

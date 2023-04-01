@@ -51,8 +51,10 @@ class reg:
 
     def set_pc_offset(self, offset, whocalled=''):
         """set program counter to 2x offset"""
-        self.registers[self.PC] = self.registers[self.PC] + 2 * (offset & self.wordmask)
-        #print(f'    setpcoffset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
+        waspc = self.registers[self.PC]
+        newpc = self.registers[self.PC] + 2 * (offset & self.bytemask)
+        self.registers[self.PC] = newpc
+        print(f'    set_pc_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
 
     def get_sp(self):
         """get stack pointer
