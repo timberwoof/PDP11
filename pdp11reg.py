@@ -7,7 +7,7 @@ class reg:
         self.bytemask = 0o377
         self.wordmask = 0o177777
         self.registermask = 0o07
-        self.sp = 0o06  # R6 is rfeqyentluy referred to as the stack pointer
+        self.sp = 0o06  # R6 is rfequentluy referred to as the stack pointer
         self.pc = 0o07  # R7 is the program counter
         self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
@@ -76,6 +76,7 @@ class reg:
         return newsp
 
     def log_registers(self):
+        """print all the registers in the log"""
         index = 0
         report = '    '
         for register in self.registers:

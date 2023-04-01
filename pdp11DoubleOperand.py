@@ -1,9 +1,9 @@
-"""pdp11dopr.py double operand instructions"""
+"""pdp11DoubleOperand.py double operand instructions"""
 
 from pdp11psw import psw
 from pdp11ram import ram
 from pdp11reg import reg
-from pdp11addressmode import am
+from pdp11AddressMode import am
 
 # masks for accessing words and bytes
 mask_byte = 0o000377
@@ -13,7 +13,7 @@ mask_byte_msb = 0o000200
 
 class dopr:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11dpor')
+        print('initializing pdp11DoubleOperand')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -165,10 +165,12 @@ class dopr:
         source = instruction & 0o000077
 
         try:
-            self.double_operand_RSS_instructions[opcode](self, instruction, register, source)
+            result = self.double_operand_RSS_instructions[opcode](self, instruction, register, source)
+            self.reg.inc_pc('do_double_operand_RSS')
+            return True, result
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} double_operand_RSS {oct(instruction)} {oct(opcode)} R{register} {oct(dest)} KeyError')
-        self.reg.inc_pc('do_double_operand_RSS')
+            return False, 0
 
     # ****************************************************
     # Double-Operand SSDD instructions
@@ -272,15 +274,22 @@ class dopr:
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
         if (instruction & 0o100000) >> 15 == 1:
-            b = 'B'
+            B = 'B'
         else:
-            b = ''
+            B = ''
         opcode = (instruction & 0o070000)
         source = (instruction & 0o007700) >> 6
+        source_value = self.am.addressing_mode_get(B, source)
         dest = (instruction & 0o000077)
 
+        run = True
         try:
-            result = self.double_operand_SSDD_instructions[opcode](instruction, b, source, dest)
+            result = self.double_operand_SSDD_instructions[opcode](instruction, B, source, dest)
+            self.reg.inc_pc('do_double_operand')
+            self.am.addressing_mode_set(B, dest, result)
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
-        self.reg.inc_pc('do_double_operand')
+            result = 0
+            run = false
+
+        return run

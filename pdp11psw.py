@@ -1,4 +1,4 @@
-"""PDP11 PSW"""
+"""PDP11 Processor Status Word"""
 
 from pdp11ram import ram
 
