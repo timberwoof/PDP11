@@ -39,7 +39,7 @@ class reg:
 
         :return: new program counter"""
         self.registers[self.PC] = self.registers[self.PC] + 2
-        #print(f'    incpc R7<-{oct(self.registers[self.pc])} {whocalled}')
+        print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
     def set_pc(self, value, whocalled=''):

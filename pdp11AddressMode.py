@@ -131,15 +131,15 @@ class am:
             # print('    autodecrement deferred')
             operandaddress = self.reg.get(register)
             ram_write(operandaddress, result)
-            self.reg.inc_pc('ams6')
+            self.reg.inc_pc('addressing_mode_set 5')
         elif addressmode == 6:  # index
             operandaddress = self.reg.get(register)
             # print(f'index R{register}={oct(operandaddress)} <- {oct(result)}')
             ram_write(operandaddress, result)
-            self.reg.inc_pc('ams6')
+            self.reg.inc_pc('addressing_mode_set 6')
         elif addressmode == 7:  # index deferred
             # print('    index deferred')
             operandaddress = self.reg.get(register)
             ram_write(operandaddress, result)
-            self.reg.inc_pc('ams7')
+            self.reg.inc_pc('addressing_mode_set 7')
 

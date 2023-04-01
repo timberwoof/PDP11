@@ -2,6 +2,12 @@
 
 from pdp11ram import ram
 
+# masks for accessing words and bytes
+mask_byte = 0o000377
+mask_word = 0o177777
+mask_byte_msb = 0o000200
+mask_word_msb = 0o100000
+
 class psw:
     """PDP11 PSW"""
 
@@ -71,6 +77,66 @@ class psw:
         if PSW > -1:
             new_PSW = PSW
         self.ram.set_PSW(new_PSW)
+
+    def set_condition_codes(self, value, B, pattern):
+        """set condition codes based on value
+
+        :param value: value to test
+        :param B: "B" or "" for Byte or Word
+        :param pattern: string matching DEC specification
+
+        pattern looks like the Status Word Condition Codes in the DEC manual.
+        Positionally NZVC for Negative, Zero, Overflor, Carry.
+        * = conditionally set; - = not affected; 0 = cleared; 1 = set.
+        Example: "**0-"
+        """
+        # set up some masks based on whether this is for Word or Byte
+        if B == "B":
+            n_mask = mask_byte_msb
+            z_mask = mask_byte
+            v_mask = mask_byte < 1 & ~mask_byte
+            c_mask = mask_byte < 1 & ~mask_byte
+        else:
+            n_mask = mask_word_msb
+            z_mask = mask_word
+            v_mask = mask_word < 1 & ~mask_word
+            c_mask = mask_word < 1 & ~mask_word  # *** I dion't know how to test for this
+
+        # set unaffected values
+        N = -1
+        Z = -1
+        V = -1
+        C = -1
+
+        codenames = "NZVC"
+
+        # check each of the 4 characters
+        for i in range(0,3):
+            codename = codenames[i] # get the letter for convenience
+            code = pattern[i]
+            # check for explicit setting
+            if code == "0" or code == "1":
+                setting = int(code)
+                if codename == "N":
+                    N = setting
+                elif codename == "Z":
+                    Z = setting
+                elif codename == "V":
+                    V = setting
+                elif codename == "C":
+                    C = setting
+            # check for conditional value
+            elif code == "*":
+                if codename == "N" and value & n_mask > 0:
+                    N = 1
+                elif codename == "Z"  and value & z_mask == 0:
+                    Z = 1
+                elif codename == "V"  and value & v_mask == v_mask:
+                    V = 1
+                elif codename == "C"  and value & c_mask == c_mask:# *** I'm not sure about this
+                    C = 1
+
+        self.set_PSW(N=N, Z=Z, V=V, C=C)
 
     def N(self):
         """negative status bit of PSW"""

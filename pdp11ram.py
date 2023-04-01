@@ -1,4 +1,11 @@
 """PDP11 RAM and i/o"""
+
+# masks for accessing words and bytes
+mask_byte = 0o000377
+mask_word = 0o177777
+mask_byte_msb = 0o000200
+mask_word_msb = 0o100000
+
 class ram:
     def __init__(self):
         print('initializing pdp11ram')
@@ -33,11 +40,11 @@ class ram:
         print (f'    TPB:{oct(self.TPB)}')
 
         # set up the vector space
-        #for address in range(0o0, self.top_of_vector_space):
-        #    self.write_byte(address, 0o377)
-        # set up the io page space
-        #for address in range(self.io_space, self.top_of_memory):
-        #    self.write_byte(address, 0o111)
+        for address in range(0o0, self.top_of_vector_space):
+            self.write_byte(address, 0o377)
+        # set up the io page space so it's always ready
+        for address in range(self.io_space, self.top_of_memory):
+            self.write_byte(address, 0o111)
 
         # set up always-ready i/o device status words
         self.write_word(self.TKS, 0o000000)

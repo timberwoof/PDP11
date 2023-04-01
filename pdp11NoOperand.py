@@ -37,7 +37,6 @@ class noopr:
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} WAIT unimplemented')
-        self.reg.inc_pc('WAIT')
         return True
 
     def RTI(self, instruction):
