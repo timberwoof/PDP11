@@ -68,7 +68,6 @@ class dopr:
                 C = 0
 
         self.psw.set_PSW(N=N, Z=Z, V=V, C=C)
-        self.reg.inc_pc('scc')
 
     # ****************************************************
     # Double-Operand RSS instructions - 07 0R SS through 07 7R SS
@@ -82,7 +81,6 @@ class dopr:
         source_value = self.am.addressing_mode_get(self, source)
         result = register * source_value
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('MUL')
         return result
 
     def DIV(self, instruction, register, source):
@@ -95,7 +93,6 @@ class dopr:
         # *** needs to get word from source
         result = register / source_value
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('DIV')
         return result
 
     def ASH(self, instruction, register, source):
@@ -105,7 +102,6 @@ class dopr:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ASH unimplemented')
         result = register >> source
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('SDH')
         return result
 
     def ASHC(self, instruction, register, source):
@@ -116,7 +112,6 @@ class dopr:
         source_value = self.am.addressing_mode_get(self, source)
         result = register >> source
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('ASHC')
         return result
 
     def XOR(self, instruction, register, source):
@@ -127,7 +122,6 @@ class dopr:
         source_value = self.am.addressing_mode_get(self, source)
         result = register ^ source_value
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('XOR')
         return result
 
     def SOB(self, instruction, register, source):
@@ -138,8 +132,6 @@ class dopr:
         source_value = self.am.addressing_mode_get(self, source)
         result = register * source_value
         self.set_condition_codes(source, dest, result)
-        # *** set PC appropriately
-        self.reg.inc_pc('SOB')
         return result
 
     def is_double_operand_RSS(self, instruction):
@@ -178,75 +170,66 @@ class dopr:
     # 11 SS DD through 16 SS DD
     # ****************************************************
 
-    def MOV(self, instruction, b, source, dest):
+    def MOV(self, instruction, B, source, dest):
         """01 SS DD move 4-23
 
         (dst) < (src)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MOV{b} {oct(source)} {oct(dest)}')
-        self.reg.inc_pc("MOV")
-        source_value = self.am.addressing_mode_get(b, source)
-        self.am.addressing_mode_set(b, dest, source_value)
-        return source
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MOV{B} {oct(source)} {oct(dest)}')
+        return self.am.addressing_mode_get(B, source)
 
-    def CMP(self, instruction, b, source, dest):
+    def CMP(self, instruction, B, source, dest):
         """compare 4-24
 
         (src)-(dst)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} CMP{b} {oct(source)} {oct(dest)}')
-        source_value = self.am.addressing_mode_get(b, source)
-        dest_value = self.am.addressing_mode_get(b, dest)
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} CMP{B} {oct(source)} {oct(dest)}')
+        source_value = self.am.addressing_mode_get(B, source)
+        dest_value = self.am.addressing_mode_get(B, dest)
         result = source_value - dest_value
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('CMP')
         return result
 
-    def BIT(self, instruction, b, source, dest):
+    def BIT(self, instruction, B, source, dest):
         """bit test 4-28
 
         (src) ^ (dst)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIT{b} {oct(source)} {oct(dest)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIT{B} {oct(source)} {oct(dest)}')
         result = source & dest
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('BIT')
         return result
 
-    def BIC(self, instruction, b, source, dest):
+    def BIC(self, instruction, B, source, dest):
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIC{b} {oct(source)} {oct(dest)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIC{B} {oct(source)} {oct(dest)}')
         result = ~source & dest
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('BIC')
         return result
 
-    def BIS(self, instruction, b, source, dest):
+    def BIS(self, instruction, B, source, dest):
         """bit set 4-30
         (dst) < (src) v (dst)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIS{b} {oct(source)} {oct(dest)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BIS{B} {oct(source)} {oct(dest)}')
         result = source | dest
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('BIS')
         return result
 
-    def ADD(self, instruction, b, source, dest):
+    def ADD(self, instruction, B, source, dest):
         """06 SS DD ADD add 4-25
 
         (dst) < (src) + (dst)"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ADD{b} {oct(source)} {oct(dest)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ADD{B} {oct(source)} {oct(dest)}')
         result = source + dest
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('ADD')
         return result
 
-    def SUB(self, instruction, b, source, dest):
+    def SUB(self, instruction, B, source, dest):
         """06 SS DD SUB add 4-25
 
         (dst) < (dst) + ~(src) + 1"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SUB{b} {oct(source)} {oct(dest)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SUB{B} {oct(source)} {oct(dest)}')
         result = source + ~dest + 1
         self.set_condition_codes(source, dest, result)
-        self.reg.inc_pc('SUB')
         return result
 
     def is_double_operand_SSDD(self, instruction):
@@ -277,15 +260,14 @@ class dopr:
             B = 'B'
         else:
             B = ''
+            self.reg.inc_pc('do_double_operand')
         opcode = (instruction & 0o070000)
         source = (instruction & 0o007700) >> 6
-        source_value = self.am.addressing_mode_get(B, source)
         dest = (instruction & 0o000077)
 
         run = True
         try:
             result = self.double_operand_SSDD_instructions[opcode](instruction, B, source, dest)
-            self.reg.inc_pc('do_double_operand')
             self.am.addressing_mode_set(B, dest, result)
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')

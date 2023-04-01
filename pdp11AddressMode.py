@@ -32,7 +32,7 @@ class am:
         if addressmode == 0:
             print('    register: Rn: register contains operand')
             operand = self.reg.get(register)
-            print(f'    R{oct(register)} = operand:{oct(operand)}')
+            print(f'    R{register} = operand:{oct(operand)}')
         elif addressmode == 1:
             print('    register deferred: @Rn or (Rn): register contains address of operand')
             operandaddress = self.reg.get(register)

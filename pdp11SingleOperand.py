@@ -77,22 +77,17 @@ class sopr:
     def SWAB(self, instruction, dest, operand, B, mask, maskmsb):
         """00 03 DD Swap Bytes 4-17"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SWAB {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = (operand & 0xFF00) << 8 + (operand & 0x00FF) >> 8
-        self.reg.inc_pc()
         return result
 
     def CLR(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} CLR{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = 0o0
         self.psw.set_PSW(N=0, Z=1, V=0, C=0)
-        self.reg.inc_pc()
         return result
 
     def COM(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} COM{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc("COM{B}")
         result = ~operand & mask
         n = 0
         if result & maskmsb == maskmsb:
@@ -105,7 +100,6 @@ class sopr:
 
     def INC(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} INC{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         # *** this is incomplete as words need their own special little operators
         result = operand + 1 & mask_word
         n = 0
@@ -122,7 +116,6 @@ class sopr:
 
     def DEC(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} DEC{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         # *** this is incomplete as words need their own special little operators
         result = operand - 1 & mask_byte
         n = 0
@@ -139,14 +132,12 @@ class sopr:
 
     def NEG(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} NEG{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = -operand & mask
         return result
 
     def ADC(self, instruction, dest, operand, B, mask, maskmsb):
         """Add Carry"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ADC{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = dest + self.psw.C()
         n = 0
         if result < 0:
@@ -166,7 +157,6 @@ class sopr:
     def SBC(self, instruction, dest, operand, B, mask, maskmsb):
         """subtract Carry"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SBC{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = dest - operand
         n = 0
         if result < 0:
@@ -185,7 +175,6 @@ class sopr:
 
     def TST(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = operand
         n = 0
         if result & mask_word == mask_word:
@@ -199,7 +188,6 @@ class sopr:
     def ROR(self, instruction, dest, operand, B, mask, maskmsb):
         """ROR rotate right"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = operand >> 1
         n = 0
         if result & maskmsb == maskmsb:
@@ -213,7 +201,6 @@ class sopr:
     def ROL(self, instruction, dest, operand, B, mask, maskmsb):
         """ROL rotate left"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = operand << 1
         n = 0
         if result & maskmsb == maskmsb:
@@ -227,7 +214,6 @@ class sopr:
     def ASR(self, instruction, dest, operand, B, mask, maskmsb):
         """ASR arithmetic shift right"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ASR{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = operand >> 1
         n = 0
         if result & maskmsb == maskmsb:
@@ -241,7 +227,6 @@ class sopr:
     def ASL(self, instruction, dest, operand, B, mask, maskmsb):
         """ASL arithmetic shift left"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ASL{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         result = operand << 1
         n = 0
         if result & maskmsb == maskmsb:
@@ -254,7 +239,6 @@ class sopr:
 
     def SXT(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SXT{B} {oct(dest)} {oct(operand)}')
-        self.reg.inc_pc()
         # *** this is incomplete as words need their own special little operators
         if self.psw.N() == 0:
             result = 0
@@ -268,12 +252,10 @@ class sopr:
 
     def MFPD(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
-        self.reg.inc_pc()
         result = 0
 
     def MTPD(self, instruction, dest, operand, B, mask, maskmsb):
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MTPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
-        self.reg.inc_pc()
         result = 0
 
     def is_single_operand(self, instruction):

@@ -66,16 +66,12 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BNE {oct(offset)}')
         if self.psw.Z() == 0:
             self.reg.set_pc_offset(offset, "BNE")
-        else:
-            self.reg.inc_pc('BNE')
 
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BEQ {oct(offset)}')
         if self.psw.Z() == 1:
             self.reg.set_pc_offset(offset, "BEQ")
-        else:
-            self.reg.inc_pc('BEQ')
 
     def BGE(self, instruction, offset):
         """00 20 XXX branch if greater than or equal 4-47"""
@@ -83,8 +79,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BGE {oct(offset)}')
         if self.psw.N() | self.psw.V() == 0:
             self.reg.set_pc_offset(offset, "BGE")
-        else:
-            self.reg.inc_pc('BGE')
 
     def BLT(self, instruction, offset):
         """"00 24 XXX branch if less thn zero"""
@@ -92,8 +86,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLT {oct(offset)}')
         if self.psw.N() ^ self.psw.V() == 1:
             self.reg.set_pc_offset(offset, "BLT")
-        else:
-            self.reg.inc_pc('BLT')
 
     def BGT(self, instruction, offset):
         """00 30 XXX branch if equal Z=1"""
@@ -101,8 +93,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BGT {oct(offset)}')
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 0:
             self.reg.set_pc_offset(offset, "BTG")
-        else:
-            self.reg.inc_pc('BGT')
 
     def BLE(self, instruction, offset):
         """00 34 XXX branch if equal Z=1"""
@@ -110,17 +100,13 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLE {oct(offset)}')
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 1:
             self.reg.set_pc_offset(offset, "BLE")
-        else:
-            self.reg.inc_pc('BLE')
 
     def BPL(self, instruction, offset):
-        """10 00 XXX branch if positive N=0"""
+        """01 00 XXX branch if positive N=0"""
         global pc
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BPL {oct(offset)}')
         if self.psw.N() == 0:
             self.reg.set_pc_offset(offset, 'BPL')
-        else:
-            self.reg.inc_pc('BPL')
 
     def BMI(self, instruction, offset):
         """10 04 XXX branch if negative N=1"""
@@ -128,8 +114,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BMI {oct(offset)}')
         if self.psw.N() == 1:
             self.reg.set_pc_offset(offset, 'BMI')
-        else:
-            self.reg.inc_pc('BMI')
 
     def BHI(self, instruction, offset):
         """10 10 XXX branch if higher"""
@@ -137,8 +121,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BHI {oct(offset)}')
         if self.psw.C() == 0 and self.psw.Z() == 0:
             self.reg.set_pc_offset(offset, 'BHI')
-        else:
-            self.reg.inc_pc('BHI')
 
     def BLOS(self, instruction, offset):
         """10 14 XXX branch if lower or same"""
@@ -146,8 +128,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLOS {oct(offset)}')
         if self.psw.C() | self.psw.Z() == 1:
             self.reg.set_pc_offset(offset, 'BLOS')
-        else:
-            self.reg.inc_pc('BLOS')
 
     def BVC(self, instruction, offset):
         """10 20 XXX Branch if overflow is clear V=0"""
@@ -155,8 +135,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BVC {oct(offset)}')
         if self.psw.V() == 0:
             self.reg.set_pc_offset(offset, 'BVC')
-        else:
-            self.reg.inc_pc('BVC')
 
     def BVS(self, instruction, offset):
         """10 24 XXX Branch if overflow is set V=1"""
@@ -164,8 +142,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BVS {oct(offset)}')
         if self.psw.V() == 1:
             self.reg.set_pc_offset(offset, 'BVS')
-        else:
-            self.reg.inc_pc('BVS')
 
     def BCC(self, instruction, offset):
         """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
@@ -173,8 +149,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BHIS {oct(offset)}')
         if self.psw.C() == 0:
             self.reg.set_pc_offset(offset, 'BCC')
-        else:
-            self.reg.inc_pc('BCC')
 
     def BCS(self, instruction, offset):
         """10 34 XXX branch if lower. BCS is the same as BLO"""
@@ -182,8 +156,6 @@ class br:
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BLO {oct(offset)}')
         if self.psw.C() == 1:
             self.reg.set_pc_offset(offset, 'BCS')
-        else:
-            self.reg.inc_pc('BCS')
 
     def is_branch(self, instruction):
         """Using instruction bit pattern, determine whether it's a branch instruction"""

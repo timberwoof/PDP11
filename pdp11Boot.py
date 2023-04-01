@@ -30,24 +30,24 @@ class boot:
     bootaddress = 0o000744
 
     # http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
-    hello_world = [0o012702, # MOV 0o27 0o2
-                   0o177566, # serial port+4
-                   0o012701, # MOV 0o27 0o1
-                   0o002032, # first character in table
-                   0o112100, # MOVB 0o21 0o0
-                   0o001405, # BEQ 0o5
-                   0o110062, # MOVB 0o0 0o62
+    hello_world = [0o012702, # 2000 start:  MOV 0o27 0o2
+                   0o177564, # serial+4,r2  ; r0 points to DL11
+                   0o012701, # MOV
+                   0o002032, # string,r1    ; r1 points to current char
+                   0o112100, # 2010 nxtchr: MOVB (r1)+,r0) ; load xmt char
+                   0o001405, # BEQ done     ; string is terminated with 0
+                   0o110062, # MOVB r0,2(r2) ; write char to transmit buffer
                    0o000002, #
-                   0o105712, # TSTB 0o0 0o0
-                   0o100376, # BPL 0o376
-                   0o000771, # 0o000771, # BR 0o371 ; transmit next character
-                   0o000000, # halt
+                   0o105712, # 2020 wait: TSTB (r2) ; character transmitted?
+                   0o100376, # BPL wait     ; no, loop
+                   0o000771, # BR nxtchr ; transmit next character
+                   0o000000, # 2026 halt
                    0o000763, # br start
-                   0o110,     0o145,     0o154,
+                   0o110,     0o145,     0o154,  # .ascii /Hello, world/
                    0o154,     0o157,     0o054,
                    0o040,     0o167,     0o157,
                    0o162,     0o154,     0o144,
-                   0o012,     0o000]
+                   0o012,     0o000]    # lf, end
     hello_address = 0o2000
 
     def load_machine_code(self, code, base):
@@ -57,6 +57,7 @@ class boot:
         :param base:
         :return:
         """
+        print (f'load_machine_code({base})')
         address = base
         for instruction in code:
             # print()

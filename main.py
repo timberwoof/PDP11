@@ -23,6 +23,10 @@ def dispatch_opcode(instruction):
     """ top-level dispatch"""
     print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
     reg.log_registers()
+
+    # increment PC
+    reg.inc_pc('main')
+
     run = True
 
     if br.is_branch(instruction):
@@ -53,14 +57,23 @@ print('begin PDP11 emulator')
 
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 boot.load_machine_code(boot.hello_world, boot.hello_address)
+ram.dump(0o2000, 0o2064)
 
 #start_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
 #reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
+limit = 40
+instruction_count = 0
 run = True
-while run:
+while run and instruction_count < limit:
+    print(f'instruction_count:{instruction_count}')
     # fetch opcode
     instruction = ram.read_word(reg.get_pc())
+
     # decode and execute opcode
     run = dispatch_opcode(instruction)
+
+    instruction_count = instruction_count + 1
+
+ram.flush_TPbuffer()
