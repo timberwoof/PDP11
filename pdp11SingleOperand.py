@@ -288,12 +288,12 @@ class sopr:
         # bits 5-0 can be anything
         # 0o000301 is one of these
         # 0 000 000 101 *** ***
-        #print(f'    is_single_operand({type(instruction)} {oct(instruction)})')
+        #print(f'    is_single_operand({oct(instruction)})')
         bits_14_13_12 = instruction & 0o070000 == 0o000000
         bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
-        isJMP = instruction & 0o000700 == 0o000100
-        isSWAB = instruction & 0o000700 == 0o000300
-        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}')
+        isJMP = instruction & 0o177700 == 0o000100
+        isSWAB = instruction & 0o177700 == 0o000300
+        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}  {isJMP}')
         return (bits_14_13_12 and bits_11_10_9) or isSWAB or isJMP
 
     def do_single_operand(self, instruction):
@@ -304,6 +304,7 @@ class sopr:
         # 15 is 1 to indicate a byte instruction
         # 15 is 0 to indicate a word instruction
         # 5-0 dst
+
         if (instruction & 0o100000) == 0o100000:
             B = 'B'
             mask = mask_byte
@@ -312,11 +313,9 @@ class sopr:
             B = ''
             mask = mask_word
             maskmsb = mask_word_msb
-        opcode = (instruction & 0o107700)
+        opcode = instruction & 0o107700
         source = instruction & 0o000077
         source_value = self.am.addressing_mode_get(B, source)
-
-        self.reg.log_registers()
 
         run = True
         try:
@@ -324,7 +323,7 @@ class sopr:
             result = self.single_operand_instructions[opcode](instruction, source_value, source_value, B, mask, maskmsb)
             self.am.addressing_mode_set(B, source_value, result)
         except KeyError:
-            print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operandmethod {oct(opcode)} was not implemented')
+            print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand method {oct(opcode)} was not implemented')
             result = 0
             run = False
 

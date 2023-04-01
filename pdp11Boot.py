@@ -1,11 +1,13 @@
 """PDP11 bootstrap utilities"""
 
 from pdp11ram import ram
+from pdp11reg import reg
 
 class boot:
-    def __init__(self, ram):
+    def __init__(self, ram, reg):
         print('initializing pdp11Boot')
         self.ram = ram
+        self.reg = reg
 
     # from pdp-11/40 book
     bootstrap_loader = [0o016701, # MOV 0o67:0o0 0o1:0o0
@@ -38,7 +40,7 @@ class boot:
                    0o000002, #
                    0o105712, # TSTB 0o0 0o0
                    0o100376, # BPL 0o376
-                   0o000771, # 0o000771, # BR 0o371 ; transmit next charager
+                   0o000771, # 0o000771, # BR 0o371 ; transmit next character
                    0o000000, # halt
                    0o000763, # br start
                    0o110,     0o145,     0o154,
@@ -48,7 +50,7 @@ class boot:
                    0o012,     0o000]
     hello_address = 0o2000
 
-    def load_machine_code(code, base):
+    def load_machine_code(self, code, base):
         """Copy the pdp-11 machine code found at code into the address in base
 
         :param code:
@@ -59,10 +61,10 @@ class boot:
         for instruction in code:
             # print()
             #print(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
-            ram.write_word(address, instruction)
+            self.ram.write_word(address, instruction)
             #print(f'{oct(address)}:{oct(ram.readword(address))}')
             address = address + 2
-        reg.set_pc(base, "load_machine_code")
+        self.reg.set_pc(base, "load_machine_code")
 
     def octal_to_decimal(self, octal_value):
         decimal_value = 0

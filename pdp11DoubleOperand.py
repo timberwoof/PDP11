@@ -13,7 +13,7 @@ mask_byte_msb = 0o000200
 
 class dopr:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11dpor')
+        print('initializing pdp11DoubleOperand')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -286,7 +286,7 @@ class dopr:
         try:
             result = self.double_operand_SSDD_instructions[opcode](instruction, B, source, dest)
             self.reg.inc_pc('do_double_operand')
-            self.am.addressing_mode_set(B, source_value, result)
+            self.am.addressing_mode_set(B, dest, result)
         except KeyError:
             print(f'    {oct(self.reg.get_pc())} {oct(instruction)} {oct(opcode)} is not a double operand instruction')
             result = 0

@@ -76,6 +76,7 @@ class reg:
         return newsp
 
     def log_registers(self):
+        """print all the registers in the log"""
         index = 0
         report = '    '
         for register in self.registers:

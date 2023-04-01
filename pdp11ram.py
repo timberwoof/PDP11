@@ -17,7 +17,7 @@ class ram:
         self.io_space = self.top_of_memory - 0o27777
 
         # PSW is stored here
-        self.PSW_address = self.top_of_memory - 3
+        self.PSW_address = self.top_of_memory - 3 # 0o377774
 
         # set up the serial interface addresses
         self.TKS = self.io_space + 0o27560 # reader status register 177560
@@ -66,7 +66,7 @@ class ram:
         :param data:
         :return:
         """
-        #print(f'    writeword({oct(address)}, {oct(data)})')
+        print(f'    writeword({oct(address)}, {oct(data)})')
         hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
         lo = data & 0o000377  # 0 000 000 011 111 111
         # print(f'hi:{oct(hi)} lo:{oct(lo)}')
@@ -82,7 +82,7 @@ class ram:
         """write a byte to memory.
         address can be even or odd"""
         data = data & 0o000377
-        #print(f'    writebyte({oct(address)}, {oct(data)})')
+        print(f'    writebyte({oct(address)}, {oct(data)})')
         self.memory[address] = data
 
         #if address > self.iospace:

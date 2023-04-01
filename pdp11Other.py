@@ -31,15 +31,6 @@ class other:
         self.reg.set_sp(stack)
         ram.self.write_word(stack, ram.self.value)
 
-    def popstack(self):
-        """pop the stack and return that value
-
-        get the stack value, increment the stack pointer, return value"""
-        stack = self.reg.get_sp()
-        result = ram.self.read_word(stack)
-        self.reg.set_sp(stack + 2)
-        return result
-
     # ****************************************************
     # Other instructions
     # ****************************************************

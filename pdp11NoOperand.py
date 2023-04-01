@@ -20,6 +20,15 @@ class noopr:
         self.no_operand_instructions[0o000006] = self.RTT
         self.no_operand_instructions[0o000240] = self.NOP
 
+    def popstack(self):
+        """pop the stack and return that value
+
+        get the stack value, increment the stack pointer, return value"""
+        stack = self.reg.get_sp()
+        result = self.ram.read_word(stack)
+        self.reg.set_sp(stack + 2)
+        return result
+
     def HALT(self, instruction):
         """00 00 00 Halt"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} HALT')
@@ -37,8 +46,8 @@ class noopr:
         *** need to implement the stack
         """
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTI')
-        self.reg.set_pc(popstack(), "RTI")
-        psw.set_PSW(PSW=popstack())
+        self.reg.set_pc(self.popstack(), "RTI")
+        self.psw.set_PSW(PSW=self.popstack())
         return True
 
     def BPT(self, instruction):
