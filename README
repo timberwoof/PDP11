@@ -64,9 +64,18 @@ Runs much of M9301-YA. Pukes pretty quickly on the others.
 
 To Do
 =====
-Proper logging with settable log levels.
-Provide stack access methods.
+Proper logging with settable log levels. FUck logging.
+    PyCharm and Logging don't get along and it's too much work reading through nonsplanations.
+
 Provide a proper DL11 console as a separate Python window connected to a serial terminal.
+tkinter
+https://likegeeks.com/python-gui-examples-tkinter-tutorial/
+most of the examples are fucking ugly
+
+
+Set up Pytest.
+    set up the thing as a proper application that will load and run some code.
+Provide stack access methods.
 Get the diagnostics running
 Get a virtual disk running
 Get a small OS running. mini-unix (no MMU needed)

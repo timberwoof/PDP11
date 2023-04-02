@@ -57,7 +57,6 @@ print('begin PDP11 emulator')
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 #boot.load_machine_code(boot.hello_world, boot.hello_address)
 #ram.dump(0o2000, 0o2064)
-
 start_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
 reg.set_pc(start_address, "load_machine_code")
 
