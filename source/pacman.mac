@@ -1,0 +1,1011 @@
+	.TITLE	PACMAN;
+	.IDENT	/V01XB/	; for PDP-11's
+	.NLIST	BEX
+	.ENABL	LC
+;
+; DISCLAIMER:	THIS PROGRAM IS NOT WRITTEN IN THE MOST EFFICIENT
+;		OR LEGIBLE CODE - IT IS A QUICK AND DIRTY TRANSLATION
+;		OF THE ORIGINAL VAX-11 CODE
+;
+	.PSECT	TTDATA,RW,LCL
+;
+	.RADIX	10
+	ESC=155.		; FOR RSTS
+	LF=10.
+	CR=13.
+	SO=14.
+	SI=143.			; FOR RSTS
+	BS=8.
+;
+;
+;
+TTIBUF:	.BLKB	100
+;
+;
+TTOBUF:	.BYTE	ESC,'Y
+TTOBFL:	.BYTE	0
+TTOBFC:	.BYTE	0
+TTOVER=.-TTOBUF
+
+TTOBFA:	.BLKB	1200
+;
+	.EVEN
+PLAYER:	.ASCII	/0/
+NRMBUG:	.ASCII	/x/
+NUMBUG:	.ASCII	/+/
+HUMBUG:	.ASCII	/#/
+ERASE:	.ASCII	/ /
+PACDOT:	.ASCII	/./
+POWDER:	.ASCII	/*/
+BEEPER:	.BYTE	7,128
+
+	.EVEN
+TEMP:	.WORD	0,0,0,0
+
+	.EVEN
+PARBLK:	.WORD	4
+PARCOL:	.WORD	0
+PARLIN:	.WORD	0
+PARNUM:	.WORD	TMPNUM
+PARSTR:	.WORD	0
+;
+TMPCOL:	.WORD	0
+TMPLIN:	.WORD	0
+TMPNUM:	.WORD	1
+OUTARA:	.BLKB	6
+
+	.EVEN
+BUGTBL:
+BUGSTA:	.WORD	0,0,0,0,0,0,0,0,0 ;1=IN, 2=INEDIBLE, 3=EDIBLE, 4=BLINK
+BUGXPS:	.WORD	0,0,0,0,0,0,0,0,0
+BUGYPS:	.WORD	0,0,0,0,0,0,0,0,0
+BUGXMV:	.WORD	0,0,0,0,0,0,0,0,0
+BUGYMV:	.WORD	0,0,0,0,0,0,0,0,0
+BUGINI:	.WORD	2,1,1,1,1,1,1,1,1
+	.WORD	16,20,20,20,20,20,20,20,20
+	.WORD	12,10,12,14,10,12,14,10,12
+	.WORD	0,1,-1,1,1,-1,1,-1,1
+	.WORD	-1,0,0,0,0,0,0,0,0
+BUGINL=.-BUGINI
+
+NOBUGS:	.WORD	3
+PLAXPS:	.WORD	0
+PLAYPS:	.WORD	0
+PLAXMV:	.WORD	0
+PLAYMV:	.WORD	0
+SCRNUM:	.WORD	0
+CHEAT:	.WORD	0
+LSTSCR:	.WORD	0
+SCORE:	.WORD	0
+COUNTA:	.WORD	0	;AFTER EAT POWDER
+COUNTB:	.WORD	0	;INTO SCREEN
+PNTVLU:	.WORD	0
+THRSLD:	.WORD	0	;HOW QUICKLY DO THINGS HAPPEN?
+RNDIDX:	.WORD	0
+DTSLFT:	.WORD	0
+PLAERS:	.WORD	3
+FLAG1:	.WORD	0	;(PHASE)3=BUGS EDIBLE,4=BUGS FLASH,0=WATCH OUT
+FLAG2:	.WORD	0	;SO BUGS PAUSE EVERY 3RD TIME (PAUSE ON 2)
+
+CHEATD:	.ASCII	/ *CHEATED*/
+CHEATL=.-CHEATD
+	.EVEN
+
+TTEOG:	.ASCII	/ ** END **/<CR><LF>
+	.IIF DF VT100,	.ASCII	<ESC>/</
+TTEOGL=.-TTEOG
+	.EVEN
+
+CHICKN:	.ASCII	/ CHICKEN!/<CR><LF>
+	.IIF DF VT100,	.ASCII	<ESC>/</
+CHCKNL=.-CHICKN
+	.EVEN
+
+EOGCOL:	.WORD	1
+EOGLIN:	.WORD	24
+EOGNUM:	.WORD	TTEOGL
+CHKNUM:	.WORD	CHCKNL
+EOGBLK:	.WORD	4,EOGCOL,EOGLIN,EOGNUM,TTEOG
+CHKBLK:	.WORD	4,EOGCOL,EOGLIN,CHKNUM,CHICKN
+RANLST:
+	.BYTE	1,0,1,1,0,0,1,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,1,1,0,1,0,0,0
+	.BYTE	1,0,1,0,0,1,1,1,0,0,0,0,1,0,1,0,1,1,0,1,1,1,1,0,0,0,0,0,0,1
+	.BYTE	1,1,1,0,0,0,0,1,1,1,1,0,1,0,0,1,0,1,0,0,0,0,1,1,1,0,0,0,1,0
+	.BYTE	1,0,0,1,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,0,1,0,1,0,0,0,1,1
+	.BYTE	0,1,1,1,0,1,0,0,1,0,1,0,0,0,1,0,0,1,1,0,0,1,1,0,0,0,0,1,0,0
+	.BYTE	1,1,1,1,0,0,1,0,1,1,1,1,0,1,0,1,1,1,1,1,0,0,0,0,0,1,0,0,0,0
+	.BYTE	1,0,1,0,1,0,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,1,1,1,1,0,1,0,1
+	.BYTE	0,1,1,1,1,0,0,0,1,1,1,1,0,1,1,0,1,0,0,0,0,1,0,1,1,1,1,1,1,1
+	.BYTE	1,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,0,0,0,1,0,1,1,0,1,1,1,1,1,0
+	.BYTE	1,1,0,0,0,0,0,0,1,0,0,1,0,1,1,0,0,1,0,1,1,0,0,0,0,0,1,1,0,0
+	.BYTE	1,0,0,0,0,1,0,1,0,0,1,1,0,1,0,1,1,1,1,1,1,0,1,1,0,1,1,0,0,0
+	.BYTE	1,1,0,0,0,0,1,1,0,0,1,1,1,1,0,1,1,1,1,1,0,1,0,0,1,1,1,1,1,1
+	.BYTE	0,1,0,1,1,0,1,1,0,1,1,0,0,1,1,0,0,1,1,0,1,1,1,0,0,0,1,1,1,1
+	.BYTE	1,0,0,0,1,1,1,0,1,0,0,0,1,0,1,1,0,0,1,0,0,1,0,0,0,1,0,1,1,1
+	.BYTE	1,1,1,0,1,0,1,1,1,1,0,0,1,1,0,1,0,1,1,0,0,0,1,0,1,0,0,0,1,1
+	.BYTE	0,1,0,1,1,1,0,1,0,0,0,1,0,1,0,1,1,1,1,0,1,1,0,0,0,1,0,1,1,0
+	.BYTE	1,1,0,1,0,1,1,0,1,1,0,0,0,1,1,1,1,0,1,0,0,1,1,1,0,0,1,0,0,0
+	.BYTE	1,1,1,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0,1,1,1,0,0,1,0,0,1,1,0,1
+	.BYTE	0,0,0,1,0,0,1,0,1,0,0,1,1,1,1,0,1,0,1,0,0,1,0,0,1,0,0,1,1,1
+	.BYTE	1,0,0,1,0,0,0,0,1,0,1,1,0,0,1,0,0,1,1,1,0,0,1,1,1,0,1,1,1,1
+RNLSTL=.-RANLST
+	.EVEN
+
+TTINIT:
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(B/<ESC>/)0/<ESC>/>/
+	.ASCII	<ESC>/[2J/	;CLEAR SCREEN
+	.ASCII	<ESC>/[?5h/	;WE LIKE IT BETTER WITH A LIGHT BACKGROUND
+	.ASCII	<ESC>/[7;9H/<ESC>/#6/
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ENDC
+	.ASCII	@--- PACMAN/PDP-11 V1.0 ---@<CR><LF><LF>
+	.IIF DF VT100,	.ASCII	<ESC>/[10;26H/
+	.ASCII	/Original VAX version By Daniel Pratt/<CR><LF>
+	.IIF DF VT100,	.ASCII	<ESC>/[12;23H/
+	.ASCII	/Translated for the PDP-11 By Jack DelBalso/<CR><LF><LF>
+	.IIF DF VT100,	.ASCII	<ESC>/[20;31H/
+	.ASCII	/DO YOU NEED HELP ? /
+TTINIL=.-TTINIT
+	.BYTE	128
+	.EVEN
+HELP1:
+	.IF DF VT100
+	.ASCII	<ESC>/[2J/<ESC>/[1;8H/<ESC>/#6/
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ENDC
+	.ASCII	@How to use PACMAN/PDP-11@<CR><LF><LF>
+	.ASCII	/Use your keypad as shown to move your pacman (0) to eat up              ^/<CR><LF>
+	.ASCII	/the dots in the maze without being eaten by the ghosts (/
+	.IIF DF VT100,	.ASCII	<ESC>/(0/
+	.ASCII	/a/
+	.IIF DF VT100,	.ASCII	<ESC>/(B/	;LIKE 'EM BETTER IF THEY'RE ALL BLOCKS
+	.ASCII	/)              |/<CR><LF>
+	.ASCII	/Eating an "energizer" (*) makes the ghosts edible (+).  Shortly         8/<CR><LF>
+	.ASCII	/before they become inedible again and attack, they will turn to    <--4   6-->/<CR><LF>
+	.ASCII	@number signs (#).  Going through an exit  on  a  boundary  will        5/2@<CR><LF>
+	.ASCII	/"wrap" to the other side (The ghosts can do this also!).   Note	        |/<CR><LF>
+	.ASCII	/that the '5' and '2' keys both work to indicate downward motion.        v/<CR><LF><LF>
+	.ASCII	/When you have eaten all the dots on the screen, a new screen appears and all /<CR><LF>
+	.ASCII	/players return to their initial positions and states.  With each new screen/<CR><LF>
+	.ASCII	@up to 8, the ghosts are faster, smarter and/or more numerous.@<CR><LF><LF>
+HELP1L=.-HELP1
+	.BYTE	128
+	.EVEN
+HELP2:
+	.ASCII	/SCORING: - Each time your pacman eats a dot, you score 10./<CR><LF>
+	.ASCII	/         - Each time you eat an energizer, you score 100./<CR><LF>
+	.ASCII	/         - The first ghost you eat after eating an energizer scores 100, the /<CR><LF>
+	.ASCII	/           second scores 200, the third 400, the fourth 800 and so on./<CR><LF>
+	.ASCII	/         - For each 5,000 you score you get an extra pacman (you start with/<CR><LF>
+	.ASCII	/           three and the number remaining is shown as UNITS at bottom left)./<CR><LF>
+	.ASCII	/           The score of the last thing eaten is shown at the top right./<CR><LF><LF>
+	.ASCII	/                        (instructions courtesy of Dave Banks)/<CR><LF>
+	.ASCII	/                    PRESS ANY KEY TO BEGIN >/
+HELP2L=.-HELP2
+	.BYTE	128
+	.EVEN
+SCRN1:
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(B/<ESC>/)0/<SO> ;TURN SPECIAL C.S. ON
+	.ASCII	<ESC>/[H/	;HOME
+	.ASCII	<ESC>/[2J/	;CLS
+	.ASCII	<ESC>/#6//    lqqqqqqqqqqqqqk lqqqqqqqqqqqqqk/<CR><LF>	;1
+	.ASCII	<ESC>/#6//    x. . . . . . .x.x. . . . . . .x/<CR><LF>	;2
+	.ASCII	<ESC>/#6//    x lqqqqqqqq q x x q qqqqqqqqk x/<CR><LF>	;3
+	.ASCII	<ESC>/#6//    x.x* . . . . . . . . . . . *x.x/<CR><LF>	;4
+	.ASCII	<ESC>/#6//    x x qqqqqqk q qqq q lqqqqqq x x/<CR><LF>	;5
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;6
+	.ASCII	<ESC>/#6//    tqq lqqqq x qqqqqqq x qqqqk qqu/<CR><LF>	;7
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;8
+	.ASCII	<ESC>/#6//    x x x qqk x lqqqqqk x lqq x x x/<CR><LF>	;9
+	.ASCII	<ESC>/#6//    x.x.x. .x.x.x     x.x.x. .x.x.x/<CR><LF>	;10
+	.ASCII	<ESC>/#6//    x x mqq x x x     x x x qqj x x/<CR><LF>	;11
+	.ASCII	<ESC>/#6//    x.x. . . .x.x     x.x  . . .x.x/<CR><LF>	;12!
+	.ASCII	<ESC>/#6//    x x lqq x x x     x x x qqk x x/<CR><LF>	;13!11
+	.ASCII	<ESC>/#6//    x.x.x. .x.x.x     x.x.x. .x.x.x/<CR><LF>	;14!10
+	.ASCII	<ESC>/#6//    x x x qqj x mqqqqqj x mqq x x x/<CR><LF>	;15!9
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;16!8
+	.ASCII	<ESC>/#6//    tqq mqqqq x qqqqqqq x qqqqj qqu/<CR><LF>	;17!7
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;18!6
+	.ASCII	<ESC>/#6//    x x qqqqqqj q qqq q mqqqqqq x x/<CR><LF>	;19!5
+	.ASCII	<ESC>/#6//    x.x* . . . . . . . . . . . *x.x/<CR><LF>	;20!4
+	.ASCII	<ESC>/#6//    x mqqqqqqqq q x x q qqqqqqqqj x/<CR><LF>	;21!3
+	.ASCII	<ESC>/#6//    x. . . . . . .x.x. . . . . . .x/<CR><LF>	;22!2
+	.ASCII	<ESC>/#6//    mqqqqqqqqqqqqqj mqqqqqqqqqqqqqj/<CR><LF>	;23!1
+	.ASCII	<ESC>/#6/<SI>
+
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ASCII		/    +-------------+ +-------------+/<CR><LF>	;1
+	.ASCII		/    |. . . . . . .|.|. . . . . . .|/<CR><LF>	;2
+	.ASCII		/    | +-------- - | | - --------+ |/<CR><LF>	;3
+	.ASCII		/    |.|* . . . . . . . . . . . *|.|/<CR><LF>	;4
+	.ASCII		/    | | ------+ - --- - +------ | |/<CR><LF>	;5
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;6
+	.ASCII		/    +-- ----- | ------- | ----+ --+/<CR><LF>	;7
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;8
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;9
+	.ASCII		/    |.|.|. .|.|.|     |.|.|. .|.|.|/<CR><LF>	;10
+	.ASCII		/    | | +-- | | |     | | | --+ | |/<CR><LF>	;11
+	.ASCII		/    |.|. . . .|.|     |.|  . . .|.|/<CR><LF>	;12!
+	.ASCII		/    | | +-- | | |     | | | --+ | |/<CR><LF>	;13!11
+	.ASCII		/    |.|.|. .|.|.|     |.|.|. .|.|.|/<CR><LF>	;14!10
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;15!9
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;16!8
+	.ASCII		/    +-- +---- + ------- + ----+ --+/<CR><LF>	;17!7
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;18!6
+	.ASCII		/    | | ------+ - --- - +------ | |/<CR><LF>	;19!5
+	.ASCII		/    |.|* . . . . . . . . . . . *|.|/<CR><LF>	;20!4
+	.ASCII		/    | +-------- - | | - --------+ |/<CR><LF>	;21!3
+	.ASCII		/    |. . . . . . .|.|. . . . . . .|/<CR><LF>	;22!2
+	.ASCII		/    +-------------+ +-------------+/<CR><LF>	;23!1
+	.ENDC
+
+	.ASCII	/UNITS: 3      SCREEN  1   SCORE: ZIP!/
+	.IIF DF VT100,	.ASCII	<ESC>/[?2l/
+SCRNL=.-SCRN1
+	.BYTE	128
+	.EVEN
+TBL1IN:
+	.ASCII	/3333333333333330333333333333333/	;1
+	.ASCII	/3202020202020232320202020202023/	;2
+	.ASCII	/3033333333303030303033333333303/	;3
+	.ASCII	/3234020202020202020202020204323/	;4
+	.ASCII	/3030333333303033303033333330303/	;5
+	.ASCII	/3202020202320202020232020202023/	;6
+	.ASCII	/3330333330303333333030333330333/	;7
+	.ASCII	/3202320202020202020202020232023/	;8
+	.ASCII	/3030303330303333333030333030303/	;9
+	.ASCII	/3232320232323000003232320232323/	;10
+	.ASCII	/3030333030303000003030303330303/	;11
+	.ASCII	/3232020202323000003230020202323/	;12!
+	.ASCII	/3030333030303000003030303330303/	;13!11
+	.ASCII	/3232320232323000003232320232323/	;14!10
+	.ASCII	/3030303330303333333030333030303/	;15!9
+	.ASCII	/3202320202020202020202020232023/	;16!8
+	.ASCII	/3330333330303333333030333330333/	;17!7
+	.ASCII	/3202020202320202020232020202023/	;18!6
+	.ASCII	/3030333333303033303033333330303/	;19!5
+	.ASCII	/3234020202020202020202020204323/	;20!4
+	.ASCII	/3033333333303030303033333333303/	;21!3
+	.ASCII	/3202020202020232320202020202023/	;22!2
+	.ASCII	/3333333333333330333333333333333/	;23!1
+	.EVEN
+SCRN2:
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(B/<ESC>/)0/<SO>	;TURN SPECIAL C.S. ON
+	.ASCII	<ESC>/[H/	;HOME
+	.ASCII	<ESC>/[2J/	;CLS
+	.ASCII	<ESC>/#6//    lqqqqqqqqqqqqqk lqqqqqqqqqqqqqk/<CR><LF>	;1
+	.ASCII	<ESC>/#6//    x. . . . . . .x.x. . . . . . .x/<CR><LF>	;2
+	.ASCII	<ESC>/#6//    x lqqqqqqqq q x x q qqqqqqqqk x/<CR><LF>	;3
+	.ASCII	<ESC>/#6//    x.x* . . . . . . . . . . . *x.x/<CR><LF>	;4
+	.ASCII	<ESC>/#6//    x x qqqqqqk q qqq q lqqqqqq x x/<CR><LF>	;5
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;6
+	.ASCII	<ESC>/#6//    tqq lqqqq x qqqqqqq x qqqqk qqu/<CR><LF>	;7
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;8
+	.ASCII	<ESC>/#6//    x x x qqk x lqqqqqk x lqq x x x/<CR><LF>	;9
+	.ASCII	<ESC>/#6//    x. .x. .x.x.x     x.x.x. .x. .x/<CR><LF>	;10
+	.ASCII	<ESC>/#6//    mqq mqq x x x     x x x qqj qqj/<CR><LF>	;11
+	.ASCII	<ESC>/#6//     . . . . .x.x     x.x  . . . . /<CR><LF>	;12!
+	.ASCII	<ESC>/#6//    lqq lqq x x x     x x x qqk qqk/<CR><LF>	;13!11
+	.ASCII	<ESC>/#6//    x. .x. .x.x.x     x.x.x. .x. .x/<CR><LF>	;14!10
+	.ASCII	<ESC>/#6//    x x x qqj x mqqqqqj x mqq x x x/<CR><LF>	;15!9
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;16!8
+	.ASCII	<ESC>/#6//    tqq mqqqq x qqqqqqq x qqqqj qqu/<CR><LF>	;17!7
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;18!6
+	.ASCII	<ESC>/#6//    x x qqqqqqj q qqq q mqqqqqq x x/<CR><LF>	;19!5
+	.ASCII	<ESC>/#6//    x.x* . . . . . . . . . . . *x.x/<CR><LF>	;20!4
+	.ASCII	<ESC>/#6//    x mqqqqqqqq q x x q qqqqqqqqj x/<CR><LF>	;21!3
+	.ASCII	<ESC>/#6//    x. . . . . . .x.x. . . . . . .x/<CR><LF>	;22!2
+	.ASCII	<ESC>/#6//    mqqqqqqqqqqqqqj mqqqqqqqqqqqqqj/<CR><LF>	;23!1
+	.ASCII	<ESC>/#6/<SI>
+
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ASCII		/    +-------------+ +-------------+/<CR><LF>	;1
+	.ASCII		/    |. . . . . . .|.|. . . . . . .|/<CR><LF>	;2
+	.ASCII		/    | +-------- - | | - --------+ |/<CR><LF>	;3
+	.ASCII		/    |.|* . . . . . . . . . . . *|.|/<CR><LF>	;4
+	.ASCII		/    | | ------+ - --- - +------ | |/<CR><LF>	;5
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;6
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;7
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;8
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;9
+	.ASCII		/    |. .|. .|.|.|     |.|.|. .|. .|/<CR><LF>	;10
+	.ASCII		/    +-- +-- | | |     | | | --+ --+/<CR><LF>	;11
+	.ASCII		/     . . . . .|.|     |.|  . . . . /<CR><LF>	;12!
+	.ASCII		/    +-- +-- | | |     | | | --+ --+/<CR><LF>	;13!11
+	.ASCII		/    |. .|. .|.|.|     |.|.|. .|. .|/<CR><LF>	;14!10
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;15!9
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;16!8
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;17!7
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;18!6
+	.ASCII		/    | | ------+ - --- - +------ | |/<CR><LF>	;19!5
+	.ASCII		/    |.|* . . . . . . . . . . . *|.|/<CR><LF>	;20!4
+	.ASCII		/    | +-------- - | | - --------+ |/<CR><LF>	;21!3
+	.ASCII		/    |. . . . . . .|.|. . . . . . .|/<CR><LF>	;22!2
+	.ASCII		/    +-------------+ +-------------+/<CR><LF>	;23!1
+	.ENDC
+
+	.ASCII	/UNITS: 3      SCREEN  2   SCORE: ZIP!/
+	.IIF DF VT100,	.ASCII	<ESC>/[?2l/
+	.BYTE	128
+	.EVEN
+TBL2IN:
+	.ASCII	/3333333333333330333333333333333/	;1
+	.ASCII	/3202020202020232320202020202023/	;2
+	.ASCII	/3033333333303030303033333333303/	;3
+	.ASCII	/3234020202020202020202020204323/	;4
+	.ASCII	/3030333333303033303033333330303/	;5
+	.ASCII	/3202020202320202020232020202023/	;6
+	.ASCII	/3330333330303333333030333330333/	;7
+	.ASCII	/3202320202020202020202020232023/	;8
+	.ASCII	/3030303330303333333030333030303/	;9
+	.ASCII	/3202320232323000003232320232023/	;10
+	.ASCII	/3330333030303000003030303330333/	;11
+	.ASCII	/0202020202323000003230020202020/	;12!
+	.ASCII	/3330333030303000003030303330333/	;13!11
+	.ASCII	/3202320232323000003232320232023/	;14!10
+	.ASCII	/3030303330303333333030333030303/	;15!9
+	.ASCII	/3202320202020202020202020232023/	;16!8
+	.ASCII	/3330333330303333333030333330333/	;17!7
+	.ASCII	/3202020202320202020232020202023/	;18!6
+	.ASCII	/3030333333303033303033333330303/	;19!5
+	.ASCII	/3234020202020202020202020204323/	;20!4
+	.ASCII	/3033333333303030303033333333303/	;21!3
+	.ASCII	/3202020202020232320202020202023/	;22!2
+	.ASCII	/3333333333333330333333333333333/	;23!1
+	.EVEN
+SCRN3:
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(B/<ESC>/)0/<SO>	;TURN SPECIAL C.S. ON
+	.ASCII	<ESC>/[H/	;HOME
+	.ASCII	<ESC>/[2J/	;CLS
+	.ASCII	<ESC>/#6//    lqqqqqqqqqwqqqqqqqqqwqqqqqqqqqk/<CR><LF>	;1
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;2
+	.ASCII	<ESC>/#6//    x lqqqqqq x x x x x x qqqqqqk x/<CR><LF>	;3
+	.ASCII	<ESC>/#6//    x.x* . . . .x.x.x.x. . . . *x.x/<CR><LF>	;4
+	.ASCII	<ESC>/#6//    x x qqqqqqk x mqj x lqqqqqq x x/<CR><LF>	;5
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;6
+	.ASCII	<ESC>/#6//    tqq lqqqq x qqqqqqq x qqqqk qqu/<CR><LF>	;7
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;8
+	.ASCII	<ESC>/#6//    x x x qqk x lqqqqqk x lqq x x x/<CR><LF>	;9
+	.ASCII	<ESC>/#6//    x. .x. .x.x.x     x.x.x. .x. .x/<CR><LF>	;10
+	.ASCII	<ESC>/#6//    mqq mqq x x x     x x x qqj qqj/<CR><LF>	;11
+	.ASCII	<ESC>/#6//     . . . . .x.x     x.x  . . . . /<CR><LF>	;12!
+	.ASCII	<ESC>/#6//    lqq lqq x x x     x x x qqk qqk/<CR><LF>	;13!11
+	.ASCII	<ESC>/#6//    x. .x. .x.x.x     x.x.x. .x. .x/<CR><LF>	;14!10
+	.ASCII	<ESC>/#6//    x x x qqj x mqqqqqj x mqq x x x/<CR><LF>	;15!9
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;16!8
+	.ASCII	<ESC>/#6//    tqq mqqqq x qqqqqqq x qqqqj qqu/<CR><LF>	;17!7
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;18!6
+	.ASCII	<ESC>/#6//    x x qqqqqqj x lqk x mqqqqqq x x/<CR><LF>	;19!5
+	.ASCII	<ESC>/#6//    x.x* . . . .x.x.x.x. . . . *x.x/<CR><LF>	;20!4
+	.ASCII	<ESC>/#6//    x mqqqqqq x x x x x x qqqqqqj x/<CR><LF>	;21!3
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;22!2
+	.ASCII	<ESC>/#6//    mqqqqqqqqqvqqqqqqqqqvqqqqqqqqqj/<CR><LF>	;23!1
+	.ASCII	<ESC>/#6/<SI>
+
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ASCII		/    +---------+---------+---------+/<CR><LF>	;1
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;2
+	.ASCII		/    | +------ | | | | | | ------+ |/<CR><LF>	;3
+	.ASCII		/    |.|* . . . .|.|.|.|. . . . *|.|/<CR><LF>	;4
+	.ASCII		/    | | ------+ | +-+ | +------ | |/<CR><LF>	;5
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;6
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;7
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;8
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;9
+	.ASCII		/    |. .|. .|.|.|     |.|.|. .|. .|/<CR><LF>	;10
+	.ASCII		/    +-- +-- | | |     | | | --+ --+/<CR><LF>	;11
+	.ASCII		/     . . . . .|.|     |.|  . . . . /<CR><LF>	;12!
+	.ASCII		/    +-- +-- | | |     | | | --+ --+/<CR><LF>	;13!11
+	.ASCII		/    |. .|. .|.|.|     |.|.|. .|. .|/<CR><LF>	;14!10
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;15!9
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;16!8
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;17!7
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;18!6
+	.ASCII		/    | | ------+ | +-+ | +------ | |/<CR><LF>	;19!5
+	.ASCII		/    |.|* . . . .|.|.|.|. . . . *|.|/<CR><LF>	;20!4
+	.ASCII		/    | +------ | | | | | | ------+ |/<CR><LF>	;21!3
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;22!2
+	.ASCII		/    +---------+---------+---------+/<CR><LF>	;23!1
+
+	.ENDC
+	.ASCII	/UNITS: 3      SCREEN  3   SCORE: ZIP!/
+	.IIF DF VT100,	.ASCII	<ESC>/[?2l/
+	.BYTE	128
+	.EVEN
+TBL3IN:
+	.ASCII	/3333333333333333333333333333333/	;1
+	.ASCII	/3202020202320202020232020202023/	;2
+	.ASCII	/3033333330303030303030333333303/	;3
+	.ASCII	/3234020202023232323202020204323/	;4
+	.ASCII	/3030333333303033303033333330303/	;5
+	.ASCII	/3202020202320202020232020202023/	;6
+	.ASCII	/3330333330303333333030333330333/	;7
+	.ASCII	/3202320202020202020202020232023/	;8
+	.ASCII	/3030303330303333333030333030303/	;9
+	.ASCII	/3202320232323000003232320232023/	;10
+	.ASCII	/3330333030303000003030303330333/	;11
+	.ASCII	/0202020202323000003230020202020/	;12!
+	.ASCII	/3330333030303000003030303330333/	;13!11
+	.ASCII	/3202320232323000003232320232023/	;14!10
+	.ASCII	/3030303330303333333030333030303/	;15!9
+	.ASCII	/3202320202020202020202020232023/	;16!8
+	.ASCII	/3330333330303333333030333330333/	;17!7
+	.ASCII	/3202020202320202020232020202023/	;18!6
+	.ASCII	/3030333333303033303033333330303/	;19!5
+	.ASCII	/3234020202023232323202020204323/	;20!4
+	.ASCII	/3033333330303030303030333333303/	;21!3
+	.ASCII	/3202020202320202020232020202023/	;22!2
+	.ASCII	/3333333333333333333333333333333/	;23!1
+	.EVEN
+SCRN4:
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(B/<ESC>/)0/<SO>	;TURN SPECIAL C.S. ON
+	.ASCII	<ESC>/[H/	;HOME
+	.ASCII	<ESC>/[2J/	;CLS
+	.ASCII	<ESC>/#6//    qqqqqqqqqqwqqqqqqqqqwqqqqqqqqqq/<CR><LF>	;1
+	.ASCII	<ESC>/#6//     . . . . .x. . . . .x. . . . . /<CR><LF>	;2
+	.ASCII	<ESC>/#6//    w lqqqqqq x x x x x x qqqqqqk w/<CR><LF>	;3
+	.ASCII	<ESC>/#6//    x.x* . . . .x.x.x.x. . . . *x.x/<CR><LF>	;4
+	.ASCII	<ESC>/#6//    x x qqqqqqk x mqj x lqqqqqq x x/<CR><LF>	;5
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;6
+	.ASCII	<ESC>/#6//    tqq lqqqq x qqqqqqq x qqqqk qqu/<CR><LF>	;7
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;8
+	.ASCII	<ESC>/#6//    x x x qqk x lqqqqqk x lqq x x x/<CR><LF>	;9
+	.ASCII	<ESC>/#6//    x.x.x. .x.x.x     x.x.x. .x.x.x/<CR><LF>	;10
+	.ASCII	<ESC>/#6//    x x mqq x x x     x x x qqj x x/<CR><LF>	;11
+	.ASCII	<ESC>/#6//    x.x. . . .x.x     x.x  . . .x.x/<CR><LF>	;12!
+	.ASCII	<ESC>/#6//    x x lqq x x x     x x x qqk x x/<CR><LF>	;13!11
+	.ASCII	<ESC>/#6//    x.x.x. .x.x.x     x.x.x. .x.x.x/<CR><LF>	;14!10
+	.ASCII	<ESC>/#6//    x x x qqj x mqqqqqj x mqq x x x/<CR><LF>	;15!9
+	.ASCII	<ESC>/#6//    x. .x. . . . . . . . . . .x. .x/<CR><LF>	;16!8
+	.ASCII	<ESC>/#6//    tqq mqqqq x qqqqqqq x qqqqj qqu/<CR><LF>	;17!7
+	.ASCII	<ESC>/#6//    x. . . . .x. . . . .x. . . . .x/<CR><LF>	;18!6
+	.ASCII	<ESC>/#6//    x x qqqqqqj x lqk x mqqqqqq x x/<CR><LF>	;19!5
+	.ASCII	<ESC>/#6//    x.x* . . . .x.x.x.x. . . . *x.x/<CR><LF>	;20!4
+	.ASCII	<ESC>/#6//    v mqqqqqq x x x x x x qqqqqqj v/<CR><LF>	;21!3
+	.ASCII	<ESC>/#6//     . . . . .x. . . . .x. . . . . /<CR><LF>	;22!2
+	.ASCII	<ESC>/#6//    qqqqqqqqqqvqqqqqqqqqvqqqqqqqqqq/<CR><LF>	;23!1
+	.ASCII	<ESC>/#6/<SI>
+
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ASCII		/    ----------+---------+----------/<CR><LF>	;1
+	.ASCII		/     . . . . .|. . . . .|. . . . . /<CR><LF>	;2
+	.ASCII		/    + +------ | | | | | | ------+ +/<CR><LF>	;3
+	.ASCII		/    |.|* . . . .|.|.|.|. . . . *|.|/<CR><LF>	;4
+	.ASCII		/    | | ------+ | +-+ | +------ | |/<CR><LF>	;5
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;6
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;7
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;8
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;9
+	.ASCII		/    |.|.|. .|.|.|     |.|.|. .|.|.|/<CR><LF>	;10
+	.ASCII		/    | | +-- | | |     | | | --+ | |/<CR><LF>	;11
+	.ASCII		/    |.|. . . .|.|     |.|  . . .|.|/<CR><LF>	;12!
+	.ASCII		/    | | +-- | | |     | | | --+ | |/<CR><LF>	;13!11
+	.ASCII		/    |.|.|. .|.|.|     |.|.|. .|.|.|/<CR><LF>	;14!10
+	.ASCII		/    | | | --+ | +-----+ | +-- | | |/<CR><LF>	;15!9
+	.ASCII		/    |. .|. . . . . . . . . . .|. .|/<CR><LF>	;16!8
+	.ASCII		/    +-- +---- | ------- | ----+ --+/<CR><LF>	;17!7
+	.ASCII		/    |. . . . .|. . . . .|. . . . .|/<CR><LF>	;18!6
+	.ASCII		/    | | ------+ | +-+ | +------ | |/<CR><LF>	;19!5
+	.ASCII		/    |.|* . . . .|.|.|.|. . . . *|.|/<CR><LF>	;20!4
+	.ASCII		/    + +------ | | | | | | ------+ +/<CR><LF>	;21!3
+	.ASCII		/     . . . . .|. . . . .|. . . . . /<CR><LF>	;22!2
+	.ASCII		/    ----------+---------+----------/<CR><LF>	;23!1
+	.ENDC
+
+	.ASCII	/UNITS: 3      SCREEN  4   SCORE: ZIP!/
+	.IIF DF VT100,	.ASCII	<ESC>/[?2l/
+	.BYTE	128
+	.EVEN
+TBL4IN:
+	.ASCII	/3333333333333333333333333333333/	;1
+	.ASCII	/0202020202320202020232020202020/	;2
+	.ASCII	/3033333330303030303030333333303/	;3
+	.ASCII	/3234020202023232323202020204323/	;4
+	.ASCII	/3030333333303033303033333330303/	;5
+	.ASCII	/3202020202320202020232020202023/	;6
+	.ASCII	/3330333330303333333030333330333/	;7
+	.ASCII	/3202320202020202020202020232023/	;8
+	.ASCII	/3030303330303333333030333030303/	;9
+	.ASCII	/3232320232323000003232320232323/	;10
+	.ASCII	/3030333030303000003030303330303/	;11
+	.ASCII	/3232020202323000003230020202323/	;12!
+	.ASCII	/3030333030303000003030303330303/	;13!11
+	.ASCII	/3232320232323000003232320232323/	;14!10
+	.ASCII	/3030303330303333333030333030303/	;15!9
+	.ASCII	/3202320202020202020202020232023/	;16!8
+	.ASCII	/3330333330303333333030333330333/	;17!7
+	.ASCII	/3202020202320202020232020202023/	;18!6
+	.ASCII	/3030333333303033303033333330303/	;19!5
+	.ASCII	/3234020202023232323202020204323/	;20!4
+	.ASCII	/3033333330303030303030333333303/	;21!3
+	.ASCII	/0202020202320202020232020202020/	;22!2
+	.ASCII	/3333333333333333333333333333333/	;23!1
+	.EVEN
+		TABLEW=31
+		TABLEH=23
+
+TABLE:	.BLKB	TABLEW*TABLEH
+
+	.EVEN
+SCRADS: .WORD SCRN1
+	.WORD SCRN3
+	.WORD SCRN2
+	.WORD SCRN4
+SCRADR:	.WORD	0
+INTADS: .WORD TBL1IN
+	.WORD TBL3IN
+	.WORD TBL2IN
+	.WORD TBL4IN
+INTADR:	.WORD	0
+TABNUM:	.BYTE	3
+
+	.EVEN
+WRKARA:	.BLKB	8
+
+	;WE ALWAYS WANT TO PRINT THE PACMAN AS BOLD,REVERSE
+
+NEWPLA:	
+	.BYTE	BS
+	.IF DF VT100
+	.ASCII	<ESC>/</	;BACKUP TO WHAT YOU PRINTED AND ENTER ANSI
+	.ASCII	<ESC>/[1;7m/	;TURN ON BOLD & REVERSE AND PRINT PACMAN
+	.ENDC
+	.ASCII	/0/	
+	.IF DF VT100
+	.ASCII	<ESC>/[0m/	;TURN OFF ATTRIBUTES
+	.ASCII	<ESC>/[?2l/	;RETURN TO VT52 MODE
+	.ENDC
+NWPLAL=.-NEWPLA
+	.EVEN
+
+	;WE WANT THE GHOSTS TO ALWAYS BE BOLD (and blocky)
+
+NEWBUG:	.BYTE	BS
+	.IF DF VT100
+	.ASCII	<ESC>/</<ESC>/(0/
+		;BACKUP TO WHAT YOU PRINTED, ENTER ANSI AND SPECIAL GRAPHICS
+	.ASCII	<ESC>/[1m/	;TURN ON BOLD
+	.ENDC
+NWBUGC:	.BYTE	0		;CODE WILL PUT THE ACTUAL 'GHOST' HERE
+	.IF DF VT100
+	.ASCII	<ESC>/(B/<ESC>/[0m/	;US CHAR SET, ATTR OFF
+	.ASCII	<ESC>/[?2l/		;RETURN TO VT52 MODE
+	.ENDC
+NWBUGL=.-NEWBUG
+	.EVEN
+RESET:
+	.IF DF VT100
+	.ASCII	<ESC>/[?5l/		;RESET SCREEN TO DARK ON EXIT
+	.IFF
+	.ASCII	<ESC>/H/<ESC>/J/
+	.ENDC
+RESETL=.-RESET
+	.EVEN
+
+	.MCALL	.EXIT,.PRINT,.TTINR
+;
+	.PSECT	TTINST,RO,LCL
+;	.ENTRY	START,	0	
+START::
+	BIS	#^O50100,^O44
+;
+	MOV	#TTINIT,R0
+	MOV	#TTINIL,R1
+	CALL	OPCOM			
+50$:	CALL	IP
+	TST	R0
+	BMI	50$
+	CMPB	R0,#'N
+	BEQ	BEGIN
+	CMPB	R0,#'n
+	BEQ	BEGIN
+	CMPB	R0,#CR
+	BEQ	BEGIN
+	MOV	#HELP1,R0
+	MOV	#HELP1L,R1
+	CALL	OPCOM
+	MOV	#HELP2,R0
+	MOV	#HELP2L,R1
+	CALL	OPCOM
+60$:	CALL	IP
+	TST	R0
+	BMI	60$
+BEGIN:	INCB	TABNUM
+	CMPB	#4,TABNUM
+	BGT	1$
+	CLRB	TABNUM
+1$:	MOVB	TABNUM,R0
+	ASL	R0
+	MOV	SCRADS(R0),SCRADR
+	MOV	INTADS(R0),INTADR
+	MOV	SCRADR,R0
+	MOV	#SCRNL,R1
+	CALL	OPCOM
+	MOV	#TMPCOL,PARCOL
+	MOV	#TMPLIN,PARLIN
+	MOV	SCRNUM,R0
+	MOV	R0,-(SP)
+	ASL	R0
+	ADD	(SP)+,R0
+	ASL	R0
+	NEG	R0
+	ADD	#30,R0
+	CMP	#5,R0
+	BLE	10$
+	MOV	#5,R0
+10$:	INC	SCRNUM
+	MOV	R0,THRSLD	;HOW QUICKLY DO THINGS HAPPEN
+	ADD	#4096,INT	;MAKE THEM HAPPEN A TAD FASTER
+	MOV	#155,DTSLFT
+;
+	MOV	#TABLEW*TABLEH,R0
+	MOV	INTADR,R1
+	MOV	#TABLE,R2
+11$:	MOVB	(R1)+,(R2)+
+	SOB	R0,11$
+;
+	MOV	#BUGINL,R0
+	MOV	#BUGINI,R1
+	MOV	#BUGTBL,R2
+12$:	MOVB	(R1)+,(R2)+
+	SOB	R0,12$
+;
+	MOV	#26,PLAXPS
+	MOV	#12,PLAYPS
+	CLR	PLAXMV
+	CLR	PLAYMV
+	CLR	COUNTB
+	CLR	FLAG1
+	CALL	BOTTOM
+;
+	MOV	SCRNUM,R0
+	MOV	#2,R1
+	CALL	GSTRNG
+;
+	MOV	#22,TMPCOL
+	MOV	#2,TMPNUM
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	CMP	#3,SCRNUM
+	BGT	LOPTOP
+	INC	NOBUGS
+	CMP	#8,NOBUGS
+	BGE	LOPTOP
+	DEC	NOBUGS
+LOPTOP:
+	CALL	SYNC
+	CALL	IP
+	TST	R0
+	BMI	10$
+	CMPB	R0,#'N
+	BNE	100$
+	INC	CHEAT
+	JMP	BEGIN
+
+100$:	CMPB	R0,#'8
+	BNE	1$
+	MOV	#-1,PLAYMV
+	CLR	PLAXMV
+	JMP	10$
+
+1$:	CMPB	R0,#'4
+	BNE	2$
+	CLR	PLAYMV
+	MOV	#-1,PLAXMV
+	JMP	10$
+
+2$:	CMPB	R0,#'6
+	BNE	3$
+	CLR	PLAYMV
+	MOV	#1,PLAXMV
+	JMP	10$
+
+3$:	CMPB	R0,#'5
+	BEQ	4$
+	CMPB	R0,#'2
+	BNE	10$
+4$:	MOV	#1,PLAYMV
+	CLR	PLAXMV
+10$:	MOV	PLAXMV,TMPCOL
+	ADD	PLAXPS,TMPCOL
+	MOV	PLAYMV,TMPLIN
+	ADD	PLAYPS,TMPLIN
+	CALL	CKTEMP
+	CALL	GETABL
+	CMPB	R2,#'3
+	BNE	20$
+	MOV	PLAXPS,TMPCOL
+	MOV	PLAYPS,TMPLIN
+20$:	MOV	#PLAXPS,PARCOL
+	MOV	#PLAYPS,PARLIN
+	MOV	#1,TMPNUM
+	MOV	#ERASE,PARSTR
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	CALL	GETABL
+	MOV	#TMPCOL,PARCOL
+	MOV	#TMPLIN,PARLIN
+	MOV	#PLAYER,PARSTR
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	MOV	#NEWPLA,R0	;RE-PRINT
+	MOV	#NWPLAL,R1	;    PACMAN
+	CALL	OPCOM		;	BOLD&REVERSE
+	MOV	TMPCOL,PLAXPS
+	MOV	TMPLIN,PLAYPS
+	CALL	GETABL
+	CMPB	R2,#'2
+	BNE	30$
+	MOVB	#'1,R2
+	CALL	PUTABL
+	MOV	#10,R0
+	CALL	SCRSUB
+25$:	DEC	DTSLFT
+	BNE	40$
+	JMP	BEGIN
+
+30$:	CMPB	R2,#'4	;MAGIC POWDER
+	BNE	40$
+	MOVB	#'1,R2
+	CALL	PUTABL
+	MOV	#100,R0
+	CALL	SCRSUB
+	CLR	COUNTA
+	MOV	NOBUGS,R4
+	ASL	R4
+32$:	CMP	BUGSTA(R4),#1
+	BEQ	35$
+	MOV	#3,BUGSTA(R4)
+35$:	SUB	#2,R4
+	BGE	32$
+	MOV	#100,PNTVLU
+	MOV	#3,FLAG1
+	BR	25$
+
+40$:	CALL	CHKATK
+BUGS:
+	INC	COUNTB	;TIME FOR ANYONE TO COME OUT TO PLAY?
+	CMP	COUNTB,THRSLD
+	BNE	20$
+	CLR	COUNTB
+	MOV	NOBUGS,R4
+	ASL	R4
+5$:	CMP	BUGSTA(R4),#1
+	BNE	10$
+	MOV	BUGXPS(R4),TMPCOL
+	MOV	BUGYPS(R4),TMPLIN
+	MOV	#ERASE,PARSTR
+	MOV	#1,TMPNUM
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	MOV	#16,BUGXPS(R4)
+	MOV	#12,BUGYPS(R4)
+	MOV	#2,BUGSTA(R4)
+	BR	20$
+
+10$:	SUB	#2,R4
+	BGE	5$
+20$:	TST	FLAG1		;ARE THEY EDIBLE?
+	BEQ	MVBUGS
+	INC	COUNTA	;SHOULD THEY BE?
+	CMP	#50,COUNTA
+	BNE	MVBUGS
+	MOV	FLAG1,R3
+	INC	R3
+	CMP	#5,R3
+	BNE	25$
+	CLR	R3
+25$:	MOV	NOBUGS,R4
+	ASL	R4
+30$:	CMP	BUGSTA(R4),FLAG1
+	BNE	40$
+	MOV	R3,BUGSTA(R4)
+40$:	SUB	#2,R4
+	BGE	30$
+	CLR	COUNTA
+	MOV	R3,FLAG1
+MVBUGS:
+	MOV	NOBUGS,R4
+	ASL	R4
+MOVBUG:
+	CALL	GTRNDM	
+	BNE	10$
+	CALL	GTRNDM
+	BEQ	CHNGBG
+10$:	JMP	DOMOVE
+
+TRYAGN:
+	CLR	BUGXMV(R4)
+	CLR	BUGYMV(R4)
+	MOV	FLAG2,R0
+	DEC	R0
+	BEQ	CHBGRN
+	DEC	R0
+	BEQ	FNDONX
+	DEC	R0
+	BEQ	FNDONY
+CHNGBG:
+	CLR	BUGXMV(R4)
+	CLR	BUGYMV(R4)
+	CLR	FLAG2
+	CMP	#3,BUGSTA(R4)	;IF BUG IS EDIBLE - DON'T FIND PLAYER
+	BLE	10$
+	CALL	GTRNDM
+	BEQ	FNDPLR
+	CMP	#6,SCRNUM
+	BGT	8$
+	CALL	GTRNDM
+	BEQ	FNDPLR
+8$:	CMP	#3,SCRNUM	;WHEN DO THEY GET SMART?
+	BGT	9$
+	CALL	GTRNDM
+	BEQ	FNDPLR
+9$:	CALL	GTRNDM
+	BEQ	FNDPLR
+10$:	JMP	CHBGRN
+
+FNDPLR:
+	CALL	GTRNDM
+	BEQ	FNDONX
+FNDONY:
+	MOV	#1,R1
+	MOV	PLAYPS,R0
+	SUB	BUGYPS(R4),R0
+	BGT	10$
+	MOV	#-1,R1
+10$:	MOV	R1,BUGYMV(R4)
+	TST	FLAG2
+	BNE	20$
+	MOV	#1,FLAG2
+	BR	30$
+
+20$:	CLR	FLAG2
+30$:	JMP	DOMOVE
+
+FNDONX:
+	MOV	#1,R1
+	MOV	PLAXPS,R0
+	SUB	BUGXPS(R4),R0
+	BGT	10$
+	MOV	#-1,R1
+10$:	MOV	R1,BUGXMV(R4)
+	TST	FLAG2
+	BNE	20$
+	MOV	#2,FLAG2
+	BR	30$
+
+20$:	CLR	FLAG2
+30$:	JMP	DOMOVE
+
+CHBGRN:
+	CLR	BUGXMV(R4)
+	CLR	BUGYMV(R4)
+	CALL	GTRNDM
+	BEQ	MOVONX
+MOVONY:
+	CALL	GTRNDM
+	MOV	R0,BUGYMV(R4)
+	BNE	10$
+	MOV	#-1,BUGYMV(R4)
+10$:	CLR	BUGXMV(R4)
+	JMP	DOMOVE
+
+MOVONX:
+	CALL	GTRNDM
+	MOV	R0,BUGXMV(R4)
+	BNE	10$
+	MOV	#-1,BUGXMV(R4)
+10$:	CLR	BUGYMV(R4)
+DOMOVE:
+	MOV	BUGXPS(R4),TMPCOL	;ERASE BUG
+	MOV	BUGYPS(R4),TMPLIN
+	MOV	#1,TMPNUM
+	MOV	#ERASE,PARSTR
+	CALL	GETABL
+	CMPB	R2,#'2
+	BNE	10$
+	MOV	#PACDOT,PARSTR
+	JMP	20$
+
+10$:	CMPB	R2,#'4
+	BNE	20$
+	MOV	#POWDER,PARSTR
+20$:	
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	MOV	BUGXPS(R4),TMPCOL
+	ADD	BUGXMV(R4),TMPCOL
+	MOV	BUGYPS(R4),TMPLIN
+	ADD	BUGYMV(R4),TMPLIN
+	CALL	CKTEMP
+	CALL	GETABL
+	CMPB	R2,#'3
+	BNE	30$
+	JMP	TRYAGN
+
+30$:	MOV	#NRMBUG,PARSTR
+	CMP	BUGSTA(R4),#3
+	BMI	BUGOUT
+	MOV	#NUMBUG,PARSTR
+	CMP	BUGSTA(R4),#4
+	BNE	BUGOUT
+	MOV	#HUMBUG,PARSTR
+BUGOUT:
+	MOVB	#'a,NRMBUG	;MAKE NORMAL GHOST BLOCKY
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	MOV	#NEWBUG,R0	;POINT TO NEW GHOST STRING
+	MOV	#NWBUGL,R1	;SETUP STRING LENGTH
+	MOV	PARSTR,-(SP)	;GET ADDRESS OF GHOST CHARACTER
+	MOVB	@(SP)+,NWBUGC	;PUT GHOST CHARACTER IN NEW GHOST STRING
+	CALL	OPCOM		;PRINT THE GHOST
+	MOV	TMPCOL,BUGXPS(R4)
+	MOV	TMPLIN,BUGYPS(R4)
+NXTBUG:
+	SUB	#2,R4
+	BGE	10$
+	BR	20$
+
+10$:	JMP	MOVBUG
+
+20$:	CALL	CHKATK
+	JMP	LOPTOP
+
+EOG:	TST	CHEAT
+	BEQ	EOGOUT
+	MOV	#CHEATL,R0
+	MOV	#CHEATD,R1
+	MOV	#TTEOG,R2
+10$:	MOVB	(R1)+,(R2)+
+	SOB	R0,10$
+EOGOUT:	
+	MOV	#EOGBLK,R0
+	CALL	POSOP
+	MOV	#RESET,R0	;RESET
+	MOV	#RESETL,R1	; VT100
+	CALL	OPCOM		;  TO DARK BACKGROUND
+;	JMP	BEGIN
+	.EXIT
+
+BOTTOM:
+;
+	MOV	PLAERS,R0
+	MOV	#2,R1
+	CALL	GSTRNG
+;
+	MOV	#7,TMPCOL
+	MOV	#24,TMPLIN
+	MOV	#2,TMPNUM
+	MOV	#OUTARA,PARSTR
+	MOV	#PARBLK,R0
+	CALL	POSOP
+;
+	MOV	SCORE,R0
+	MOV	#6,R1
+	CALL	GSTRNG
+;
+	MOV	#34,TMPCOL
+	MOV	#6,TMPNUM
+	MOV	#PARBLK,R0
+	CALL	POSOP
+	RETURN
+
+;
+GETABL:
+	MOV	TMPLIN,R5
+	DEC	R5
+	MOV	R5,-(SP)
+	ASL	R5
+	ASL	R5
+	ASL	R5

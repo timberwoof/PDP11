@@ -66,5 +66,47 @@ To Do
 =====
 Proper logging with settable log levels.
 Provide stack access methods.
-Provide a proper console as a separate Python window connected to a serial terminal.
-Get a small OS running.
+Provide a proper DL11 console as a separate Python window connected to a serial terminal.
+Get the diagnostics running
+Get a virtual disk running
+Get a small OS running. mini-unix (no MMU needed)
+Get PacMan or Space Wars running
+FP-11
+Implement ODT https://gunkies.org/wiki/QBUS_CPU_ODT
+Get that assembler running.
+
+
+RK02 1.22MB
+03 2.45MB
+05 2.45MB
+06 13.8MB
+07 27.6MB
+
+Mini-Unix
+http://www.tavi.co.uk/unixhistory/mini-unix.html
+magtape and RK05
+
+••• DL11 communications controller
+http://gunkies.org/wiki/DL11_asynchronous_serial_line_interface
+address 0777560, vector 060
+
+DC11 communications controller 774000
+http://gunkies.org/wiki/DC11_asynchronous_serial_line_interface
+
+DH11 communications controller
+RK05 images - munixrks.zip
+installation tape - munix-tap
+initialization files - munix-initfiles
+need devices
+tm0 - tape - munix.tap
+rk0 - first RK05 - system.dsk
+rk1 - source.dsk
+rk2 - doc.dsk
+
+RK05 emulator in python
+a library that talks to pdp11ram.py
+pdp11.py should be able to take as a parameter "setup.ini"
+and that needs to be able to set up the emulated
+tapes and drives and to slam stuff into memory
+wants an 11/20
+sim>quit should write simulated disk to disk file
