@@ -6,44 +6,49 @@ This document describes the timberwoof/PDP11 project.
 
 timberwoof/PDP11 is an attempt to write, independently of any existing code influencess,
 an emulator for the basic PDP/11 instruction set. The environment is Python 3. The initial
-test of the code is published PDP11 CPU test code.
+test of the code is a hello world program and published PDP11 CPU test code.
 
 Modules
 =======
-pdp11psw.py
------------
-implements the Processtor Status Word.
-Does some initializations and provides access primitives.
+main.py
+-------
+Startup
+instruction dispatch
+processor loop
 
 pdp11ram.py
 ----------
 implements 64kB of byte-addressible RAM.
 Provides access primitives and two convenience functions,
 octal-to-decimal conversion and to read an assembled assembly file into RAM.
+Provides one io device, the serial output.
+
+pdp11psw.py
+-----------
+implements the Processtor Status Word.
+Does some initializations and provides access primitives.
+Provides a neat way to set the PSW after instructions.
+Calls resemble PDP-11 processor handbook notation.
 
 pdp11.reg.py
 ------------
 implements the register file.
-Provides access p[rimitives that implement various PDP11 ways of doing things.
+Provides access primitives that implement various PDP11 ways of doing things.
 
-main.py
--------
-everything. Probably needs to be split up.
-Imports psw, ram, and reg.
-Provides stack access methods. (Maybe this should be in ram.)
-Implements instructions in a typical pattern.
-no-operand instructions
-branch instructions
-single-operand instructions
-set up and take down addressing modes
-double-operand instructions
-double-operand RSS instructions
-other instructions
-instruction dispatch
-
+pdp11Boot.py
+------------
+convenience library for loading programs from code or file into pdp-11 ram.
 Sets up the instruction dispatch tables
 Reads the (hard-coded for now) assembly file into ram.
 Starts the processor loop.
+
+pdp11Branch.py - implements branch instructions
+pdp11NoOperand.py - implements no-operand instructions
+pdp11SingleOperand.py - implements single-operand instructions
+pdp11DoubleOperand.py - implements double-operand instructions
+pdp11Other.py - implements other instrucutions
+pdp11AddressMode.py - sets up and takes down source and destination for the address modes.
+
 
 Installation
 ============
@@ -53,6 +58,13 @@ Run.
 
 Current State of the Project
 ============================
-The dispatchers and instructions log a lot of stuff.
-Presently it stops after 0o173372. There is an error in cleaning up the addressing mode.
-Not all instructions are implemented.
+Runs Hellow World project.
+Runs much of M9301-YA. Pukes pretty quickly on the others.
+
+
+To Do
+=====
+Proper logging with settable log levels.
+Provide stack access methods.
+Provide a proper console as a separate Python window connected to a serial terminal.
+Get a small OS running.
