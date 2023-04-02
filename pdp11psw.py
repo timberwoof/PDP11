@@ -57,7 +57,6 @@ class psw:
         :param PSW:
         :return:
         """
-        print(f'set_PSW mode:{oct(mode)} Priority:{oct(priority)} {trap} NZVC: {N} {Z} {V} {C}  PSW:{oct(PSW)}  ')
         new_PSW = PSW
         PSW = self.ram.get_PSW()
         if mode > -1:
@@ -70,10 +69,7 @@ class psw:
         if N > -1:
             PSW = (PSW & ~self.N_mask) | (N << 3)
         if Z > -1:
-            print(f'PSW:{oct(PSW)}    self.Z_mask:{oct(self.Z_mask)}    ~self.Z_mask:{oct(~self.Z_mask)}   Z:{Z}')
-            print(f'PSW & ~self.Z_mask:{oct(PSW & ~self.Z_mask)}    Z<<2:{oct(Z<<2)}')
             PSW = (PSW & ~self.Z_mask) | (Z << 2)
-            print(f'new_PSW:{oct(PSW)}')
         if V > -1:
             PSW = (PSW & ~self.V_mask) | (V << 1)
         if C > -1:
@@ -152,9 +148,7 @@ class psw:
                     else:
                         C = 0
 
-        print(f'    set NZVC: {N} {Z} {V} {C}')
         self.set_PSW(N=N, Z=Z, V=V, C=C)
-        print(f'    did set NZVC: {self.N()} {self.Z()} {self.V()} {self.C()}')
 
     def N(self):
         """negative status bit of PSW"""

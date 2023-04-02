@@ -61,7 +61,7 @@ class noopr:
 
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RESET unimplemented')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RESET does nothing')
         return True
 
     def RTT(self, instruction):

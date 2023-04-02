@@ -15,7 +15,9 @@ class ram:
         self.top_of_vector_space = 0o274
 
         # the io page is the top 4kB of memory
-        self.io_space = self.top_of_memory - 0o27777
+        self.io_space = self.top_of_memory - 0o1000
+        # 0o27777 - somewhere
+        # 0o1000 = 4kB
 
         # PSW is stored here
         self.PSW_address = self.top_of_memory - 3 # 0o377774
@@ -27,22 +29,23 @@ class ram:
         self.TPB = self.io_space + 0o27566 # punch buffer register
         self.TPbuffer = bytearray("", encoding="utf-8")
 
-        print (f'    i/o devices:')
-        print (f'    TKS:{oct(self.TKS)}')
-        print (f'    TKB:{oct(self.TKB)}')
-        print (f'    TPS:{oct(self.TPS)}')
-        print (f'    TPB:{oct(self.TPB)}')
+        print (f'io_space:{oct(self.io_space)}')
+        print (f'i/o devices:')
+        print (f'     TKS:{oct(self.TKS)}')
+        print (f'     TKB:{oct(self.TKB)}')
+        print (f'     TPS:{oct(self.TPS)}')
+        print (f'     TPB:{oct(self.TPB)}')
 
         # set up the vector space
-        for address in range(0o0, self.top_of_vector_space):
-            self.write_byte(address, 0o377)
+        #for address in range(0o0, self.top_of_vector_space):
+        #    self.write_byte(address, 0o377)
         # set up the io page space so it's always ready
-        for address in range(self.io_space, self.top_of_memory):
-            self.write_byte(address, 0o111)
+        #for address in range(self.io_space, self.top_of_memory):
+        #    self.write_byte(address, 0o111)
 
         # set up always-ready i/o device status words
-        self.write_word(self.TKS, 0o000000)
-        self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
+        #self.write_word(self.TKS, 0o000000)
+        #self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
 
     def read_byte(self, address):
         """Read one byte of memory."""
@@ -67,7 +70,7 @@ class ram:
         :param data:
         :return:
         """
-        print(f'    writeword({oct(address)}, {oct(data)})')
+        #print(f'    writeword({oct(address)}, {oct(data)})')
         hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
         lo = data & 0o000377  # 0 000 000 011 111 111
         # print(f'hi:{oct(hi)} lo:{oct(lo)}')

@@ -39,7 +39,7 @@ class reg:
 
         :return: new program counter"""
         self.registers[self.PC] = self.registers[self.PC] + 2
-        print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
+        #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
     def set_pc(self, value, whocalled=''):
@@ -54,7 +54,7 @@ class reg:
         waspc = self.registers[self.PC]
         newpc = self.registers[self.PC] + 2 * (offset & self.bytemask)
         self.registers[self.PC] = newpc
-        print(f'    set_pc_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
+        #print(f'    set_pc_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
 
     def get_sp(self):
         """get stack pointer
