@@ -1,11 +1,12 @@
 """PDP11 RAM and i/o"""
+
 class ram:
     def __init__(self):
         print('initializing pdp11ram')
 
         # set up basic memory boundaries
         # overall size of memory: 64kB
-        self.top_of_memory = 0o377777  # 0o377777 = 0xFFFF which is 16 bits
+        self.top_of_memory = 0o177777  # 0o177777 = 0xFFFF which is 16 bits
 
         # the actual array for simuating RAM.
         self.memory = bytearray(self.top_of_memory)
@@ -14,7 +15,9 @@ class ram:
         self.top_of_vector_space = 0o274
 
         # the io page is the top 4kB of memory
-        self.io_space = self.top_of_memory - 0o27777
+        self.io_space = self.top_of_memory - 0o1000
+        # 0o27777 - somewhere
+        # 0o1000 = 4kB
 
         # PSW is stored here
         self.PSW_address = self.top_of_memory - 3 # 0o377774
@@ -26,22 +29,23 @@ class ram:
         self.TPB = self.io_space + 0o27566 # punch buffer register
         self.TPbuffer = bytearray("", encoding="utf-8")
 
-        print (f'    i/o devices:')
-        print (f'    TKS:{oct(self.TKS)}')
-        print (f'    TKB:{oct(self.TKB)}')
-        print (f'    TPS:{oct(self.TPS)}')
-        print (f'    TPB:{oct(self.TPB)}')
+        print (f'io_space:{oct(self.io_space)}')
+        print (f'i/o devices:')
+        print (f'     TKS:{oct(self.TKS)}')
+        print (f'     TKB:{oct(self.TKB)}')
+        print (f'     TPS:{oct(self.TPS)}')
+        print (f'     TPB:{oct(self.TPB)}')
 
         # set up the vector space
-        for address in range(0o0, self.top_of_vector_space):
-            self.write_byte(address, 0o377)
-        # set up the io page space
-        for address in range(self.io_space, self.top_of_memory):
-            self.write_byte(address, 0o111)
+        #for address in range(0o0, self.top_of_vector_space):
+        #    self.write_byte(address, 0o377)
+        # set up the io page space so it's always ready
+        #for address in range(self.io_space, self.top_of_memory):
+        #    self.write_byte(address, 0o111)
 
         # set up always-ready i/o device status words
-        self.write_word(self.TKS, 0o000000)
-        self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
+        #self.write_word(self.TKS, 0o000000)
+        #self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
 
     def read_byte(self, address):
         """Read one byte of memory."""
@@ -66,7 +70,7 @@ class ram:
         :param data:
         :return:
         """
-        print(f'    writeword({oct(address)}, {oct(data)})')
+        #print(f'    writeword({oct(address)}, {oct(data)})')
         hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
         lo = data & 0o000377  # 0 000 000 011 111 111
         # print(f'hi:{oct(hi)} lo:{oct(lo)}')
@@ -74,9 +78,9 @@ class ram:
         self.memory[address] = lo
         # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
 
-        # serial output
-        #if address > self.iospace:
-            #print(f'    iopage @{oct(address)}')
+        if address > self.io_space and address < 0o177774:
+            print(f'    write word to io_space {oct(address)}, {oct(data)}')
+
 
     def write_byte(self, address, data):
         """write a byte to memory.
@@ -85,15 +89,15 @@ class ram:
         print(f'    writebyte({oct(address)}, {oct(data)})')
         self.memory[address] = data
 
-        #if address > self.iospace:
-            #print(f'    iopage {oct(address)}')
+        if address > self.io_space:
+            print(f'    write byte to io_space {oct(address)}, {oct(data)}')
         # serial output
-        if address == self.TPB:
+        if address == self.TPS:
             #print(f'    TPB<-{data}')
             self.TPbuffer.append(data)
+            self.memory[self.TPS] = 0   # eat the character
             if data == 0:
-                print (self.TPbuffer.decode('utf-8'))
-                #self.TPbuffer = bytearray("test", encoding="utf-8")
+                print (f'TPbuffer:"{self.TPbuffer.decode("utf-8")}"')
 
     def set_PSW(self, new_PSW):
         self.write_word(self.PSW_address, new_PSW)
@@ -101,4 +105,10 @@ class ram:
     def get_PSW(self):
         return self.read_word(self.PSW_address)
 
+    def flush_TPbuffer(self):
+        print(f'TPbuffer:"{self.TPbuffer.decode("utf-8")}"')
 
+    def dump(self, start, stop):
+        print(f'{oct(start)}:{oct(stop)}')
+        for address in range(start, stop+2, 2):
+            print (f'{oct(address)}:{oct(self.read_word(address))}')

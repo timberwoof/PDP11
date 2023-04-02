@@ -37,7 +37,6 @@ class noopr:
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} WAIT unimplemented')
-        self.reg.inc_pc('WAIT')
         return True
 
     def RTI(self, instruction):
@@ -53,31 +52,26 @@ class noopr:
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BPT unimplemented')
-        self.reg.inc_pc('BPT')
         return True
 
     def IOT(self, instruction):
         """00 00 04 IOT input/output trap 4-68"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} IOT unimplemented')
-        self.reg.inc_pc('IOT')
         return True
 
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RESET unimplemented')
-        self.reg.inc_pc('RESET')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RESET does nothing')
         return True
 
     def RTT(self, instruction):
         """00 00 06 RTT return from interrupt 4-70"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTT unimplemented')
-        self.reg.inc_pc('RTT')
         return True
 
     def NOP(self, instruction):
         """00 02 40 NOP no operation"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} NOP')
-        self.reg.inc_pc('NOP')
         return True
 
     def is_no_operand(self, instruction):

@@ -37,7 +37,6 @@ class other:
     def RTS(self, instruction):
         """00 20 0R RTS return from subroutine 00020R 4-60"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS unimplemented')
-        self.reg.inc_pc('RTS')
 
     def JSR(self, instruction):
         """00 4R DD JSR jump to subroutine
@@ -55,17 +54,14 @@ class other:
     def MARK(instruction):
         """00 64 NN mark 46-1"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MARK unimplemented')
-        self.reg.inc_pc('MARK')
 
     def MFPI(instruction):
         """00 65 SS move from previous instruction space 4-77"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPI unimplemented')
-        self.reg.inc_pc('MFPI')
 
     def MTPI(instruction, dest, operand):
         """00 66 DD move to previous instruction space 4-78"""
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MTPI unimplemented')
-        self.reg.inc_pc('MTPI')
 
 
     def other_opcode(self, instruction):
