@@ -23,10 +23,6 @@ other = other(psw, ram, reg)
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
     #print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
-
-    # increment PC
-    reg.inc_pc('main')
-
     run = True
 
     if br.is_branch(instruction):
@@ -55,23 +51,29 @@ def dispatch_opcode(instruction):
 # ****************************************************
 print('begin PDP11 emulator')
 
-#boot.load_machine_code(boot.bootstrap_loader, bootaddress)
-boot.load_machine_code(boot.hello_world, boot.hello_address)
-#ram.dump(0o2000, 0o2064)
-#start_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
-#reg.set_pc(start_address, "load_machine_code")
-
 # set up DL11
 # set up the serial interface addresses
 DL11 = 0o177560  # reader status register 177560
 dl11 = dl11(ram, DL11)
 dl11.register_with_ram()
+# this must eventually be definable in a file so it has to be here
+
+#boot.load_machine_code(boot.bootstrap_loader, bootaddress)
+boot.load_machine_code(boot.hello_world, boot.hello_address)
+ram.dump(0o2000, 0o2064)
+
+#start_address, end_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+#ram.dump(start_address, start_address+32)
+#reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
 run = True
 while run:
     # fetch opcode
     instruction = ram.read_word(reg.get_pc())
+
+    # increment PC
+    reg.inc_pc('main')
 
     # decode and execute opcode
     run = dispatch_opcode(instruction)

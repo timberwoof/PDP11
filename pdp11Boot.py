@@ -117,4 +117,4 @@ class boot:
                 # log what we got. octal, octal, decimal, decimal
                 #print(part0, part1, address, value1)
                 self.ram.write_word(address, value1)
-        return base
+        return base, address

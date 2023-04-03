@@ -36,7 +36,7 @@ class other:
     # ****************************************************
     def RTS(self, instruction):
         """00 20 0R RTS return from subroutine 00020R 4-60"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS unimplemented')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} RTS unimplemented')
 
     def JSR(self, instruction):
         """00 4R DD JSR jump to subroutine
@@ -46,28 +46,28 @@ class other:
         |  reg <- PC+2
         |  PC <- (dst)
         """
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} JSR')
         pushstack(ram.self.read_word(register))
         self.reg.set(register, self.reg.inc_pc('JSR'))
         self.reg.set_pc(dest, "JSR")
 
     def MARK(instruction):
         """00 64 NN mark 46-1"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MARK unimplemented')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MARK unimplemented')
 
     def MFPI(instruction):
         """00 65 SS move from previous instruction space 4-77"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPI unimplemented')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MFPI unimplemented')
 
     def MTPI(instruction, dest, operand):
         """00 66 DD move to previous instruction space 4-78"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MTPI unimplemented')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MTPI unimplemented')
 
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} other_opcode')
         result = True
         if instruction & 0o177000 == 0o002000:
             self.RTS(instruction)

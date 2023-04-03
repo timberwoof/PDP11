@@ -20,6 +20,11 @@ class sopr:
         self.reg = reg
         self.am = am(psw, ram, reg)
 
+        # ****************************************************
+        # Single-Operand instructions -
+        # 00 50 DD - 00 77 DD
+        # 10 50 DD - 10 77 DD
+        # ****************************************************
         self.single_operand_instructions = {}
         self.single_operand_instructions[0o000100] = self.JMP
         self.single_operand_instructions[0o000300] = self.SWAB
@@ -54,121 +59,122 @@ class sopr:
         self.single_operand_instructions[0o106500] = self.MFPD
         self.single_operand_instructions[0o106600] = self.MTPD
 
-    # ****************************************************
-    # Single-Operand instructions -
-    # 00 50 DD - 00 77 DD
-    # 10 50 DD - 10 77 DD
-    # ****************************************************
+        self.single_operand_instruction_names = {}
+        self.single_operand_instruction_names[0o000100] = "JMP"
+        self.single_operand_instruction_names[0o000300] = "SWAB"
+        self.single_operand_instruction_names[0o005000] = "CLR"
+        self.single_operand_instruction_names[0o005100] = "COM"
+        self.single_operand_instruction_names[0o005200] = "INC"
+        self.single_operand_instruction_names[0o005300] = "DEC"
+        self.single_operand_instruction_names[0o005400] = "NEG"
+        self.single_operand_instruction_names[0o005500] = "ADC"
+        self.single_operand_instruction_names[0o005600] = "SBC"
+        self.single_operand_instruction_names[0o005700] = "TST"
+        self.single_operand_instruction_names[0o006000] = "ROR"
+        self.single_operand_instruction_names[0o006100] = "ROL"
+        self.single_operand_instruction_names[0o006200] = "ASR"
+        self.single_operand_instruction_names[0o006300] = "ASL"
+        # self.single_operand_instruction_names[0o006400] = "MARK"
+        # self.single_operand_instruction_names[0o006500] = "MFPI"
+        # self.single_operand_instruction_names[0o006600] = "MTPI"
+        self.single_operand_instruction_names[0o006700] = "SXT"
+        self.single_operand_instruction_names[0o105000] = "CLRB"
+        self.single_operand_instruction_names[0o105100] = "COMB"
+        self.single_operand_instruction_names[0o105200] = "INCB"
+        self.single_operand_instruction_names[0o105300] = "DECB"
+        self.single_operand_instruction_names[0o105400] = "NEGB"
+        self.single_operand_instruction_names[0o105500] = "ADCB"
+        self.single_operand_instruction_names[0o105600] = "SBCB"
+        self.single_operand_instruction_names[0o105700] = "TSTB"
+        self.single_operand_instruction_names[0o106000] = "RORB"
+        self.single_operand_instruction_names[0o106100] = "ROLB"
+        self.single_operand_instruction_names[0o106200] = "ASRB"
+        self.single_operand_instruction_names[0o106300] = "ASLB"
+        self.single_operand_instruction_names[0o106500] = "MFPD"
+        self.single_operand_instruction_names[0o106600] = "MTPD"
 
     def JMP(self, instruction, dest, operand, B):
         """00 01 DD JMP jump 4-56"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JMP {oct(dest)} {oct(operand)}')
         self.reg.set_pc(operand, 'JMP')
+        return operand, "----"
 
     def SWAB(self, instruction, dest, operand, B):
         """00 03 DD Swap Bytes 4-17"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SWAB {oct(dest)} {oct(operand)}')
         result = (operand & 0xFF00) << 8 + (operand & 0x00FF) >> 8
-        self.psw.set_condition_codes(result, B, "**00")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "**00"
 
     def CLR(self, instruction, dest, operand, B):
         """00 50 DD Clear Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} CLR{B} {oct(dest)} {oct(operand)}')
         result = 0o0
-        self.psw.set_condition_codes(result, B, "0000")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "0000"
 
     def COM(self, instruction, dest, operand, B):
         """00 51 DD Complement Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} COM{B} {oct(dest)} {oct(operand)}')
         result = ~operand
-        self.psw.set_condition_codes(result, B, "**01")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "**01"
 
     def INC(self, instruction, dest, operand, B):
         """00 52 DD Increment Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} INC{B} {oct(dest)} {oct(operand)}')
-        # *** this is incomplete as words need their own special little operators
         result = operand + 1
-        self.psw.set_condition_codes(result, B, "***-")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "***-"
 
     def DEC(self, instruction, dest, operand, B):
         """00 53 DD Decrement Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} DEC{B} {oct(dest)} {oct(operand)}')
-        # *** this is incomplete as words need their own special little operators
         result = operand - 1
-        self.psw.set_condition_codes(result, B, "***-")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "***-"
 
     def NEG(self, instruction, dest, operand, B):
         """00 54 DD negate Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} NEG{B} {oct(dest)} {oct(operand)}')
         result = -operand
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def ADC(self, instruction, dest, operand, B):
         """00 55 DD Add Carry"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ADC{B} {oct(dest)} {oct(operand)}')
         result = dest + self.psw.C()
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def SBC(self, instruction, dest, operand, B):
         """00 56 DD Subtract Carry"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SBC{B} {oct(dest)} {oct(operand)}')
         result = dest - operand
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def TST(self, instruction, dest, operand, B):
         """00 57 DD Test Destination"""
-        #print(f'    {oct(self.reg.get_pc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
-        self.psw.set_condition_codes(dest, B, "**00")
+        return dest, "**00"
 
     def ROR(self, instruction, dest, operand, B):
         """00 60 DD ROR rotate right"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
         result = operand >> 1
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def ROL(self, instruction, dest, operand, B):
         """00 61 DD ROL rotate left"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ROR{B} {oct(dest)} {oct(operand)}')
         result = operand << 1
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def ASR(self, instruction, dest, operand, B):
         """00 62 DD ASR arithmetic shift right"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ASR{B} {oct(dest)} {oct(operand)}')
         result = operand >> 1
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def ASL(self, instruction, dest, operand, B):
         """00 63 DD ASL arithmetic shift left"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} ASL{B} {oct(dest)} {oct(operand)}')
         result = operand << 1
-        self.psw.set_condition_codes(result, B, "****")
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def SXT(self, instruction, dest, operand, B):
         """00 67 DD Sign Extend"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} SXT{B} {oct(dest)} {oct(operand)}')
-        self.psw.set_condition_codes(result, B, "****") # ****
-        self.am.addressing_mode_set(B, dest, result)
+        return result, "****"
 
     def MFPD(self, instruction, dest, operand, B):
         """10 65 SS Move from previous data space"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MFPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
+        print(f'NOT IMPLEMENTED')
+        return operand, "****"
 
     def MTPD(self, instruction, dest, operand, B):
         """10 66 SS Move to previous data space"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} MTPD{B} {oct(dest)} {oct(operand)} NOT IMPLEMENTED')
+        print(f'NOT IMPLEMENTED')
+        return operand, "****"
 
     def is_single_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -208,11 +214,9 @@ class sopr:
         source_value = self.am.addressing_mode_get(B, source)
 
         run = True
-        try:
-            #print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand opcode:{oct(opcode)} source_value:{oct(source_value)}')
-            self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
-        except KeyError:
-            print(f'    {oct(self.reg.get_pc())} {oct(instruction)} single_operand method {oct(opcode)} was not implemented')
-            run = False
-
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+              f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
+        result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
+        self.am.addressing_mode_set(B, source, result)
+        self.psw.set_condition_codes(result, B, codes)
         return run
