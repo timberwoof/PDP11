@@ -125,7 +125,7 @@ class sopr:
 
     def TST(self, instruction, dest, operand, B):
         """00 57 DD Test Destination"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
+        #print(f'    {oct(self.reg.get_pc())} {oct(instruction)} TST{B} {oct(dest)} {oct(operand)}')
         self.psw.set_condition_codes(dest, B, "**00")
 
     def ROR(self, instruction, dest, operand, B):

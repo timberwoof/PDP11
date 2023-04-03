@@ -47,7 +47,7 @@ def dispatch_opcode(instruction):
     else:
         run = other.other_opcode(instruction)
 
-    reg.log_registers()
+    #reg.log_registers()
     return run
 
 # ****************************************************

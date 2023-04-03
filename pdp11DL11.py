@@ -20,7 +20,7 @@ class dl11:
         self.XCSR = 0
         self.XBUF = 0
 
-    # these methods let RAM access the registers
+    # these methods let RAM write to the registers
     def write_RCSR(self, byte):
         """write to receiver status register"""
         print(f'dl11.write_RCSR({oct(byte)})')
@@ -40,25 +40,27 @@ class dl11:
         """write to transitter buffer register"""
         print(f'dl11.write_XBUF({oct(byte)})')
         self.XBUF = byte
+        print(f'{chr(byte)}')
 
+    # these methods let RAM read from the registers
     def read_RCSR(self):
         """read from receiver status register"""
-        print(f'dl11.read_RCSR()')
+        print(f'dl11.read_RCSR() returns {oct(self.RCSR)}')
         return self.RCSR
 
     def read_RBUF(self):
         """read from receiver buffer register"""
-        print(f'dl11.read_RBUF()')
+        print(f'dl11.read_RBUF() returns {oct(self.RBUF)}')
         return self.RBUF
 
     def read_XCSR(self):
         """read from transitter status register"""
-        print(f'dl11.read_XCSR()')
+        print(f'dl11.read_XCSR() returns {oct(self.XCSR)}')
         return self.XCSR
 
     def read_XBUF(self):
         """read from transitter buffer register"""
-        print(f'dl11.read_XBUF()')
+        print(f'dl11.read_XBUF() returns {oct(self.XBUF)}')
         return self.XBUF
 
     def register_with_ram(self):

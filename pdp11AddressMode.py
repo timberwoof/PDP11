@@ -92,9 +92,11 @@ class am:
         #print(f'    D addressing_mode_set {B} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
 
         if B == 'B':
+            ram_read = self.ram.read_byte
             ram_write = self.ram.write_byte
             increment = 2
         else:
+            ram_read = self.ram.read_word
             ram_write = self.ram.write_word
             increment = 2
         if register == 6 or register == 7:
@@ -132,8 +134,10 @@ class am:
             self.reg.inc_pc('addressing_mode_set 5')
         elif addressmode == 6:  # index
             #print(f'    D mode {addressmode} index: X(R{register}): value X is added to Register to produce address of operand')
-            operandaddress = self.reg.get(register)
-            # print(f'index R{register}={oct(operandaddress)} <- {oct(result)}')
+            nextword = self.ram.read_word(self.reg.get_pc())
+            #print(f'nextword:{oct(nextword)}')
+            operandaddress = self.reg.get(register) + nextword
+            #print(f'index R{register}={oct(operandaddress)} <- {oct(result)}')
             ram_write(operandaddress, result)
             self.reg.inc_pc('addressing_mode_set 6')
         elif addressmode == 7:  # index deferred

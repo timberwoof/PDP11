@@ -46,7 +46,7 @@ class ram:
     def read_byte(self, address):
         """Read one byte of memory."""
         if address in self.iomap_readers.keys():
-            return self.iomap_readers[address]
+            return self.iomap_readers[address]()
         else:
             return self.memory[address]
 
@@ -56,7 +56,7 @@ class ram:
         and high bytes at are stored at odd-numbered memory locations.
         Returns a two-byte value"""
         if address in self.iomap_readers.keys():
-            return self.iomap_readers[address]
+            return self.iomap_readers[address]()
         else:
             hi = self.memory[address + 1]
             low = self.memory[address]
@@ -89,7 +89,7 @@ class ram:
             self.iomap_writers[address](data)
         else:
             data = data & 0o000377
-            #print(f'writebyte({oct(address)}, {oct(data)})')
+            print(f'writebyte({oct(address)}, {oct(data)})')
             self.memory[address] = data
 
     def set_PSW(self, new_PSW):
