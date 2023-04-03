@@ -59,8 +59,11 @@ dl11.register_with_ram()
 # this must eventually be definable in a file so it has to be here
 
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
-boot.load_machine_code(boot.hello_world, boot.hello_address)
-ram.dump(0o2000, 0o2064)
+#boot.load_machine_code(boot.hello_world, boot.hello_address)
+#ram.dump(0o2000, 0o2064)
+
+boot.load_machine_code(boot.echo, boot.echo_address)
+ram.dump(0o1000, 0o1020)
 
 #start_address, end_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
 #ram.dump(start_address, start_address+32)

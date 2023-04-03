@@ -50,6 +50,13 @@ class boot:
                    0o012,     0o000]    # lf, end
     hello_address = 0o2000
 
+    echo = [0o012700,  0o177560,  # start: mov #kbs, r0
+            0o105710,             # wait: tstb (r0)       ; character received?
+            0o100376,             # bpl wait        ; no, loop
+            0o016060, 0o000002, 0o000006, # mov 2(r0),6(r0) ; transmit data
+            0o000772]             # br wait         ; get next character
+    echo_address = 0o001000
+
     def load_machine_code(self, code, base):
         """Copy the pdp-11 machine code found at code into the address in base
 
@@ -63,7 +70,7 @@ class boot:
             # print()
             #print(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
             self.ram.write_word(address, instruction)
-            #print(f'{oct(address)}:{oct(ram.readword(address))}')
+            #print(f'    {oct(address)}:{oct(self.ram.read_word(address))}')
             address = address + 2
         self.reg.set_pc(base, "load_machine_code")
 
