@@ -70,8 +70,8 @@ Proper logging with settable log levels. FUck logging.
 Provide a proper DL11 console as a separate Python window connected to a serial terminal.
 tkinter
 https://likegeeks.com/python-gui-examples-tkinter-tutorial/
-most of the examples are fucking ugly
-
+most of the examples are fucking ugly. tkinter is fucking broken on MacOS
+you should use PySide6 instead of PyQt due to licensing
 
 Set up Pytest.
     set up the thing as a proper application that will load and run some code.
