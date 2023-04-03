@@ -6,13 +6,18 @@ class ram:
 
         # set up basic memory boundaries
         # overall size of memory: 64kB
-        self.top_of_memory = 0o177777  # 0o177777 = 0xFFFF which is 16 bits
+        self.top_of_memory = 0o177777
+            # 16 bits   0o177777 = 0x0000FFFF
+            # 18 bits   0o777777 = 0x0003FFFF
+            # 22 bits 0o17777777 = 0x003FFFFF
 
         # the actual array for simuating RAM.
-        self.memory = bytearray(self.top_of_memory)
+        self.memory = bytearray(self.top_of_memory+1)
+        # +1 because I want to be able to index self.top_of_memory
 
         # PSW is stored here
-        self.PSW_address = self.top_of_memory - 3 # 0o377774
+        self.PSW_address = self.top_of_memory - 1 # 0o377776
+        self.Stack_Limit_Register = self.top_of_memory - 3 #0o377774
 
         # set up the vector space
         # the bottom area is io device handler vectors

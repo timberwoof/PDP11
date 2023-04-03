@@ -80,72 +80,72 @@ class br:
     def BNE(self, instruction, offset):
         """00 10 XXX branch if not equal Z=0"""
         if self.psw.Z() == 0:
-            self.reg.set_pc_offset(offset, "BNE")
+            self.reg.set_pc_2x_offset(offset, "BNE")
 
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         if self.psw.Z() == 1:
-            self.reg.set_pc_offset(offset, "BEQ")
+            self.reg.set_pc_2x_offset(offset, "BEQ")
 
     def BGE(self, instruction, offset):
         """00 20 XXX branch if greater than or equal 4-47"""
         if self.psw.N() | self.psw.V() == 0:
-            self.reg.set_pc_offset(offset, "BGE")
+            self.reg.set_pc_2x_offset(offset, "BGE")
 
     def BLT(self, instruction, offset):
         """"00 24 XXX branch if less thn zero"""
         if self.psw.N() ^ self.psw.V() == 1:
-            self.reg.set_pc_offset(offset, "BLT")
+            self.reg.set_pc_2x_offset(offset, "BLT")
 
     def BGT(self, instruction, offset):
         """00 30 XXX branch if equal Z=1"""
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 0:
-            self.reg.set_pc_offset(offset, "BTG")
+            self.reg.set_pc_2x_offset(offset, "BTG")
 
     def BLE(self, instruction, offset):
         """00 34 XXX branch if equal Z=1"""
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 1:
-            self.reg.set_pc_offset(offset, "BLE")
+            self.reg.set_pc_2x_offset(offset, "BLE")
 
     def BPL(self, instruction, offset):
         """01 00 XXX branch if positive N=0"""
         if self.psw.N() == 0 and self.psw.Z() == 0:
-            self.reg.set_pc_offset(offset, 'BPL')
+            self.reg.set_pc_2x_offset(offset, 'BPL')
 
     def BMI(self, instruction, offset):
         """10 04 XXX branch if negative N=1"""
         if self.psw.N() == 1:
-            self.reg.set_pc_offset(offset, 'BMI')
+            self.reg.set_pc_2x_offset(offset, 'BMI')
 
     def BHI(self, instruction, offset):
         """10 10 XXX branch if higher"""
         if self.psw.C() == 0 and self.psw.Z() == 0:
-            self.reg.set_pc_offset(offset, 'BHI')
+            self.reg.set_pc_2x_offset(offset, 'BHI')
 
     def BLOS(self, instruction, offset):
         """10 14 XXX branch if lower or same"""
         if self.psw.C() | self.psw.Z() == 1:
-            self.reg.set_pc_offset(offset, 'BLOS')
+            self.reg.set_pc_2x_offset(offset, 'BLOS')
 
     def BVC(self, instruction, offset):
         """10 20 XXX Branch if overflow is clear V=0"""
         if self.psw.V() == 0:
-            self.reg.set_pc_offset(offset, 'BVC')
+            self.reg.set_pc_2x_offset(offset, 'BVC')
 
     def BVS(self, instruction, offset):
         """10 24 XXX Branch if overflow is set V=1"""
         if self.psw.V() == 1:
-            self.reg.set_pc_offset(offset, 'BVS')
+            self.reg.set_pc_2x_offset(offset, 'BVS')
 
     def BCC(self, instruction, offset):
         """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
         if self.psw.C() == 0:
-            self.reg.set_pc_offset(offset, 'BCC')
+            self.reg.set_pc_2x_offset(offset, 'BCC')
 
     def BCS(self, instruction, offset):
         """10 34 XXX branch if lower. BCS is the same as BLO"""
         if self.psw.C() == 1:
-            self.reg.set_pc_offset(offset, 'BCS')
+            self.reg.set_pc_2x_offset(offset, 'BCS')
 
     def is_branch(self, instruction):
         """Using instruction bit pattern, determine whether it's a branch instruction"""

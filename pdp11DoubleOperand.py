@@ -30,13 +30,15 @@ class dopr:
         self.double_operand_RSS_instruction_names[0o077000] = "SOB"
 
         self.double_operand_SSDD_instructions = {}
+        # SSDD instructions with B variants the usual way
         self.double_operand_SSDD_instructions[0o010000] = self.MOV
         self.double_operand_SSDD_instructions[0o020000] = self.CMP
         self.double_operand_SSDD_instructions[0o030000] = self.BIT
         self.double_operand_SSDD_instructions[0o040000] = self.BIC
         self.double_operand_SSDD_instructions[0o050000] = self.BIS
-        self.double_operand_SSDD_instructions[0o060000] = self.ADD
-        self.double_operand_SSDD_instructions[0o160000] = self.SUB
+
+        # SSDD instructions that break the rule
+        self.double_operand_SSDD_instructions[0o060000] = self.ADDSUB
 
         self.double_operand_SSDD_instruction_names = {}
         self.double_operand_SSDD_instruction_names[0o010000] = "MOV"
@@ -45,6 +47,11 @@ class dopr:
         self.double_operand_SSDD_instruction_names[0o040000] = "BIC"
         self.double_operand_SSDD_instruction_names[0o050000] = "BIS"
         self.double_operand_SSDD_instruction_names[0o060000] = "ADD"
+        self.double_operand_SSDD_instruction_names[0o110000] = "MOVB"
+        self.double_operand_SSDD_instruction_names[0o120000] = "CMPB"
+        self.double_operand_SSDD_instruction_names[0o130000] = "BITB"
+        self.double_operand_SSDD_instruction_names[0o140000] = "BICB"
+        self.double_operand_SSDD_instruction_names[0o150000] = "BISB"
         self.double_operand_SSDD_instruction_names[0o160000] = "SUB"
 
     # ****************************************************
@@ -144,14 +151,20 @@ class dopr:
 
         (dst) < (src)"""
         result = source
+        print(f'    source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         return result, "**0-"
 
     def CMP(self, B, source, dest):
         """compare 4-24
-
         (src)-(dst)"""
+        # subtract dst from source
+        # set the condition code based on that result
+        # but don't change the destination
         result = source - dest
-        return result, "****"
+        #print(f'    CMP source:{source} dest:{dest} result:{result}')
+        self.psw.set_condition_codes(result, B, "****")
+        #print(f'    CMP NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}')
+        return dest, "----"
 
     def BIT(self, B, source, dest):
         """bit test 4-28
@@ -173,18 +186,14 @@ class dopr:
         result = source | dest
         return result, "**0-"
 
-    def ADD(self, B, source, dest):
-        """06 SS DD ADD add 4-25
-
-        (dst) < (src) + (dst)"""
-        result = source + dest
-        return result, "****"
-
-    def SUB(self, B, source, dest):
-        """06 SS DD SUB add 4-25
-
-        (dst) < (dst) + ~(src) + 1"""
-        result = source + ~dest + 1
+    def ADDSUB(self, B, source, dest):
+        """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
+        | 16 SS DD: SUB 4-26 (dst) < (dst) + ~(src) + 1
+        """
+        if B == "":
+            result = source + dest
+        else:
+            result = abs(source + ~dest + 1)
         return result, "****"
 
     def is_double_operand_SSDD(self, instruction):
@@ -216,8 +225,9 @@ class dopr:
         else:
             B = ''
         opcode = (instruction & 0o070000)
+        name_opcode = (instruction & 0o170000)
         print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
-              f'{self.double_operand_SSDD_instruction_names[opcode]}{B} ')
+              f'{self.double_operand_SSDD_instruction_names[name_opcode]} ')
 
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
@@ -227,8 +237,8 @@ class dopr:
 
         run = True
         result, code = self.double_operand_SSDD_instructions[opcode](B, source_value, dest_value)
-        #print(f'    {oct(source)}={oct(source_value)} {oct(dest)}={oct(dest_value)}')
         self.am.addressing_mode_set(B, dest, result)
         self.psw.set_condition_codes(result, B, code)
+        print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
 
         return run
