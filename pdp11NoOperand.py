@@ -20,6 +20,16 @@ class noopr:
         self.no_operand_instructions[0o000006] = self.RTT
         self.no_operand_instructions[0o000240] = self.NOP
 
+        self.no_operand_instruction_namess = {}
+        self.no_operand_instruction_namess[0o000000]= "HALT"
+        self.no_operand_instruction_namess[0o000001]= "WAIT"
+        self.no_operand_instruction_namess[0o000002]= "RTI"
+        self.no_operand_instruction_namess[0o000003]= "BPT"
+        self.no_operand_instruction_namess[0o000004]= "IOT"
+        self.no_operand_instruction_namess[0o000005]= "RESET"
+        self.no_operand_instruction_namess[0o000006]= "RTT"
+        self.no_operand_instruction_namess[0o000240]= "NOP"
+
     def popstack(self):
         """pop the stack and return that value
 
@@ -31,47 +41,43 @@ class noopr:
 
     def HALT(self, instruction):
         """00 00 00 Halt"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} HALT')
         return False
 
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} WAIT unimplemented')
-        return True
+        print(f'WAIT unimplemented')
+        return False
 
     def RTI(self, instruction):
         """00 00 02 RTI return from interrupt 4-69
         PC < (SP)^; PS< (SP)^
         *** need to implement the stack
         """
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTI')
         self.reg.set_pc(self.popstack(), "RTI")
         self.psw.set_PSW(PSW=self.popstack())
         return True
 
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} BPT unimplemented')
-        return True
+        print(f'BPT unimplemented')
+        return False
 
     def IOT(self, instruction):
         """00 00 04 IOT input/output trap 4-68"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} IOT unimplemented')
-        return True
+        print(f'IOT unimplemented')
+        return False
 
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RESET does nothing')
         return True
 
     def RTT(self, instruction):
         """00 00 06 RTT return from interrupt 4-70"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTT unimplemented')
-        return True
+        print(f'RTT unimplemented')
+        return False
 
     def NOP(self, instruction):
         """00 02 40 NOP no operation"""
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} NOP')
         return True
 
     def is_no_operand(self, instruction):
@@ -81,12 +87,7 @@ class noopr:
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
-        # print(f'    {oct(self.reg.getpc())} {oct(instruction)} no_operand {oct(instruction)}')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
         result = True
-        try:
-            # method = self.no_operand_instructions[instruction]
-            result = self.no_operand_instructions[instruction](instruction)
-        except KeyError:
-            #print(f'{oct(instruction)} is not a no_operand')
-            result = False
+        result = self.no_operand_instructions[instruction](instruction)
         return result

@@ -65,13 +65,15 @@ class am:
             #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(operand)}')
         elif addressmode == 6:
             #print(f'    S mode {addressmode} index: X(R{register}): value X is added to Register to produce address of operand')
-            operandaddress = self.reg.get(register) + ram_read(self.reg.get_pc() + 2)
+            nextword = self.ram.read_word(self.reg.get_pc())
+            operandaddress = self.reg.get(register) + nextword
             operand = ram_read(operandaddress)
             #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
             #print(f'    S mode {addressmode} index deferred: @X(R{register}): value X is added to Register then used as address of address of operand')
-            operandaddress = self.reg.get(register)
-            operandaddress = ram_read(operandaddress) + ram_read(self.reg.get_pc() + 2)
+            nextword = self.ram.read_word(self.reg.get_pc()+2)
+            operandaddress = self.reg.get(register) + nextword
+            operandaddress = ram_read(operandaddress)
             operand = ram_read(operandaddress)
             #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(operand)}')
         return operand
@@ -92,9 +94,11 @@ class am:
         #print(f'    D addressing_mode_set {B} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
 
         if B == 'B':
+            ram_read = self.ram.read_byte
             ram_write = self.ram.write_byte
             increment = 2
         else:
+            ram_read = self.ram.read_word
             ram_write = self.ram.write_word
             increment = 2
         if register == 6 or register == 7:
@@ -103,42 +107,53 @@ class am:
         if addressmode == 0:  # register direct
             #print(f'    D mode {addressmode} register: R{register}: register contains operand')
             self.reg.set(register, result)
+            #print(f'    R{register} = operand:{oct(result)}')
         if addressmode == 1:  # register deferred
             #print(f'    D mode {addressmode} register deferred: (R{register}): register contains address of operand')
             operandaddress = self.reg.get(register)
             ram_write(operandaddress, result)
+            #print(f'    @{oct(operandaddress)} = operand:{oct(result)}')
         elif addressmode == 2:  # autoincrement direct - R has address, then increment
             #print(f'    D mode {addressmode} autoincrement: (R{register})+: register contains address of operand then incremented')
             operandaddress = self.reg.get(register)
             self.reg.set(register, self.reg.get(register) + increment)
             ram_write(operandaddress, result)
+            #print(f'    R{register}={oct(operandaddress)} = operand:{oct(result)}')
         elif addressmode == 3:  # autoincrement deferred - R has handle, then increment
             #print(f'    D mode {addressmode} autoincrement deferred: @(R{register})+: register contains address of address of operand, then incremented')
             operandhandle = self.reg.get(register)
             self.reg.set(register, self.reg.get(register) + increment)
             operandaddress = self.ram.read_word(operandhandle)
             ram_write(operandaddress, result)
+            #print(f'    @{oct(operandaddress)} = operand:{oct(result)}')
         elif addressmode == 4:  # autodecrement direct - decrement, then R has address
             #print(f'    D mode {addressmode} autodecrement: -(R{register}): register is decremented, then contains address of operand')
             self.reg.set(register, self.reg.get(register) - increment)
             operandaddress = self.reg.get(register)
             ram_write(operandaddress, result)
+            #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(result)}')
         elif addressmode == 5:  # autodecrement deferred - decrement, then R has handle
             #print(f'    D mode {addressmode} autodecrement deferred: @-(R{register}): register is decremented, then contains address of address of operand')
             self.reg.set(register, self.reg.get(register) - increment)
             operandhandle = self.reg.get(register)
             operandaddress = self.ram.read_word(operandhandle)
             ram_write(operandaddress, result)
+            #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(result)}')
             self.reg.inc_pc('addressing_mode_set 5')
         elif addressmode == 6:  # index
             #print(f'    D mode {addressmode} index: X(R{register}): value X is added to Register to produce address of operand')
-            operandaddress = self.reg.get(register)
-            # print(f'index R{register}={oct(operandaddress)} <- {oct(result)}')
+            nextword = self.ram.read_word(self.reg.get_pc())
+            operandaddress = self.reg.get(register) + nextword
+            #print(f'    index R{register}={oct(operandaddress)} <- {oct(result)}')
             ram_write(operandaddress, result)
+            #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(result)}')
             self.reg.inc_pc('addressing_mode_set 6')
         elif addressmode == 7:  # index deferred
             #print(f'    D mode {addressmode} index deferred: @X(R{register}): value X is added to Register then used as address of address of operand')
-            operandaddress = self.reg.get(register)
+            nextword = self.ram.read_word(self.reg.get_pc())
+            operandaddress = self.reg.get(register) + nextword
+            operandaddress = ram_read(operandaddress)
             ram_write(operandaddress, result)
+            #print(f'    R{register}=@{oct(operandaddress)} = operand:{oct(result)}')
             self.reg.inc_pc('addressing_mode_set 7')
 
