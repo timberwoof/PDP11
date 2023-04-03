@@ -20,7 +20,7 @@ class am:
 
         if B == 'B':
             ram_read = self.ram.read_byte
-            increment = 2
+            increment = 1
             b = 'B'
         else:
             ram_read = self.ram.read_word
@@ -98,7 +98,7 @@ class am:
         if B == 'B':
             ram_read = self.ram.read_byte
             ram_write = self.ram.write_byte
-            increment = 2
+            increment = 1
         else:
             ram_read = self.ram.read_word
             ram_write = self.ram.write_word
