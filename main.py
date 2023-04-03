@@ -62,12 +62,12 @@ dl11.register_with_ram()
 #boot.load_machine_code(boot.hello_world, boot.hello_address)
 #ram.dump(0o2000, 0o2064)
 
-boot.load_machine_code(boot.echo, boot.echo_address)
-ram.dump(0o1000, 0o1020)
+#boot.load_machine_code(boot.echo, boot.echo_address)
+#ram.dump(0o1000, 0o1020)
 
-#start_address, end_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+start_address, end_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
 #ram.dump(start_address, start_address+32)
-#reg.set_pc(start_address, "load_machine_code")
+reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
 run = True

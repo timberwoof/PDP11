@@ -111,7 +111,7 @@ class psw:
         codenames = "NZVC"
 
         # check each of the 4 characters
-        for i in range(0,4):
+        for i in range(0,3):
             code = pattern[i]
             codename = codenames[i] # get the letter for convenience
             # check for explicit setting
@@ -128,7 +128,7 @@ class psw:
             # check for conditional value
             elif code == "*":
                 if codename == "N":
-                    if (value & n_mask) > 0:
+                    if (value & n_mask) == n_mask:
                         N = 1
                     else:
                         N = 0

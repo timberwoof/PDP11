@@ -3,6 +3,7 @@
 from pdp11psw import psw
 from pdp11ram import ram
 from pdp11reg import reg
+from pdp11Stack import stack
 
 class noopr:
     def __init__(self, psw, ram, reg):
@@ -30,15 +31,6 @@ class noopr:
         self.no_operand_instruction_namess[0o000006]= "RTT"
         self.no_operand_instruction_namess[0o000240]= "NOP"
 
-    def popstack(self):
-        """pop the stack and return that value
-
-        get the stack value, increment the stack pointer, return value"""
-        stack = self.reg.get_sp()
-        result = self.ram.read_word(stack)
-        self.reg.set_sp(stack + 2)
-        return result
-
     def HALT(self, instruction):
         """00 00 00 Halt"""
         return False
@@ -51,10 +43,9 @@ class noopr:
     def RTI(self, instruction):
         """00 00 02 RTI return from interrupt 4-69
         PC < (SP)^; PS< (SP)^
-        *** need to implement the stack
         """
-        self.reg.set_pc(self.popstack(), "RTI")
-        self.psw.set_PSW(PSW=self.popstack())
+        self.reg.set_pc(self.stack.pop(), "RTI")
+        self.psw.set_PSW(PSW=self.stack.pop())
         return True
 
     def BPT(self, instruction):
@@ -63,8 +54,13 @@ class noopr:
         return False
 
     def IOT(self, instruction):
-        """00 00 04 IOT input/output trap 4-68"""
-        print(f'IOT unimplemented')
+        """00 00 04 IOT input/output trap 4-68
+
+        | push PS
+        | push PC
+        PC <- 20
+        PS <- 22"""
+
         return False
 
     def RESET(self, instruction):
@@ -73,7 +69,9 @@ class noopr:
 
     def RTT(self, instruction):
         """00 00 06 RTT return from interrupt 4-70"""
-        print(f'RTT unimplemented')
+        self.reg.set_pc(self.stack.pop(), "RTT")
+        self.reg.set_sp(self.stack.pop())
+        self.psw.set_condition_codes(self.reg.get_sp(), '', "***")
         return False
 
     def NOP(self, instruction):
