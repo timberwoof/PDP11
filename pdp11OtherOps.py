@@ -3,7 +3,7 @@
 from pdp11Hardware import ram
 from pdp11Hardware import reg
 from pdp11Hardware import psw
-from pdp11AddressModes import am
+from pdp11Hardware import am
 from pdp11Stack import stack
 
 # masks for accessing words and bytes

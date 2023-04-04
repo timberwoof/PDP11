@@ -127,8 +127,8 @@ sim>quit should write simulated disk to disk file
 
 branch Glom
 combine all those disparate class into one library
-psw - move into pdp11Hardware
 ram - rename this pdp11Hardware
 reg - move into pdp11Hardware
+psw - move into pdp11Hardware
 stack - needs psw, ram, reg
 addressModes  - needs psw, ram, reg
