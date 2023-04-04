@@ -132,3 +132,5 @@ reg - move into pdp11Hardware
 psw - move into pdp11Hardware
 stack - needs psw, ram, reg
 addressModes  - needs psw, ram, reg
+
+• load system mystr be able to deal with bytes and words

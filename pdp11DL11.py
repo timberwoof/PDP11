@@ -3,7 +3,7 @@ from pdp11Hardware import ram
 
 class dl11:
     def __init__(self, ram, base_address):
-        print(f'initializing pdp11DL11.dl11({oct(base_address)})')
+        print(f'initializing dl11({oct(base_address)})')
         self.ram = ram
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2

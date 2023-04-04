@@ -7,7 +7,7 @@ from pdp11Hardware import addressModes as am
 
 class doubleOperandOps:
     def __init__(self, psw, ram, reg, am):
-        print('initializing pdp11DoubleOperandOps.dopr')
+        print('initializing doubleOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg

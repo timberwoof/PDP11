@@ -14,7 +14,7 @@ mask_byte_msb = 0o000200
 
 class otherOps:
     def __init__(self, psw, ram, reg, am ):
-        print('initializing pdp11OtherOps.other')
+        print('initializing otherOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg

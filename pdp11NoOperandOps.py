@@ -7,7 +7,7 @@ from pdp11Hardware import stack
 
 class noOperandOps:
     def __init__(self, psw, ram, reg, stack):
-        print('initializing pdp11NoOPerandOps.noopr')
+        print('initializing noOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg

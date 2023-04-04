@@ -8,7 +8,7 @@ mask_word_msb = 0o100000
 
 class ram:
     def __init__(self):
-        print('initializing pdp11Hardware.ram')
+        print('initializing pdp11Hardware ram')
 
         # set up basic memory boundaries
         # overall size of memory: 64kB
@@ -57,9 +57,12 @@ class ram:
     def read_byte(self, address):
         """Read one byte of memory."""
         if address in self.iomap_readers.keys():
-            return self.iomap_readers[address]()
+            result = self.iomap_readers[address]()
+            print(f'read_byte io({oct(address)} returns {oct(result)}')
         else:
-            return self.memory[address]
+            result = self.memory[address]
+            print(f'read_byte ({oct(address)} returns {oct(result)}')
+        return result
 
     def read_word(self, address):
         """Read a word of memory.
@@ -97,10 +100,11 @@ class ram:
         """write a byte to memory.
         address can be even or odd"""
         if address in self.iomap_writers.keys():
+            print(f'write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
             data = data & 0o000377
-            print(f'writebyte({oct(address)}, {oct(data)})')
+            print(f'write_byte({oct(address)}, {oct(data)})')
             self.memory[address] = data
 
     def set_PSW(self, new_PSW):
@@ -116,7 +120,7 @@ class ram:
 
 class registers:
     def __init__(self):
-        print('initializing pdp11Hardware.reg')
+        print('initializing pdp11Hardware registers')
         self.bytemask = 0o377
         self.wordmask = 0o177777
         self.registermask = 0o07
@@ -160,7 +164,7 @@ class registers:
         waspc =  self.registers[self.PC]
         newpc = value & self.wordmask
         self.registers[self.PC] = newpc
-        #print(f'    setpc R7<-{oct(newpc)} {whocalled}')
+        print(f'    setpc R7<-{oct(newpc)} {whocalled}')
 
     def set_pc_2x_offset(self, offset, whocalled=''):
         """set program counter to 2x offset"""
@@ -199,7 +203,7 @@ class psw:
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
-        print('initializing pdp11Hardware.psw')
+        print('initializing pdp11Hardware psw')
         # 104000-104377 EMT (trap & interrupt)
         # 104400-104777 TRAP (trap & interrupt)
 
@@ -390,7 +394,7 @@ class psw:
 
 class stack:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11Hardware.stack')
+        print('initializing pdp11Hardware stack')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -418,7 +422,7 @@ class stack:
 
 class addressModes:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11Hardware.am')
+        print('initializing pdp11Hardware addressModes')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -490,11 +494,7 @@ class addressModes:
             operand = ram_read(address)
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
-        if (addressmode == 6 or addressmode == 7) and register != 7:
-            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_get")
-
         return operand
-
 
     def addressing_mode_set(self, B, mode_register, result):
         """copy the result into the place indicated by mode_register
@@ -558,15 +558,15 @@ class addressModes:
             print(f'    D mode 5 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 6:  # index
             print(f'    D mode 6 index: X(R{register}): value X is added to Register to produce address of operand')
-            nextword = self.ram.read_word(self.reg.get_pc())
-            address = self.reg.get(register) + nextword
+            X = self.ram.read_word(self.reg.get_pc())
+            address = self.reg.get(register) + X
             print(f'    D mode 6 index R{register}={oct(address)} <- {oct(result)}')
             ram_write(address, result)
             print(f'    D mode 6 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 7:  # index deferred
             print(f'    D mode 7 index deferred: @X(R{register}): value X is added to Register then used as address of address of operand')
-            nextword = self.ram.read_word(self.reg.get_pc())
-            address = self.reg.get(register) + nextword
+            X = self.ram.read_word(self.reg.get_pc())
+            address = self.reg.get(register) + X
             address = ram_read(address)
             ram_write(address, result)
             print(f'    D mode 7 R{register}=@{oct(address)} = operand:{oct(result)}')

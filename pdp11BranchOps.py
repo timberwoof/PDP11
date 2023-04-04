@@ -12,7 +12,7 @@ mask_byte_msb = 0o000200
 
 class branchOps:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11BranchOps.br')
+        print('initializing branchOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg

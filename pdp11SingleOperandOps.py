@@ -14,7 +14,7 @@ from pdp11Hardware import addressModes as am
 
 class singleOperandOps:
     def __init__(self, psw, ram, reg, am):
-        print('initializing pdp11SingleOperandOps.sopr')
+        print('initializing singleOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
