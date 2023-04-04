@@ -1,9 +1,9 @@
-"""pdp11SingleOperand.py single oprand instructions"""
+"""pdp11SingleOperandOps.py single oprand instructions"""
 
 from pdp11psw import psw
-from pdp11ram import ram
-from pdp11reg import reg
-from pdp11AddressMode import am
+from pdp11Hardware import ram
+from pdp11Hardware import reg
+from pdp11AddressModes import am
 
 """self.single_operand_instructions
     :param instruction: opcode

@@ -1,6 +1,6 @@
 """PDP11 Processor Status Word"""
 
-from pdp11ram import ram
+from pdp11Hardware import ram
 
 # masks for accessing words and bytes
 mask_byte = 0o000377

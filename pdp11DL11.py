@@ -1,5 +1,5 @@
 """PDP11 DL11 communications console"""
-from pdp11ram import ram
+from pdp11Hardware import ram
 
 class dl11:
     def __init__(self, ram, base_address):

@@ -124,3 +124,11 @@ and that needs to be able to set up the emulated
 tapes and drives and to slam stuff into memory
 wants an 11/20
 sim>quit should write simulated disk to disk file
+
+branch Glom
+combine all those disparate class into one library
+psw
+ram - rename this pdp11Hardware
+reg
+stack - needs psw, ram, reg
+addressModes  - needs psw, ram, reg

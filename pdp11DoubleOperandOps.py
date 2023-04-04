@@ -1,9 +1,9 @@
-"""pdp11DoubleOperand.py double operand instructions"""
+"""pdp11DoubleOperandOps.py double operand instructions"""
 
 from pdp11psw import psw
-from pdp11ram import ram
-from pdp11reg import reg
-from pdp11AddressMode import am
+from pdp11Hardware import ram
+from pdp11Hardware import reg
+from pdp11AddressModes import am
 
 class dopr:
     def __init__(self, psw, ram, reg):

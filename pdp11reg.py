@@ -3,7 +3,7 @@
 
 class reg:
     def __init__(self):
-        #print('initializing pdp11reg')
+        print('initializing pdp11reg')
         self.bytemask = 0o377
         self.wordmask = 0o177777
         self.registermask = 0o07

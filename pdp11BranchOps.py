@@ -1,8 +1,8 @@
-"""pdp11Branch.py branch instructions"""
+"""pdp11BranchOps.py branch instructions"""
 
 from pdp11psw import psw
-from pdp11ram import ram
-from pdp11reg import reg
+from pdp11Hardware import ram
+from pdp11Hardware import reg
 
 # masks for accessing words and bytes
 mask_byte = 0o000377
