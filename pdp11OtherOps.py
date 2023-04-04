@@ -4,7 +4,7 @@ from pdp11Hardware import ram
 from pdp11Hardware import reg
 from pdp11Hardware import psw
 from pdp11Hardware import am
-from pdp11Stack import stack
+from pdp11Hardware import stack
 
 # masks for accessing words and bytes
 mask_byte = 0o000377

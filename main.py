@@ -2,6 +2,7 @@
 from pdp11Hardware import ram
 from pdp11Hardware import reg
 from pdp11Hardware import psw
+from pdp11Hardware import stack
 from pdp11Boot import boot
 from pdp11NoOperandOps import noopr
 from pdp11SingleOperandOps import sopr
@@ -9,7 +10,6 @@ from pdp11DoubleOperandOps import dopr
 from pdp11BranchOps import br
 from pdp11OtherOps import other
 from pdp11DL11 import dl11
-from pdp11Stack import stack
 
 reg = reg()
 ram = ram()

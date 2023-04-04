@@ -3,7 +3,7 @@
 from pdp11Hardware import ram
 from pdp11Hardware import reg
 from pdp11Hardware import psw
-from pdp11Stack import stack
+from pdp11Hardware import stack
 
 class noopr:
     def __init__(self, psw, ram, reg, stack):
