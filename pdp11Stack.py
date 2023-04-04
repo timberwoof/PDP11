@@ -1,8 +1,8 @@
 """pdp11stac"""
 
-from pdp11psw import psw
 from pdp11Hardware import ram
 from pdp11Hardware import reg
+from pdp11Hardware import psw
 
 class stack:
     def __init__(self, psw, ram, reg):

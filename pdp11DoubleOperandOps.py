@@ -1,8 +1,8 @@
 """pdp11DoubleOperandOps.py double operand instructions"""
 
-from pdp11psw import psw
 from pdp11Hardware import ram
 from pdp11Hardware import reg
+from pdp11Hardware import psw
 from pdp11AddressModes import am
 
 class dopr:

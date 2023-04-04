@@ -1,8 +1,8 @@
 """pdp11other - other instructions"""
 
-from pdp11psw import psw
 from pdp11Hardware import ram
 from pdp11Hardware import reg
+from pdp11Hardware import psw
 from pdp11AddressModes import am
 from pdp11Stack import stack
 

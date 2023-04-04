@@ -1,7 +1,7 @@
 """PDP-11 Emulator"""
 from pdp11Hardware import ram
 from pdp11Hardware import reg
-from pdp11psw import psw
+from pdp11Hardware import psw
 from pdp11Boot import boot
 from pdp11NoOperandOps import noopr
 from pdp11SingleOperandOps import sopr

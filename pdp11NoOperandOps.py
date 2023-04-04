@@ -1,8 +1,8 @@
 """pdp11NoOperandOps.py - no-operand instructions 00 00 00 through 00 00 06"""
 
-from pdp11psw import psw
 from pdp11Hardware import ram
 from pdp11Hardware import reg
+from pdp11Hardware import psw
 from pdp11Stack import stack
 
 class noopr:
