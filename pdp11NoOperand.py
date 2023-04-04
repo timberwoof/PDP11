@@ -6,11 +6,13 @@ from pdp11reg import reg
 from pdp11Stack import stack
 
 class noopr:
-    def __init__(self, psw, ram, reg):
+    def __init__(self, psw, ram, reg, stack):
         print('initializing pdp11noopr')
         self.psw = psw
         self.ram = ram
         self.reg = reg
+        self.stack = stack
+
         self.no_operand_instructions = {}
         self.no_operand_instructions[0o000000] = self.HALT
         self.no_operand_instructions[0o000001] = self.WAIT
@@ -60,8 +62,15 @@ class noopr:
         | push PC
         PC <- 20
         PS <- 22"""
+        # Performs a trap sequence with a trap vector address of 20.
+        # Used to call the 1/0 Executive routine lOX in the paper tape software system,
+        # and for error reporting in the Disk Oper- ating System.
 
-        return False
+        self.stack.push(self.ram.get_PSW()) # this shows that get-PSW should be in reg
+        self.stack.push(self.reg.get_pc())
+        #self.reg.set_pc(20) # why this magic value?
+        #self.reg.set_ps(22) # what are we setting? why this magic value?
+        return True
 
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
@@ -72,7 +81,7 @@ class noopr:
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop())
         self.psw.set_condition_codes(self.reg.get_sp(), '', "***")
-        return False
+        return True
 
     def NOP(self, instruction):
         """00 02 40 NOP no operation"""

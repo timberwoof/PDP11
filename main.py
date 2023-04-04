@@ -9,12 +9,14 @@ from pdp11DoubleOperand import dopr
 from pdp11Branch import br
 from pdp11Other import other
 from pdp11DL11 import dl11
+from pdp11Stack import stack
 
 reg = reg()
 ram = ram()
 psw = psw(ram)
+stack = stack(psw, ram, reg)
 boot = boot(ram, reg)
-noopr = noopr(psw, ram, reg)
+noopr = noopr(psw, ram, reg, stack)
 sopr = sopr(psw, ram, reg)
 dopr = dopr(psw, ram, reg)
 br = br(psw, ram, reg)
@@ -59,15 +61,24 @@ dl11.register_with_ram()
 # this must eventually be definable in a file so it has to be here
 
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
-#boot.load_machine_code(boot.hello_world, boot.hello_address)
+boot.load_machine_code(boot.hello_world, boot.hello_address)
+reg.set_pc(0o2000, "load_machine_code")
 #ram.dump(0o2000, 0o2064)
 
 #boot.load_machine_code(boot.echo, boot.echo_address)
 #ram.dump(0o1000, 0o1020)
 
-start_address, end_address = boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+#boot.read_PDP11_assembly_file('source/M9301-YF.txt')
+#reg.set_pc(0o165000, "load_machine_code")
+
+#boot.read_PDP11_assembly_file('source/M9301-YF.txt')
+#reg.set_pc(0o165022, "load_machine_code")
+
+# source/M9301-YA.txt - includes assembly; starts at 165000
+# source/M9301-YF.txt - includes assembly; starts at 165022
+# source/M9301-YB.txt - raw machine, not very useful in diagnosing anything
+# source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 #ram.dump(start_address, start_address+32)
-reg.set_pc(start_address, "load_machine_code")
 
 # start the processor loop
 run = True

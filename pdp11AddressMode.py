@@ -78,6 +78,9 @@ class am:
             operand = ram_read(address)
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
+        if (addressmode == 6 or addressmode == 7) and register != 7:
+            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_get")
+
         return operand
 
 
@@ -155,3 +158,6 @@ class am:
             address = ram_read(address)
             ram_write(address, result)
             print(f'    D mode 7 R{register}=@{oct(address)} = operand:{oct(result)}')
+
+        if (addressmode == 6 or addressmode == 7) and register != 7:
+            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_set")

@@ -11,24 +11,24 @@ class stack:
         self.ram = ram
         self.reg = reg
 
-        # ****************************************************
-        # stack methods for use by instructions
-        # ****************************************************
-        def push(self, value):
-            """push the value onto the stack
+    # ****************************************************
+    # stack methods for use by instructions
+    # ****************************************************
+    def push(self, value):
+        """push the value onto the stack
 
-            decrement stack pointer, write value to that address
-            """
-            stack = self.reg.get_sp() - 2
-            self.reg.set_sp(stack)
-            self.ram.write_word(stack, self.ram.value)
+        decrement stack pointer, write value to that address
+        """
+        stack = self.reg.get_sp() - 2
+        self.reg.set_sp(stack)
+        self.ram.write_word(stack, value)
 
-        def pop(self):
-            """pop value off the stack
+    def pop(self):
+        """pop value off the stack
 
-            get value from stack pointer, increment stack pointer"""
-            stack = self.reg.get_sp()
-            result = self.ram.read_word(stack)
-            self.reg.set_sp(stack + 2)
-            return result
+        get value from stack pointer, increment stack pointer"""
+        stack = self.reg.get_sp()
+        result = self.ram.read_word(stack)
+        self.reg.set_sp(stack + 2)
+        return result
 
