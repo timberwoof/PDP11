@@ -5,7 +5,7 @@ from pdp11Hardware import registers as reg
 
 class boot:
     def __init__(self, ram, reg):
-        print('initializing pdp11Boot')
+        #print('initializing pdp11Boot')
         self.ram = ram
         self.reg = reg
 
@@ -43,12 +43,13 @@ class boot:
                    0o000771, # BR nxtchr ; transmit next character
                    0o000000, # 2026 halt
                    0o000763, # br start
+                   0o62510, 0o66154, 0o26157, 0o73440, 0o71157, 0o62154, 0o12]
                    # Following are bytes, not words.
-                   0o110,     0o145,     0o154,  # .ascii /Hello, world/
-                   0o154,     0o157,     0o054,
-                   0o040,     0o167,     0o157,
-                   0o162,     0o154,     0o144,
-                   0o012,     0o000]    # lf, end
+                   #0o110,     0o145,     0o154,  # .ascii /Hello, world/
+                   #0o154,     0o157,     0o054,
+                   #0o040,     0o167,     0o157,
+                   #0o162,     0o154,     0o144,
+                   #0o012,     0o000]    # lf, end
     hello_address = 0o2000
 
     echo = [0o012700,  0o177560,  # start: mov #kbs, r0
@@ -65,7 +66,7 @@ class boot:
         :param base:
         :return:
         """
-        print (f'load_machine_code({base})')
+        #print (f'load_machine_code({base})')
         address = base
         for instruction in code:
             # print()

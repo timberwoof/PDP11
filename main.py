@@ -47,7 +47,7 @@ def dispatch_opcode(instruction):
     else:
         run = other.other_opcode(instruction)
 
-    reg.log_registers()
+    #reg.log_registers()
     return run
 
 # ****************************************************
@@ -65,7 +65,7 @@ dl11.register_with_ram()
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 boot.load_machine_code(boot.hello_world, boot.hello_address)
 reg.set_pc(0o2000, "load_machine_code")
-ram.dump(0o2000, 0o2064)
+#ram.dump(0o2000, 0o2064)
 
 #boot.load_machine_code(boot.echo, boot.echo_address)
 #ram.dump(0o1000, 0o1020)

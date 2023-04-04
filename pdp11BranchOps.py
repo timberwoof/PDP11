@@ -12,7 +12,7 @@ mask_byte_msb = 0o000200
 
 class branchOps:
     def __init__(self, psw, ram, reg):
-        print('initializing branchOps')
+        #print('initializing branchOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -157,7 +157,7 @@ class branchOps:
         blankbits = instruction & 0o070000 == 0o000000
         lowbits0 = instruction & 0o107400 in [          0o000400, 0o001000, 0o001400, 0o002000, 0o002400, 0o003000, 0o003400]
         lowbits1 = instruction & 0o107400 in [0o100000, 0o100400, 0o101000, 0o101400, 0o102000, 0o102400, 0o103000, 0o103400]
-        #print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
+        ##print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
         return blankbits and (lowbits0 or lowbits1)
 
     def do_branch(self, instruction):
@@ -165,7 +165,7 @@ class branchOps:
         #parameter: opcode of form 0 000 000 *** *** ***
         opcode = (instruction & 0o177400)
         offset = instruction & mask_byte
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.branch_instruction_names[opcode]} {oct(offset)}')
+        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.branch_instruction_names[opcode]} {oct(offset)}')
         result = True
         self.branch_instructions[opcode](instruction, offset)
         return result

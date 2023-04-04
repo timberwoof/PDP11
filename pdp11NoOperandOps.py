@@ -7,7 +7,7 @@ from pdp11Hardware import stack
 
 class noOperandOps:
     def __init__(self, psw, ram, reg, stack):
-        print('initializing noOperandOps')
+        #print('initializing noOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -39,7 +39,7 @@ class noOperandOps:
 
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
-        print(f'WAIT unimplemented')
+        #print(f'WAIT unimplemented')
         return False
 
     def RTI(self, instruction):
@@ -52,7 +52,7 @@ class noOperandOps:
 
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
-        print(f'BPT unimplemented')
+        #print(f'BPT unimplemented')
         return False
 
     def IOT(self, instruction):
@@ -94,7 +94,7 @@ class noOperandOps:
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
+        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
         result = True
         result = self.no_operand_instructions[instruction](instruction)
         return result

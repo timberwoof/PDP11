@@ -14,7 +14,7 @@ from pdp11Hardware import addressModes as am
 
 class singleOperandOps:
     def __init__(self, psw, ram, reg, am):
-        print('initializing singleOperandOps')
+        #print('initializing singleOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -168,12 +168,12 @@ class singleOperandOps:
 
     def MFPD(self, instruction, dest, operand, B):
         """10 65 SS Move from previous data space"""
-        print(f'NOT IMPLEMENTED')
+        #print(f'NOT IMPLEMENTED')
         return operand, "****"
 
     def MTPD(self, instruction, dest, operand, B):
         """10 66 SS Move to previous data space"""
-        print(f'NOT IMPLEMENTED')
+        #print(f'NOT IMPLEMENTED')
         return operand, "****"
 
     def is_single_operand(self, instruction):
@@ -188,12 +188,12 @@ class singleOperandOps:
         # bits 5-0 can be anything
         # 0o000301 is one of these
         # 0 000 000 101 *** ***
-        #print(f'    is_single_operand({oct(instruction)})')
+        ##print(f'    is_single_operand({oct(instruction)})')
         bits_14_13_12 = instruction & 0o070000 == 0o000000
         bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
         isJMP = instruction & 0o177700 == 0o000100
         isSWAB = instruction & 0o177700 == 0o000300
-        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}  {isJMP}')
+        ##print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}  {isJMP}')
         return (bits_14_13_12 and bits_11_10_9) or isSWAB or isJMP
 
     def do_single_operand(self, instruction):
@@ -214,8 +214,8 @@ class singleOperandOps:
         source_value = self.am.addressing_mode_get(B, source)
 
         run = True
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
-              f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
+        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+        #      f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
         result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
         self.am.addressing_mode_set(B, source, result)
         self.psw.set_condition_codes(result, B, codes)
