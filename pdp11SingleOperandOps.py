@@ -1,9 +1,9 @@
 """pdp11SingleOperandOps.py single oprand instructions"""
 
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
-from pdp11Hardware import am
+from pdp11Hardware import addressModes as am
 
 """self.single_operand_instructions
     :param instruction: opcode
@@ -12,13 +12,13 @@ from pdp11Hardware import am
     :param B: 'B' for byte instruction, '' for word
 """
 
-class sopr:
-    def __init__(self, psw, ram, reg):
-        print('initializing pdp11sopr')
+class singleOperandOps:
+    def __init__(self, psw, ram, reg, am):
+        print('initializing pdp11SingleOperandOps.sopr')
         self.psw = psw
         self.ram = ram
         self.reg = reg
-        self.am = am(psw, ram, reg)
+        self.am = am
 
         # ****************************************************
         # Single-Operand instructions -

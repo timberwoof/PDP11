@@ -1,26 +1,28 @@
 """PDP-11 Emulator"""
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
 from pdp11Hardware import stack
-from pdp11Boot import boot
-from pdp11NoOperandOps import noopr
-from pdp11SingleOperandOps import sopr
-from pdp11DoubleOperandOps import dopr
-from pdp11BranchOps import br
-from pdp11OtherOps import other
+from pdp11Hardware import addressModes as am
+from pdp11NoOperandOps import noOperandOps as nopr
+from pdp11SingleOperandOps import singleOperandOps as sopr
+from pdp11DoubleOperandOps import doubleOperandOps as dopr
+from pdp11BranchOps import branchOps as br
+from pdp11OtherOps import otherOps as other
 from pdp11DL11 import dl11
+from pdp11Boot import boot
 
 reg = reg()
 ram = ram()
 psw = psw(ram)
 stack = stack(psw, ram, reg)
-boot = boot(ram, reg)
-noopr = noopr(psw, ram, reg, stack)
-sopr = sopr(psw, ram, reg)
-dopr = dopr(psw, ram, reg)
+am = am(psw, ram, reg)
+nopr = nopr(psw, ram, reg, stack)
+sopr = sopr(psw, ram, reg, am)
+dopr = dopr(psw, ram, reg, am)
 br = br(psw, ram, reg)
-other = other(psw, ram, reg)
+other = other(psw, ram, reg, am)
+boot = boot(ram, reg)
 
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
@@ -30,8 +32,8 @@ def dispatch_opcode(instruction):
     if br.is_branch(instruction):
         br.do_branch(instruction)
 
-    elif noopr.is_no_operand(instruction):
-        run = noopr.do_no_operand(instruction)
+    elif nopr.is_no_operand(instruction):
+        run = nopr.do_no_operand(instruction)
 
     elif sopr.is_single_operand(instruction):
         run = sopr.do_single_operand(instruction)

@@ -1,9 +1,9 @@
 """pdp11other - other instructions"""
 
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
-from pdp11Hardware import am
+from pdp11Hardware import addressModes as am
 from pdp11Hardware import stack
 
 # masks for accessing words and bytes
@@ -12,13 +12,13 @@ mask_word = 0o177777
 mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 
-class other:
-    def __init__(self, psw, ram, reg):
-        print('initializing pdp11other')
+class otherOps:
+    def __init__(self, psw, ram, reg, am ):
+        print('initializing pdp11OtherOps.other')
         self.psw = psw
         self.ram = ram
         self.reg = reg
-        self.am = am(psw, ram, reg)
+        self.am = am
 
 
     # ****************************************************

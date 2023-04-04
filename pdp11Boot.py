@@ -1,7 +1,7 @@
 """PDP11 bootstrap utilities"""
 
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 
 class boot:
     def __init__(self, ram, reg):

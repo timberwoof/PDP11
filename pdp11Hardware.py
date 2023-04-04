@@ -8,7 +8,7 @@ mask_word_msb = 0o100000
 
 class ram:
     def __init__(self):
-        print('initializing pdp11 ram')
+        print('initializing pdp11Hardware.ram')
 
         # set up basic memory boundaries
         # overall size of memory: 64kB
@@ -114,9 +114,9 @@ class ram:
         for address in range(start, stop+2, 2):
             print (f'{oct(address)}:{oct(self.read_word(address))}')
 
-class reg:
+class registers:
     def __init__(self):
-        print('initializing pdp11 registers')
+        print('initializing pdp11Hardware.reg')
         self.bytemask = 0o377
         self.wordmask = 0o177777
         self.registermask = 0o07
@@ -199,7 +199,7 @@ class psw:
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
-        print('initializing pdp11psw')
+        print('initializing pdp11Hardware.psw')
         # 104000-104377 EMT (trap & interrupt)
         # 104400-104777 TRAP (trap & interrupt)
 
@@ -390,7 +390,7 @@ class psw:
 
 class stack:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11Stack')
+        print('initializing pdp11Hardware.stack')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -416,9 +416,9 @@ class stack:
         self.reg.set_sp(stack + 2)
         return result
 
-class am:
+class addressModes:
     def __init__(self, psw, ram, reg):
-        print('initializing pdp11AddressMode')
+        print('initializing pdp11Hardware.am')
         self.psw = psw
         self.ram = ram
         self.reg = reg

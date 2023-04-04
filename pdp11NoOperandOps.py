@@ -1,13 +1,13 @@
 """pdp11NoOperandOps.py - no-operand instructions 00 00 00 through 00 00 06"""
 
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
 from pdp11Hardware import stack
 
-class noopr:
+class noOperandOps:
     def __init__(self, psw, ram, reg, stack):
-        print('initializing pdp11noopr')
+        print('initializing pdp11NoOPerandOps.noopr')
         self.psw = psw
         self.ram = ram
         self.reg = reg

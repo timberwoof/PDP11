@@ -1,17 +1,17 @@
 """pdp11DoubleOperandOps.py double operand instructions"""
 
 from pdp11Hardware import ram
-from pdp11Hardware import reg
+from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
-from pdp11Hardware import am
+from pdp11Hardware import addressModes as am
 
-class dopr:
-    def __init__(self, psw, ram, reg):
-        print('initializing pdp11DoubleOperand')
+class doubleOperandOps:
+    def __init__(self, psw, ram, reg, am):
+        print('initializing pdp11DoubleOperandOps.dopr')
         self.psw = psw
         self.ram = ram
         self.reg = reg
-        self.am = am(psw, ram, reg)
+        self.am = am
 
         self.double_operand_RSS_instructions = {}
         self.double_operand_RSS_instructions[0o070000] = self.MUL
