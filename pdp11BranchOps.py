@@ -5,10 +5,17 @@ from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
 
 # masks for accessing words and bytes
-mask_byte = 0o000377
+mask_low_byte = 0o000377
+mask_high_byte = 0o177400
 mask_word = 0o177777
 mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
+
+# mask_high_byte - opcode
+# mask_low_byte - offset
+# extend sign of offset through bits 8-15
+# multiply by two
+# add to PC to make branch address
 
 class branchOps:
     def __init__(self, psw, ram, reg):
@@ -71,81 +78,96 @@ class branchOps:
         oldpc = self.reg.get_pc()
         newpc = self.reg.get_pc() + 2 * offset -2
         if oldpc == newpc:
-            global run
-            run = False
+            print(f'PC:{oldpc} did not update on Branch. Halting.')
+            return False
         else:
             self.reg.set_pc(newpc, "BR")
+            return True
         # with the Branch instruction at location 500 see p. 4-37
 
     def BNE(self, instruction, offset):
         """00 10 XXX branch if not equal Z=0"""
         if self.psw.Z() == 0:
             self.reg.set_pc_2x_offset(offset, "BNE")
+        return True
 
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         if self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
+        return True
 
     def BGE(self, instruction, offset):
         """00 20 XXX branch if greater than or equal 4-47"""
         if self.psw.N() | self.psw.V() == 0:
             self.reg.set_pc_2x_offset(offset, "BGE")
+        return True
 
     def BLT(self, instruction, offset):
         """"00 24 XXX branch if less thn zero"""
         if self.psw.N() ^ self.psw.V() == 1:
             self.reg.set_pc_2x_offset(offset, "BLT")
+        return True
 
     def BGT(self, instruction, offset):
         """00 30 XXX branch if equal Z=1"""
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 0:
             self.reg.set_pc_2x_offset(offset, "BTG")
+        return True
 
     def BLE(self, instruction, offset):
         """00 34 XXX branch if equal Z=1"""
         if self.psw.Z() | (self.psw.N() ^ self.psw.V()) == 1:
             self.reg.set_pc_2x_offset(offset, "BLE")
+        return True
 
     def BPL(self, instruction, offset):
         """01 00 XXX branch if positive N=0"""
         if self.psw.N() == 0 and self.psw.Z() == 0:
             self.reg.set_pc_2x_offset(offset, 'BPL')
+        return True
 
     def BMI(self, instruction, offset):
         """10 04 XXX branch if negative N=1"""
         if self.psw.N() == 1:
             self.reg.set_pc_2x_offset(offset, 'BMI')
+        return True
 
     def BHI(self, instruction, offset):
         """10 10 XXX branch if higher"""
         if self.psw.C() == 0 and self.psw.Z() == 0:
             self.reg.set_pc_2x_offset(offset, 'BHI')
+        return True
 
     def BLOS(self, instruction, offset):
         """10 14 XXX branch if lower or same"""
         if self.psw.C() | self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, 'BLOS')
+        return True
 
     def BVC(self, instruction, offset):
         """10 20 XXX Branch if overflow is clear V=0"""
         if self.psw.V() == 0:
             self.reg.set_pc_2x_offset(offset, 'BVC')
+        return True
 
     def BVS(self, instruction, offset):
         """10 24 XXX Branch if overflow is set V=1"""
         if self.psw.V() == 1:
             self.reg.set_pc_2x_offset(offset, 'BVS')
+        return True
 
     def BCC(self, instruction, offset):
         """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
         if self.psw.C() == 0:
             self.reg.set_pc_2x_offset(offset, 'BCC')
+        return True
 
     def BCS(self, instruction, offset):
         """10 34 XXX branch if lower. BCS is the same as BLO"""
         if self.psw.C() == 1:
             self.reg.set_pc_2x_offset(offset, 'BCS')
+        return True
 
     def is_branch(self, instruction):
         """Using instruction bit pattern, determine whether it's a branch instruction"""
@@ -163,9 +185,9 @@ class branchOps:
     def do_branch(self, instruction):
         """dispatch a branch opcode"""
         #parameter: opcode of form 0 000 000 *** *** ***
-        opcode = (instruction & 0o177400)
-        offset = instruction & mask_byte
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.branch_instruction_names[opcode]} {oct(offset)}')
+        opcode = (instruction & mask_high_byte)
+        offset = instruction & mask_low_byte
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.branch_instruction_names[opcode]} {oct(offset)}')
         result = True
-        self.branch_instructions[opcode](instruction, offset)
+        result = self.branch_instructions[opcode](instruction, offset)
         return result

@@ -170,7 +170,11 @@ class doubleOperandOps:
         """bit test 4-28
 
         (src) ^ (dst)"""
+        # Clears each bit in the destination that corresponds to a set bit in the source.
+        # The original contents of the destination are lost.
+        # The contents of the source are unaffected.
         result = source & dest
+        print(f'    BIT source:{source} dest:{dest} result:{result}')
         return result, "**0-"
 
     def BIC(self, B, source, dest):
@@ -226,8 +230,8 @@ class doubleOperandOps:
             B = ''
         opcode = (instruction & 0o070000)
         name_opcode = (instruction & 0o170000)
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
-        #      f'{self.double_operand_SSDD_instruction_names[name_opcode]} ')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+              f'{self.double_operand_SSDD_instruction_names[name_opcode]} ')
 
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
@@ -239,6 +243,6 @@ class doubleOperandOps:
         result, code = self.double_operand_SSDD_instructions[opcode](B, source_value, dest_value)
         self.am.addressing_mode_set(B, dest, result)
         self.psw.set_condition_codes(result, B, code)
-        #print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
+        print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
 
         return run

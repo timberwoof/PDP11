@@ -65,7 +65,7 @@ class otherOps:
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} other_opcode')
+        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} other_opcode')
         result = True
         if instruction & 0o177000 == 0o002000:
             self.RTS(instruction)

@@ -209,14 +209,19 @@ class singleOperandOps:
             B = 'B'
         else:
             B = ''
-        opcode = instruction & 0o107700
         source = instruction & 0o000077
-        source_value = self.am.addressing_mode_get(B, source)
-
-        run = True
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
-        #      f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
-        result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
-        self.am.addressing_mode_set(B, source, result)
-        self.psw.set_condition_codes(result, B, codes)
-        return run
+        opcode = instruction & 0o107700
+        addressmode = (opcode & 0o0070) >> 3
+        register = (opcode & 0o0007)
+        # special handling for JMP with R7
+        if instruction & 0o177700 == 0o000100: # JMP R7
+            return self.am.addressing_mode_jmp(source)
+        else:
+            source_value = self.am.addressing_mode_get(B, source)
+            run = True
+            print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+                  f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
+            result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
+            source_value = self.am.addressing_mode_set(B, source, result)
+            self.psw.set_condition_codes(result, B, codes)
+            return run

@@ -27,6 +27,7 @@ boot = boot(ram, reg)
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
     #print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
+    # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
     run = True
 
     if br.is_branch(instruction):
@@ -47,7 +48,6 @@ def dispatch_opcode(instruction):
     else:
         run = other.other_opcode(instruction)
 
-    #reg.log_registers()
     return run
 
 # ****************************************************
@@ -63,15 +63,17 @@ dl11.register_with_ram()
 # this must eventually be definable in a file so it has to be here
 
 #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
-boot.load_machine_code(boot.hello_world, boot.hello_address)
-reg.set_pc(0o2000, "load_machine_code")
+#boot.load_machine_code(boot.hello_world, boot.hello_address)
+#reg.set_pc(0o2000, "load_machine_code")
 #ram.dump(0o2000, 0o2064)
 
 #boot.load_machine_code(boot.echo, boot.echo_address)
 #ram.dump(0o1000, 0o1020)
 
-#boot.read_PDP11_assembly_file('source/M9301-YF.txt')
-#reg.set_pc(0o165000, "load_machine_code")
+boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+reg.set_pc(0o165000, "load_machine_code")
+ram.dump(0o165000, 0o165777)
+ram.dump(0o173000, 0o173776)
 
 #boot.read_PDP11_assembly_file('source/M9301-YF.txt')
 #reg.set_pc(0o165022, "load_machine_code")
@@ -80,16 +82,21 @@ reg.set_pc(0o2000, "load_machine_code")
 # source/M9301-YF.txt - includes assembly; starts at 165022
 # source/M9301-YB.txt - raw machine, not very useful in diagnosing anything
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
-#ram.dump(start_address, start_address+32)
+#ram.dump(0o165000, 0o165000+32)
 
 # start the processor loop
 run = True
 while run:
     # fetch opcode
     instruction = ram.read_word(reg.get_pc())
+    print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
+    reg.log_registers()
 
     # increment PC
     reg.inc_pc('main')
 
     # decode and execute opcode
     run = dispatch_opcode(instruction)
+    reg.log_registers()
+
+ram.dump(0o165000, 0o165112)
