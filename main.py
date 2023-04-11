@@ -99,4 +99,5 @@ while run:
     run = dispatch_opcode(instruction)
     reg.log_registers()
 
-ram.dump(0o165000, 0o165112)
+if reg.get_pc() > 0o200:
+    ram.dump(reg.get_pc()-0o20, reg.get_pc()+0o20)

@@ -76,7 +76,7 @@ class branchOps:
             # offset is negative, say 0o0371 0o11111001
             offset = offset - 0o377
         oldpc = self.reg.get_pc()
-        newpc = self.reg.get_pc() + 2 * offset -2
+        newpc = self.reg.get_pc() + 2 * offset #-2
         if oldpc == newpc:
             print(f'PC:{oldpc} did not update on Branch. Halting.')
             return False

@@ -1,5 +1,7 @@
 """PDP11 RAM, Registers, PSW"""
 
+import sys
+
 # masks for accessing words and bytes
 mask_byte = 0o000377
 mask_word = 0o177777
@@ -317,6 +319,8 @@ class psw:
         * = conditionally set; - = not affected; 0 = cleared; 1 = set.
         Example: "**0-"
         """
+        #print(f'    set_condition_codes({oct(value)}, {B}, {pattern})')
+
         # set up some masks based on whether this is for Word or Byte
         if B == "B":
             n_mask = mask_byte_msb
@@ -338,9 +342,10 @@ class psw:
         codenames = "NZVC"
 
         # check each of the 4 characters
-        for i in range(0,3):
+        for i in range(0,4):
             code = pattern[i]
             codename = codenames[i] # get the letter for convenience
+            #print(f'    i:{i} code:{code} codename:{codename}')
             # check for explicit setting
             if code == "0" or code == "1":
                 setting = int(code)
@@ -374,7 +379,7 @@ class psw:
                         C = 1
                     else:
                         C = 0
-
+        #print(f'    set_condition_codes sets NZVC:{N}{Z}{V}{C}')
         self.set_PSW(N=N, Z=Z, V=V, C=C)
 
     def N(self):
@@ -464,6 +469,20 @@ class addressModes:
         self.ram = ram
         self.reg = reg
 
+    def add_offset(self, a, b):
+        """Add 16-bit values; if b is negative, do the right thing"""
+        #print(f'add_offset({oct(a)}, {oct(b)})')
+        if b & mask_word_msb:
+            more_bits = sys.maxsize & ~mask_word
+            field = sys.maxsize - (b & mask_word | more_bits) +1
+            #print(f'add_offset field:{oct(field)} {field}')
+            result = a - field
+            #print(f'add_offset({oct(a)}, -{oct(field)}) returns {oct(result)}')
+        else:
+            result = a + b
+            #print(f'add_offset({oct(a)}, {oct(b)}) returns {oct(result)}')
+        return result
+
     def addressing_mode_get(self, B, mode_register):
         """copy the value from the location indicated by byte_register"""
         addressmode = (mode_register & 0o70) >> 3
@@ -517,16 +536,16 @@ class addressModes:
             operand = ram_read(address)
             print(f'    S mode 5 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 6:
-            print(f'    S mode 6 Index: X(R{register}): value X is added to Register to produce address of operand')
             X = self.ram.read_word(self.reg.get_pc())
-            address = self.reg.get(register) + X
+            print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
+            address = self.add_offset(self.reg.get(register), X)
             print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
             print(f'    S mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
-            print(f'    S mode 7 Index Deferred: @X(R{register}): value X is added to Register then used as address of address of operand')
             X = self.ram.read_word(self.reg.get_pc())
-            pointer = self.reg.get(register) + X
+            print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
+            pointer = self.add_offset(self.reg.get(register), X)
             address = ram_read(pointer)
             print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
@@ -589,7 +608,7 @@ class addressModes:
             print(f'    S mode 07: JMP direct illegal register address')
             run = False
         elif addressmode == 1:
-            print(f'    S mode 17: JMP register deferred. Register R contains the address of the operand. Weird.')
+            print(f'    S mode 17: JMP register deferred. R{register} contains the address of the operand. Weird.')
             address = self.reg.get(register)
             operand = self.ram.read_word(address)
         elif addressmode == 2:
@@ -617,15 +636,15 @@ class addressModes:
         elif addressmode == 6:
             # The expression E, plus the contents of the PC,
             # yield the effective address of the operand.
-            print(f'    S mode 67: JMP relative. X plus PC gets address.')
             X = self.ram.read_word(self.reg.get_pc())
+            print(f'    S mode 67: JMP relative. immediate value {oct(X)} plus PC gets address.')
             address = self.reg.get(register) + X
             operand = self.ram.read_word(address)
         elif addressmode == 7:
             # The expression E, plus the contents of the PC
             # yield a pointer to the effective address of the operand.
-            print(f'    S mode 77: JMP relative deferred. X plus PC gets pointer to address.')
             X = self.ram.read_word(self.reg.get_pc())
+            print(f'    S mode 77: JMP relative deferred. immediate value {oct(X)} plus PC gets pointer to address.')
             pointer = self.reg.get(register) + X
             address = self.ram.read_word(pointer)
             operand = self.ram.read_word(address)
@@ -701,16 +720,16 @@ class addressModes:
             ram_write(address, result)
             print(f'    D mode 5 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 6:  # index
-            print(f'    D mode 6 index: X(R{register}): value X is added to Register to produce address of operand')
             X = self.ram.read_word(self.reg.get_pc())
-            address = self.reg.get(register) + X
+            print(f'    D mode 6 index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
+            address = self.add_offset(self.reg.get(register), X)
             print(f'    D mode 6 index R{register}={oct(address)} <- {oct(result)}')
             ram_write(address, result)
             print(f'    D mode 6 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 7:  # index deferred
-            print(f'    D mode 7 index deferred: @X(R{register}): value X is added to Register then used as address of address of operand')
             X = self.ram.read_word(self.reg.get_pc())
-            address = self.reg.get(register) + X
+            print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
+            address = self.add_offset(self.reg.get(register), X)
             address = ram_read(address)
             ram_write(address, result)
             print(f'    D mode 7 R{register}=@{oct(address)} = operand:{oct(result)}')
