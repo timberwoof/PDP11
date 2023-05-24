@@ -1,0 +1,101 @@
+# 104000-104377 EMT (trap & interrupt)
+# 104400-104777 TRAP (trap & interrupt)
+
+    # 16SSDD 1 110 *** *** *** *** subtract src from dst (double)
+    # 06SSDD 0 110 *** *** *** *** ADD add src to dst (double)
+
+    # branch
+    # 15-8 base code
+    # 7-0 offset
+
+    #        * 000 +++ *00 000 *0*
+    # 000000 0 000 000 000 000 000 HALT
+    # 000001 0 000 000 000 000 001 WAIT
+    # 000005 0 000 000 000 000 101 RESET
+    # 000400 0 000 000 100 000 000 BR
+    # 001000 0 000 001 000 000 000 BNE
+    # 001400 0 000 001 100 000 000 BEQ
+    # 002000 0 000 010 000 000 000 BGE
+    # 002400 0 000 010 100 000 000 BLT
+    # 003000 0 000 011 000 000 000 BGT
+    # 003400 0 000 011 100 000 000 BLE
+    # 100000 1 000 000 000 000 000 BPL
+    # 100400 1 000 000 100 000 000 BMI
+    # 101000 1 000 001 000 000 000 BHI
+    # 101400 1 000 001 100 000 000 BLOS
+    # 102000 1 000 010 000 000 000 BVC
+    # 102400 1 000 010 100 000 000 BVS
+    # 103000 1 000 011 000 000 000 BCC BHIS ?
+    # 103400 1 000 011 100 000 000 BCS BLO ?
+    # bits 14-11 = 0
+    # bit 10,9 in [0, 1, 2, 3]
+
+    #        0 000 000 +++ *** ***
+    # 0001DD 0 000 000 001 *** *** JMP (jump & subroutine)
+    # 00020R 0 000 000 010 000 *** RTS (jump & subroutine)
+    # 0003DD 0 000 000 011 *** *** SWAB swap bytes
+    # 0065SS 0 000 110 101 *** *** MFPI (misc)
+    # 0066DD 0 000 110 110 *** *** MTPI (misc)
+    # bits 14-12 = 0
+    # bits 11-9 in [0, 6]
+    # bits 8-6 in [1, 2, 3, 5, 6]
+
+
+    # single operands
+    # 15-6 opcode
+    # 15 is 1 to indicate a byte instruction
+    # 15 is 0 to indicate a word instruction
+    # 5-0 dst
+    #        * 000 1++ *** *** ***
+    # •050DD * 000 101 000 *** *** CLR clear (single)
+    # •051DD * 000 101 001 *** *** COM complement (single)
+    # •052DD * 000 101 010 *** *** INC increment (single)
+    # •053DD * 000 101 011 *** *** DEC decrement (single)
+    # •054DD * 000 101 100 *** *** NEG negate (single)
+    # •055DD * 000 101 101 *** *** ADC add carry (single)
+    # •056DD * 000 101 110 *** *** subtract carry (single)
+    # •057DD * 000 101 111 *** *** TST test (single)
+    # •060DD * 000 110 000 *** *** ROR rotate right (single)
+    # •061DD * 000 110 001 *** *** ROL rotate left (single)
+    # •062DD * 000 110 010 *** *** ASR arithmetic shift right (single)
+    # •063DD * 000 110 011 *** *** ASL arithmetic shift left (single)
+    # •067DD * 000 110 111 *** *** SXT sign extent (single)
+    # bits 14-12 = 0
+    # bit 11 = 1
+    # bits 10-9 in [1, 2]
+
+    # 004RDD 0 000 100 *** *** *** JSR (jump & subroutine)
+
+    # register source or destination
+    # 15-9 opcode
+    # 8-6 reg
+    # 5-0 src or dst
+
+    #        0 111 +++ *** *** ***
+    # 070RSS 0 111 000 *** *** *** MUL (register)
+    # 071RSS 0 111 001 *** *** *** DIV (register)
+    # 072RSS 0 111 010 *** *** *** ASH (register)
+    # 073RSS 0 111 011 *** *** *** ASHC (register)
+    # 074RDD 0 111 100 *** *** *** XOR (register)
+    # 077R00 0 111 111 *** 000 000 SOB (jump & subroutine)
+    # bit 15 = 0
+    # bits 14-12 = 7
+    # bits 9 10 11 in [0,1,2,3,4,7]
+
+    # double operands
+    # 15-12 opcode
+    # 11-6 src
+    # 5-0 dst
+
+    #        * +++ *** *** *** *** double operands
+    # •1SSDD * 001 *** *** *** *** MOV move source to destination (double)
+    # •2SSDD * 010 *** *** *** *** CMP compare src to dst (double)
+    # •3SSDD * 011 *** *** *** *** BIT bit test (double)
+    # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
+    # •5SSDD * 101 *** *** *** *** BIS bit set (double)
+    # 06SSDD 0 110 *** *** *** *** ADD
+    # 16SSDD 1 110 *** *** *** *** SUB
+    # bits 14-12 in [1, 2, 3, 4, 5, 6]
+
+    # 013400 0 001 011 100 000 000 BCS (branch)
+
