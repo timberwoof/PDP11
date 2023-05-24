@@ -134,10 +134,8 @@ class doubleOperandOps:
         #      f'{self.double_operand_RSS_instruction_names[opcode]} '
         #      f'r{register}={oct(self.reg[register])} {oct(source)}={oct(source_value)}')
         result, code = self.double_operand_RSS_instructions[opcode](self, register, source_value)
-        self.reg.inc_pc('do_double_operand_RSS')
         self.reg.registers[register] = result
         self.psw.set_condition_codes('W', result, code)
-        reg.inc_pc('do_double_operand_RSS')
 
         return run
 
@@ -212,7 +210,6 @@ class doubleOperandOps:
         """dispatch a double-operand opcode.
         parameter: opcode of form * +++ *** *** *** ***
         where +++ = not 000 and not 111 and not 110 """
-        print(f'double_operand_SSDD {oct(instruction)}')
         # double operands
         # 15-12 opcode
         # 11-6 src
@@ -231,7 +228,7 @@ class doubleOperandOps:
             BW = 'W'
         opcode = (instruction & 0o070000)
         name_opcode = (instruction & 0o170000)
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+        print(f'double_operand_SSDD {oct(instruction)} '
               f'{self.double_operand_SSDD_instruction_names[name_opcode]} ')
 
         source = (instruction & 0o007700) >> 6
@@ -244,7 +241,6 @@ class doubleOperandOps:
         result, code = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
         self.am.addressing_mode_set(BW, dest, result)
         self.psw.set_condition_codes(BW, result, code)
-        self.reg.inc_pc('do_double_operand_SSDD')
         print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
 
         return run

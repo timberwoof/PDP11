@@ -219,11 +219,10 @@ class singleOperandOps:
         else:
             source_value = self.am.addressing_mode_get(BW, source)
             run = True
-            print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
+            print(f'do_single_operand {oct(instruction)} '
                   f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
             result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
             source_value = self.am.addressing_mode_set(BW, source, result)
             print(f'    source_value:{source_value}  result:{result}   codes:{codes}')
             self.psw.set_condition_codes(BW, result, codes) # second parameter
-            self.reg.inc_pc('do_single_operand')
             return run

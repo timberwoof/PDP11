@@ -94,8 +94,7 @@ class noOperandOps:
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
+        print(f'{oct(self.reg.get_pc())} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
         result = True
         result = self.no_operand_instructions[instruction](instruction)
-        self.reg.inc_pc('do_no_operand')
         return result

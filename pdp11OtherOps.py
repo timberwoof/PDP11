@@ -33,7 +33,7 @@ class otherOps:
         """
         R = instruction & 0o000700 >> 6
         DD = instructuion & 0o000077
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} JSR r{R} {oct(DD)}')
+        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
         tmp = DD
         self.stack.push(self.reg.get(R))
         self.reg.set(self.reg.get_pc())
@@ -51,21 +51,21 @@ class otherOps:
 
     def MARK(instruction):
         """00 64 NN mark 46-1"""
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MARK unimplemented')
+        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MARK unimplemented')
 
     def MFPI(instruction):
         """00 65 SS move from previous instruction space 4-77"""
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MFPI unimplemented')
+        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MFPI unimplemented')
 
     def MTPI(instruction, dest, operand):
         """00 66 DD move to previous instruction space 4-78"""
-        #print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MTPI unimplemented')
+        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MTPI unimplemented')
 
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} other_opcode')
+        print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
         if instruction & 0o177000 == 0o002000:
             self.RTS(instruction)
         elif instruction & 0o177000 == 0o004000:
@@ -80,5 +80,4 @@ class otherOps:
             #print(f'{oct(instruction)} is an unknown instruction')
             self.reg.set_pc(0o0, "other_opcode")
             return False
-        self.reg.inc_pc('other_opcode')
         return True

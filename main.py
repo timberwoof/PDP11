@@ -26,7 +26,7 @@ boot = boot(ram, reg)
 
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
-    print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
+    print(f'dispatch_opcode {oct(instruction)}')
     # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
     run = True
 
@@ -88,8 +88,10 @@ ram.dump(0o173000, 0o173776)
 run = True
 while run:
     # fetch opcode
-    instruction = ram.read_word(reg.get_pc())
-    print(f'dispatch_opcode {oct(reg.get_pc())} {oct(instruction)}')
+    PC = reg.get_pc()
+    instruction = ram.read_word(PC)
+    print(f'fetched opcode {oct(PC)} {oct(instruction)}')
+    reg.inc_pc('processor loop')
     reg.log_registers()
 
     # decode and execute opcode
