@@ -163,8 +163,9 @@ class registers:
         self.bytemask = 0o377
         self.wordmask = 0o177777
         self.registermask = 0o07
-        self.SP = 0o06  # R6 is rfequentluy referred to as the stack pointer
+        self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
         self.PC = 0o07  # R7 is the program counter
+        # During operand decoding, PC points to the instruction being decoded.
         self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
     def get(self, register):
@@ -195,7 +196,7 @@ class registers:
 
         :return: new program counter"""
         self.registers[self.PC] = self.registers[self.PC] + 2
-        #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
+        print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
     def set_pc(self, value, whocalled=''):
@@ -210,7 +211,7 @@ class registers:
         waspc = self.registers[self.PC]
         newpc = self.registers[self.PC] + 2 * (offset & self.bytemask)
         self.registers[self.PC] = newpc
-        #print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
+        print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
 
     def get_sp(self):
         """get stack pointer
@@ -307,22 +308,22 @@ class psw:
             PSW = new_PSW
         self.ram.set_PSW(PSW)
 
-    def set_condition_codes(self, value, B, pattern):
+    def set_condition_codes(self, B, value, pattern):
         """set condition codes based on value
 
-        :param value: value to test
         :param B: "B" or "" for Byte or Word
-        :param pattern: string matching DEC specification
+        :param value: value to test
+        :param pattern: string matching DEC specification like --*1
 
         pattern looks like the Status Word Condition Codes in the DEC manual.
         Positionally NZVC for Negative, Zero, Overflor, Carry.
         * = conditionally set; - = not affected; 0 = cleared; 1 = set.
         Example: "**0-"
         """
-        #print(f'    set_condition_codes({oct(value)}, {B}, {pattern})')
+        print(f'    set_condition_codes({B}, {oct(value)}, {pattern})')
 
         # set up some masks based on whether this is for Word or Byte
-        if B == "B":
+        if B == 'B':
             n_mask = mask_byte_msb
             z_mask = mask_byte
             v_mask = mask_byte < 1 & ~mask_byte
@@ -379,7 +380,7 @@ class psw:
                         C = 1
                     else:
                         C = 0
-        #print(f'    set_condition_codes sets NZVC:{N}{Z}{V}{C}')
+        print(f'    set_condition_codes sets NZVC:{N}{Z}{V}{C}')
         self.set_PSW(N=N, Z=Z, V=V, C=C)
 
     def N(self):
@@ -463,6 +464,10 @@ class stack:
         return result
 
 class addressModes:
+    '''Implements the 6 standrad address modes of the PDP11 instruction set.
+    Every instruction that needs to set these up calls addressing_mode_get to get the praneter,
+    addressing_mode_jmp to implement program counter jmps, and
+    addressing_mode_set to hndle addres smodes for destination register'''
     def __init__(self, psw, ram, reg):
         print('initializing pdp11Hardware addressModes')
         self.psw = psw
@@ -470,7 +475,7 @@ class addressModes:
         self.reg = reg
 
     def add_offset(self, a, b):
-        """Add 16-bit values; if b is negative, do the right thing"""
+        """used to add offsets to PC in opcode decoding"""
         #print(f'add_offset({oct(a)}, {oct(b)})')
         if b & mask_word_msb:
             more_bits = sys.maxsize & ~mask_word
@@ -484,7 +489,14 @@ class addressModes:
         return result
 
     def addressing_mode_get(self, B, mode_register):
-        """copy the value from the location indicated by byte_register"""
+        """copy the value from the location indicated by byte_register
+
+        :param B: "" for word, "B" for byte
+        :param mode_register: bits of opcode that contain address mode and register number
+        :return: the parameter
+        """
+        # B sets the byte/word mode. It is empty for word nd 'B' for byte mode.
+        # Thus it is useful as the mode indicator and to label instructions in log correctly.
         addressmode = (mode_register & 0o70) >> 3
         register = mode_register & 0o07
 
@@ -519,8 +531,8 @@ class addressModes:
         elif addressmode == 3:  # autoincrement deferred
             print(f'    S mode 3 Autoincrement Deferred: @(R{register})+: register contains address of address of operand, then incremented')
             address = self.reg.get(register)
-            self.reg.set(register, self.reg.get(register)+2)
             operand = ram_read(address)
+            self.reg.set(register, self.reg.get(register) + increment)
             print(f'    S mode 3 @{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 4:  # autodecrement direct
             print(f'    S mode 4 Autodecrement: -(R{register}): register is decremented, then contains address of operand')
@@ -530,13 +542,15 @@ class addressModes:
             print(f'    S mode 4 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 5:  # autodecrement deferred
             print(f'    S mode 5 Autodecrement Deferred: @-(R{register}): register is decremented, then contains address of address of operand')
-            self.reg.set(register, self.reg.get(register)-2)
+            self.reg.set(register, self.reg.get(register) - 2)
             pointer = self.reg.get(register)
             address = ram_read(pointer)
             operand = ram_read(address)
             print(f'    S mode 5 R{register}=@{oct(address)} = operand:{oct(operand)}')
-        elif addressmode == 6:
+        elif addressmode == 6: # index
             X = self.ram.read_word(self.reg.get_pc())
+            # **** During operand decoding, PC points to the instruction being decoded.
+            # **** Should this be PC+2?
             print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
             address = self.add_offset(self.reg.get(register), X)
             print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
@@ -720,12 +734,13 @@ class addressModes:
             ram_write(address, result)
             print(f'    D mode 5 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 6:  # index
-            X = self.ram.read_word(self.reg.get_pc())
-            print(f'    D mode 6 index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
-            address = self.add_offset(self.reg.get(register), X)
-            print(f'    D mode 6 index R{register}={oct(address)} <- {oct(result)}')
-            ram_write(address, result)
-            print(f'    D mode 6 R{register}=@{oct(address)} = operand:{oct(result)}')
+            PC = self.reg.get_pc()
+            X = self.ram.read_word(PC)
+            print(f'    D mode 6 index: X(R{register}): immediate value @{oct(PC)}={oct(X)} is added to R{register} to produce address of operand')
+            immediateAddress = self.add_offset(self.reg.get(register), X)
+
+            ram_write(address, address)
+            print(f'    D mode 6 R{register}=@{oct(address)} = operand:{oct(address)}')
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc())
             print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')

@@ -80,7 +80,7 @@ class noOperandOps:
         """00 00 06 RTT return from interrupt 4-70"""
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop())
-        self.psw.set_condition_codes(self.reg.get_sp(), '', "***")
+        self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
         return True
 
     def NOP(self, instruction):
@@ -97,4 +97,5 @@ class noOperandOps:
         print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
         result = True
         result = self.no_operand_instructions[instruction](instruction)
+        self.reg.inc_pc('do_no_operand')
         return result

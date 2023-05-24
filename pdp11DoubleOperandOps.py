@@ -136,7 +136,8 @@ class doubleOperandOps:
         result, code = self.double_operand_RSS_instructions[opcode](self, register, source_value)
         self.reg.inc_pc('do_double_operand_RSS')
         self.reg.registers[register] = result
-        self.psw.set_condition_codes(result, "", code)
+        self.psw.set_condition_codes('W', result, code)
+        reg.inc_pc('do_double_operand_RSS')
 
         return run
 
@@ -146,7 +147,7 @@ class doubleOperandOps:
     # 11 SS DD through 16 SS DD
     # ****************************************************
 
-    def MOV(self, B, source, dest):
+    def MOV(self, BW, source, dest):
         """01 SS DD move 4-23
 
         (dst) < (src)"""
@@ -154,7 +155,7 @@ class doubleOperandOps:
         #print(f'    source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         return result, "**0-"
 
-    def CMP(self, B, source, dest):
+    def CMP(self, BW, source, dest):
         """compare 4-24
         (src)-(dst)"""
         # subtract dst from source
@@ -162,11 +163,11 @@ class doubleOperandOps:
         # but don't change the destination
         result = source - dest
         ##print(f'    CMP source:{source} dest:{dest} result:{result}')
-        self.psw.set_condition_codes(result, B, "****")
+        self.psw.set_condition_codes(BW, result, "****")
         ##print(f'    CMP NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}')
         return dest, "----"
 
-    def BIT(self, B, source, dest):
+    def BIT(self, BW, source, dest):
         """bit test 4-28
 
         (src) ^ (dst)"""
@@ -177,24 +178,24 @@ class doubleOperandOps:
         print(f'    BIT source:{source} dest:{dest} result:{result}')
         return result, "**0-"
 
-    def BIC(self, B, source, dest):
+    def BIC(self, BW, source, dest):
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
         result = ~source & dest
         return result, "**0-"
 
-    def BIS(self, B, source, dest):
+    def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) v (dst)"""
         result = source | dest
         return result, "**0-"
 
-    def ADDSUB(self, B, source, dest):
+    def ADDSUB(self, BW, source, dest):
         """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
         | 16 SS DD: SUB 4-26 (dst) < (dst) + ~(src) + 1
         """
-        if B == "":
+        if BW == 'W':
             result = source + dest
         else:
             result = abs(source + ~dest + 1)
@@ -211,7 +212,7 @@ class doubleOperandOps:
         """dispatch a double-operand opcode.
         parameter: opcode of form * +++ *** *** *** ***
         where +++ = not 000 and not 111 and not 110 """
-        # #print(f'double_operand_SSDD {oct(instruction)}')
+        print(f'double_operand_SSDD {oct(instruction)}')
         # double operands
         # 15-12 opcode
         # 11-6 src
@@ -225,9 +226,9 @@ class doubleOperandOps:
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
         if (instruction & 0o100000) >> 15 == 1:
-            B = 'B'
+            BW = 'B'
         else:
-            B = ''
+            BW = 'W'
         opcode = (instruction & 0o070000)
         name_opcode = (instruction & 0o170000)
         print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
@@ -235,14 +236,15 @@ class doubleOperandOps:
 
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
-        source_value = self.am.addressing_mode_get(B, source)
-        dest_value = self.am.addressing_mode_get(B, dest)
+        source_value = self.am.addressing_mode_get(BW, source)
+        dest_value = self.am.addressing_mode_get(BW, dest)
         ##print(f'    {oct(source)}={oct(source_value)} {oct(dest)}={oct(dest_value)}')
 
         run = True
-        result, code = self.double_operand_SSDD_instructions[opcode](B, source_value, dest_value)
-        self.am.addressing_mode_set(B, dest, result)
-        self.psw.set_condition_codes(result, B, code)
+        result, code = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
+        self.am.addressing_mode_set(BW, dest, result)
+        self.psw.set_condition_codes(BW, result, code)
+        self.reg.inc_pc('do_double_operand_SSDD')
         print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
 
         return run

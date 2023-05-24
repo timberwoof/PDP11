@@ -206,9 +206,9 @@ class singleOperandOps:
         # 5-0 dst
 
         if (instruction & 0o100000) == 0o100000:
-            B = 'B'
+            BW = 'B'
         else:
-            B = ''
+            BW = ''
         source = instruction & 0o000077
         opcode = instruction & 0o107700
         addressmode = (opcode & 0o0070) >> 3
@@ -217,11 +217,13 @@ class singleOperandOps:
         if instruction & 0o177700 == 0o000100: # JMP R7
             return self.am.addressing_mode_jmp(source)
         else:
-            source_value = self.am.addressing_mode_get(B, source)
+            source_value = self.am.addressing_mode_get(BW, source)
             run = True
             print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} '
                   f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
-            result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, B)
-            source_value = self.am.addressing_mode_set(B, source, result)
-            self.psw.set_condition_codes(result, B, codes)
+            result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
+            source_value = self.am.addressing_mode_set(BW, source, result)
+            print(f'    source_value:{source_value}  result:{result}   codes:{codes}')
+            self.psw.set_condition_codes(BW, result, codes) # second parameter
+            self.reg.inc_pc('do_single_operand')
             return run
