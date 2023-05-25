@@ -297,7 +297,6 @@ class psw:
             self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
         if C > -1:
             self.PSW = (self.PSW & ~self.C_mask) | C
-        print(f'set_PSW {self.PSW}')
         self.ram.write_word(self.ram.PSW_address, self.PSW)
 
     def set_condition_codes(self, B, value, pattern):
@@ -353,17 +352,14 @@ class psw:
 
     def N(self):
         """negative status bit of PSW"""
-        print(f'{oct(self.PSW)}')
         return (self.PSW & self.N_mask) >> 3
 
     def Z(self):
         """zero status bit of PSW"""
-        print(f'{oct(self.PSW)}')
         return (self.PSW & self.Z_mask) >> 2
 
     def V(self):
         """overflow status bit of PSW"""
-        print(f'{oct(self.PSW)}')
         return (self.PSW & self.V_mask) >> 1
 
     def C(self):

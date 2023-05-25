@@ -100,7 +100,7 @@ class singleOperandOps:
 
     def SWAB(self, instruction, dest, operand, B):
         """00 03 DD Swap Bytes 4-17"""
-        result = (operand & 0xFF00) << 8 + (operand & 0x00FF) >> 8
+        result = ((operand & 0xFF00) >> 8) + ((operand & 0x00FF) << 8)
         return result, "**00"
 
     def CLR(self, instruction, dest, operand, B):
