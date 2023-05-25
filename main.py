@@ -24,9 +24,19 @@ br = br(psw, ram, reg)
 other = other(psw, ram, reg, am)
 boot = boot(ram, reg)
 
+def log_registers():
+    """print all the registers in the log"""
+    index = 0
+    report = '    '
+    for register in reg.registers:
+        report = report + f'R{index}: {oct(register)}  '
+        index = index + 1
+    report = report + f'NZVC: {psw.N()}{psw.Z()}{psw.V()}{psw.C()}'
+    print(report)
+
 def dispatch_opcode(instruction):
     """ top-level dispatch"""
-    print(f'dispatch_opcode {oct(instruction)}')
+    #print(f'dispatch_opcode {oct(instruction)}')
     # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
     run = True
 
@@ -90,13 +100,13 @@ while run:
     # fetch opcode
     PC = reg.get_pc()
     instruction = ram.read_word(PC)
-    print(f'fetched opcode {oct(PC)} {oct(instruction)}')
+    print(f'{oct(PC)} {oct(instruction)}')
     reg.inc_pc('processor loop')
-    reg.log_registers()
+    log_registers()
 
     # decode and execute opcode
     run = dispatch_opcode(instruction)
-    reg.log_registers()
+    log_registers()
 
 if reg.get_pc() > 0o200:
     ram.dump(reg.get_pc()-0o20, reg.get_pc()+0o20)

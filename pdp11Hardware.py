@@ -110,9 +110,18 @@ class ram:
             self.memory[address] = data
 
     def set_PSW(self, new_PSW):
+        """
+        Convenience function for anything that needs wordlike access to PSW
+        :param new_PSW:
+        :return:
+        """
         self.write_word(self.PSW_address, new_PSW)
 
     def get_PSW(self):
+        """
+        Convenience function for anything that needs wordlike access to PSW
+        :return: PSW
+        """
         return self.read_word(self.PSW_address)
 
 #    mask_byte = 0o000377
@@ -196,7 +205,7 @@ class registers:
 
         :return: new program counter"""
         self.registers[self.PC] = self.registers[self.PC] + 2
-        print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
+        #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
     def set_pc(self, value, whocalled=''):
@@ -229,15 +238,6 @@ class registers:
         #print(f'{oct(wassp)} setpc {oct(newsp)}')
         return newsp
 
-    def log_registers(self):
-        """print all the registers in the log"""
-        index = 0
-        report = '    '
-        for register in self.registers:
-            report = report + f'R{index}: {oct(register)}  '
-            index = index + 1
-        print (report)
-
 class psw:
     """PDP11 PSW"""
 
@@ -260,12 +260,19 @@ class psw:
         # 2 Z result was zero       0o000004
         # 1 V overflow              0o000002
         # 0 C result had carry      0o000001
+
         self.ram = ram
+        # This class keeps the deinitive version of the PSW.
+        # When it changes, this class sets it into RAM.
+        self.PSW = 0o0
+
         self.c_mode_mask = 0o140000
         self.p_mode_mask = 0o030000
         self.mode_mask = 0o170000
         self.priority_mask = 0o000340
         self.trap_mask = 0o000020
+
+        # condition codes
         self.N_mask = 0o000010  # Negative
         self.Z_mask = 0o000004  # Zero
         self.V_mask = 0o000002  # Overflow
@@ -287,29 +294,25 @@ class psw:
         :param PSW:
         :return:
         """
-        new_PSW = PSW
-        PSW = self.ram.get_PSW()
         if mode > -1:
-            oldmode = (PSW & self.mode_mask)
-            PSW = (PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
+            oldmode = (self.PSW & self.mode_mask)
+            self.PSW = (self.PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
         if priority > -1:
-            PSW = (PSW & ~self.priority_mask) | (priority << 5)
+            self.PSW = (self.PSW & ~self.priority_mask) | (priority << 5)
         if trap > -1:
-            PSW = (PSW & ~self.trap_mask) | (trap << 4)
+            self.PSW = (self.PSW & ~self.trap_mask) | (trap << 4)
         if N > -1:
-            PSW = (PSW & ~self.N_mask) | (N << 3)
+            self.PSW = (self.PSW & ~self.N_mask) | (N << 3)
         if Z > -1:
-            PSW = (PSW & ~self.Z_mask) | (Z << 2)
+            self.PSW = (self.PSW & ~self.Z_mask) | (Z << 2)
         if V > -1:
-            PSW = (PSW & ~self.V_mask) | (V << 1)
+            self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
         if C > -1:
-            PSW = (PSW & ~self.C_mask) | C
-        if new_PSW > -1:
-            PSW = new_PSW
-        self.ram.set_PSW(PSW)
+            self.PSW = (self.PSW & ~self.C_mask) | C
+        self.ram.set_PSW(self.PSW)
 
     def set_condition_codes(self, B, value, pattern):
-        """set condition codes based on value
+        """set condition codes based on value and pattern
 
         :param B: "B" or "" for Byte or Word
         :param value: value to test
@@ -334,54 +337,30 @@ class psw:
             v_mask = mask_word < 1 & ~mask_word
             c_mask = mask_word < 1 & ~mask_word  # *** I dion't know how to test for this
 
-        # set unaffected values
-        N = -1
-        Z = -1
-        V = -1
-        C = -1
-
-        codenames = "NZVC"
-
+        codition_code_masks = [n_mask, z_mask, v_mask, c_mask]
+        condition_codes = [0,0,0,0]
         # check each of the 4 characters
         for i in range(0,4):
             code = pattern[i]
-            codename = codenames[i] # get the letter for convenience
-            #print(f'    i:{i} code:{code} codename:{codename}')
+            the_mask = codition_code_masks[i]
             # check for explicit setting
             if code == "0" or code == "1":
-                setting = int(code)
-                if codename == "N":
-                    N = setting
-                elif codename == "Z":
-                    Z = setting
-                elif codename == "V":
-                    V = setting
-                elif codename == "C":
-                    C = setting
+                condition_codes[i] = int(code)
             # check for conditional value
             elif code == "*":
-                if codename == "N":
-                    if (value & n_mask) == n_mask:
-                        N = 1
-                    else:
-                        N = 0
-                elif codename == "Z":
-                    if (value & z_mask) == 0:
-                        Z = 1
-                    else:
-                        Z = 0
-                elif codename == "V":
-                    if (value & v_mask) == v_mask:
-                        V = 1
-                    else:
-                        V = 0
-                elif codename == "C":
-                    if (value & c_mask) == c_mask:  # *** I'm not sure about this
-                        C = 1
-                    else:
-                        C = 0
-        print(f'    set_condition_codes sets NZVC:{N}{Z}{V}{C}')
-        self.set_PSW(N=N, Z=Z, V=V, C=C)
+                if (value & the_mask) == the_mask:
+                    condition_codes[i] = 1
+                else:
+                    condition_codes[i] = 0
+            # check for unaffected value
+            elif code == "-":
+                value = self.PSW & the_mask
+                if value > 0:
+                    condition_codes[i] = 1
+                else:
+                    condition_codes[i] = 0
+        # Put the codes into the PSW
+        self.set_PSW(N=condition_codes[0], Z=condition_codes[1], V=condition_codes[2], C=condition_codes[3])
 
     def N(self):
         """negative status bit of PSW"""
@@ -486,7 +465,7 @@ class addressModes:
 
     def add_word(self, a, b):
         """add two-byte words with sign handling"""
-        print(f'add_word({oct(a)}, {oct(b)})  mask_word_msb:{oct(mask_word_msb)}')
+        #print(f'add_word({oct(a)}, {oct(b)})  mask_word_msb:{oct(mask_word_msb)}')
         result = self.fix_sign(a) + self.fix_sign(b)
         return result
 

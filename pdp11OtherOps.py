@@ -33,7 +33,7 @@ class otherOps:
         """
         R = instruction & 0o000700 >> 6
         DD = instructuion & 0o000077
-        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
         tmp = DD
         self.stack.push(self.reg.get(R))
         self.reg.set(self.reg.get_pc())
@@ -46,20 +46,21 @@ class otherOps:
         | reg <- (SP)^
         """
         R = instruction & 0o000007
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
         self.reg.set_pc(self.reg.get(R), "RTS")
         reg.set(R, self.stack.pop())
 
     def MARK(instruction):
         """00 64 NN mark 46-1"""
-        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MARK unimplemented')
+        print(f'    MARK {oct(instruction)} unimplemented')
 
     def MFPI(instruction):
         """00 65 SS move from previous instruction space 4-77"""
-        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MFPI unimplemented')
+        print(f'    MFPI {oct(instruction)} unimplemented')
 
     def MTPI(instruction, dest, operand):
         """00 66 DD move to previous instruction space 4-78"""
-        #print(f'{oct(self.reg.get_pc())} {oct(instruction)} MTPI unimplemented')
+        print(f'    MTPI {oct(instruction)} unimplemented')
 
 
     def other_opcode(self, instruction):

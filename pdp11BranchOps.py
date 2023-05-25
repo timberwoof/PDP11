@@ -187,7 +187,7 @@ class branchOps:
         #parameter: opcode of form 0 000 000 *** *** ***
         opcode = (instruction & mask_high_byte)
         offset = instruction & mask_low_byte
-        print(f'branch operation {oct(instruction)} {self.branch_instruction_names[opcode]} {oct(offset)}')
+        print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} branch operation  {oct(offset)}')
         result = True
         result = self.branch_instructions[opcode](instruction, offset)
         return result

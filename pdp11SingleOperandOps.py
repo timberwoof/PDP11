@@ -219,8 +219,8 @@ class singleOperandOps:
         else:
             source_value = self.am.addressing_mode_get(BW, source)
             run = True
-            print(f'do_single_operand {oct(instruction)} '
-                  f'{self.single_operand_instruction_names[opcode]} {oct(source_value)}')
+            print(f'    {self.single_operand_instruction_names[opcode]} {oct(source_value)}'
+                  f'{oct(instruction)} single-operand instructon register:{oct(register)}  addressmode:{oct(addressmode)}')
             result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
             source_value = self.am.addressing_mode_set(BW, source, result)
             print(f'    source_value:{source_value}  result:{result}   codes:{codes}')
