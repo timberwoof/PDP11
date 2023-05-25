@@ -46,6 +46,8 @@ class ram:
 
         print(f'top_of_memory:{oct(self.top_of_memory)}')
         print(f'PSW_address:{oct(self.PSW_address)}')
+        # psw class handles updating PSW in ram.
+        # Only a pdp11 program should read this from ram.
         print(f'io_space:{oct(self.io_space)}')
 
         # io map is two dictionaries of addresses and methods
@@ -112,21 +114,6 @@ class ram:
             result = (hi << 8) + low
             #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
             return result
-
-    def set_PSW(self, new_PSW):
-        """
-        Convenience function for anything that needs wordlike access to PSW
-        :param new_PSW:
-        :return:
-        """
-        self.write_word(self.PSW_address, new_PSW)
-
-    def get_PSW(self):
-        """
-        Convenience function for anything that needs wordlike access to PSW
-        :return: PSW
-        """
-        return self.read_word(self.PSW_address)
 
 #    mask_low_byte = 0o000277
 #    mask_word = 0o177777
@@ -234,9 +221,9 @@ class registers:
         """set stack pointer
 
         :return: new stack pointer"""
-        wassp =  self.registers[self.PC]
+        #wassp =  self.registers[self.PC]
         newsp = value & mask_word
-        self.registers[self.PC] = newsp
+        self.registers[self.SP] = newsp
         #print(f'{oct(wassp)} setpc {oct(newsp)}')
         return newsp
 
@@ -293,6 +280,8 @@ class psw:
         :param PSW:
         :return:
         """
+        if PSW > -1:
+            self.PSW = PSW
         if mode > -1:
             oldmode = (self.PSW & self.mode_mask)
             self.PSW = (self.PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
@@ -308,7 +297,8 @@ class psw:
             self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
         if C > -1:
             self.PSW = (self.PSW & ~self.C_mask) | C
-        self.ram.set_PSW(self.PSW)
+        print(f'set_PSW {self.PSW}')
+        self.ram.write_word(self.ram.PSW_address, self.PSW)
 
     def set_condition_codes(self, B, value, pattern):
         """set condition codes based on value and pattern
@@ -363,54 +353,57 @@ class psw:
 
     def N(self):
         """negative status bit of PSW"""
-        return (self.ram.get_PSW() & self.N_mask) >> 3
+        print(f'{oct(self.PSW)}')
+        return (self.PSW & self.N_mask) >> 3
 
     def Z(self):
         """zero status bit of PSW"""
-        return (self.ram.get_PSW() & self.Z_mask) >> 2
+        print(f'{oct(self.PSW)}')
+        return (self.PSW & self.Z_mask) >> 2
 
     def V(self):
         """overflow status bit of PSW"""
-        return (self.ram.get_PSW() & self.V_mask) >> 1
+        print(f'{oct(self.PSW)}')
+        return (self.PSW & self.V_mask) >> 1
 
     def C(self):
         """carry status bit of PSW"""
-        return (self.ram.get_PSW() & self.C_mask)
+        return (self.PSW & self.C_mask)
 
     def addb(self, b1, b2):
         """add byte, limit to 8 bits, set PSW"""
         result = b1 + b2
-        if result > result & self.byte_mask:
-            self.ram.set_PSW(V=1)
+        if result > (result & mask_low_byte):
+            self.set_PSW(V=1)
         if result == 0:
-            self.ram.set_PSW(Z=1)
-        result = result & self.byte_mask
+            self.set_PSW(Z=1)
+        result = result & mask_low_byte
         return result
 
     def subb(self, b1, b2):
         """subtract bytes b1 - b2, limit to 8 bits, set PSW"""
         result = b1 - b2
         if result < 0:
-            self.ram.set_PSW(N=1)
-        result = result & self.byte_mask
+            self.set_PSW(N=1)
+        result = result & mask_low_byte
         return result
 
     def addw(self, b1, b2):
         """add words, limit to 16 bits, set PSW"""
         result = b1 + b2
-        if result > result & self.word_mask:
-            self.ram.set_PSW(V=1)
+        if result > (result & mask_word):
+            self.set_PSW(V=1)
         if result == 0:
-            self.ram.set_PSW(Z=1)
-        result = result & self.word_mask
+            self.set_PSW(Z=1)
+        result = result & mask_word
         return result
 
     def subw(self, b1, b2):
         """subtract words b1 - b2, limit to 16 bits, set PSW"""
         result = b1 - b2
         if result < 0:
-            self.ram.set_PSW(N=1)
-        result = result & self.word_mask
+            self.set_PSW(N=1)
+        result = result & mask_word
         return result
 
 class stack:
