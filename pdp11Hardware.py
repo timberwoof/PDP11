@@ -3,35 +3,39 @@
 import sys
 
 # masks for accessing words and bytes
-mask_byte = 0o000377
 mask_word = 0o177777
-mask_byte_msb = 0o000200
 mask_word_msb = 0o100000
+mask_byte_msb = 0o000200
+mask_low_byte = 0o000377
+mask_high_byte = 0o177400
 
 class ram:
+    # overall size of memory: 64kB
+    top_of_memory = 0o177777
+    # 16 bits   0o177777 = 0x0000FFFF
+    # 18 bits   0o777777 = 0x0003FFFF
+    # 22 bits 0o17777777 = 0x003FFFFF
+
+    # the actual array for simuating RAM.
+    memory = bytearray(top_of_memory + 1)
+    # +1 because I want to be able to index self.top_of_memory
+
+    # PSW is stored here
+    PSW_address = top_of_memory - 1  # 0o377776
+    Stack_Limit_Register = top_of_memory - 3  # 0o377774
+    # the io page is the top 4kB of memory
+    io_space = top_of_memory - 0o1000
+
     def __init__(self):
         print('initializing pdp11Hardware ram')
 
         # set up basic memory boundaries
-        # overall size of memory: 64kB
-        self.top_of_memory = 0o177777
-            # 16 bits   0o177777 = 0x0000FFFF
-            # 18 bits   0o777777 = 0x0003FFFF
-            # 22 bits 0o17777777 = 0x003FFFFF
-
-        # the actual array for simuating RAM.
-        self.memory = bytearray(self.top_of_memory+1)
-        # +1 because I want to be able to index self.top_of_memory
-
-        # PSW is stored here
-        self.PSW_address = self.top_of_memory - 1 # 0o377776
-        self.Stack_Limit_Register = self.top_of_memory - 3 #0o377774
 
         # set up the vector space
         # the bottom area is io device handler vectors
         #self.top_of_vector_space = 0o274
         #for address in range(0o0, self.top_of_vector_space):
-        #    self.write_byte(address, 0o377)
+        #    self.write_byte(address, 0o277)
         # set up the io page space so it's always ready
         #for address in range(self.io_space, self.top_of_memory):
         #    self.write_byte(address, 0o111)
@@ -40,21 +44,32 @@ class ram:
         #self.write_word(self.TKS, 0o000000)
         #self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
 
-        # the io page is the top 4kB of memory
-        self.io_space = self.top_of_memory - 0o1000
-        print (f'io_space:{oct(self.io_space)}')
+        print(f'top_of_memory:{oct(self.top_of_memory)}')
+        print(f'PSW_address:{oct(self.PSW_address)}')
+        print(f'io_space:{oct(self.io_space)}')
 
         # io map is two dictionaries of addresses and methods
         self.iomap_readers = {}
         self.iomap_writers = {}
 
+    def register_io_writer(self, device_address, method):
+        print(f'register_io_writer({oct(device_address)}, {method.__name__})')
+        self.iomap_writers[device_address] = method
+
     def register_io_reader(self, device_address, method):
         print(f'register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
 
-    def register_io_writer(self, device_address, method):
-        print(f'register_io_writer({oct(device_address)}, {method.__name__})')
-        self.iomap_writers[device_address] = method
+    def write_byte(self, address, data):
+        """write a byte to memory.
+        address can be even or odd"""
+        data = data & mask_low_byte
+        if address in self.iomap_writers.keys():
+            print(f'write_byte io({oct(address)}, {oct(data)})')
+            self.iomap_writers[address](data)
+        else:
+            print(f'write_byte({oct(address)}, {oct(data)})')
+            self.memory[address] = data
 
     def read_byte(self, address):
         """Read one byte of memory."""
@@ -65,6 +80,24 @@ class ram:
             result = self.memory[address]
             #print(f'read_byte ({oct(address)} returns {oct(result)}')
         return result
+
+    def write_word(self, address, data):
+        """write a two-word data chunk to memory.
+        address must be even.
+
+        :param address:
+        :param data:
+        """
+        #print(f'    writeword({oct(address)}, {oct(data)})')
+        if address in self.iomap_writers.keys():
+            self.iomap_writers[address](data)
+        else:
+            hi = (data & mask_high_byte) >> 8  # 1 111 111 100 000 000
+            lo = data & mask_low_byte  # 0 000 000 011 111 111
+            # print(f'hi:{oct(hi)} lo:{oct(lo)}')
+            self.memory[address + 1] = hi
+            self.memory[address] = lo
+            # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
 
     def read_word(self, address):
         """Read a word of memory.
@@ -79,35 +112,6 @@ class ram:
             result = (hi << 8) + low
             #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
             return result
-
-    def write_word(self, address, data):
-        """write a two-word data chunk to memory.
-        address must be even.
-
-        :param address:
-        :param data:
-        """
-        #print(f'    writeword({oct(address)}, {oct(data)})')
-        if address in self.iomap_writers.keys():
-            self.iomap_writers[address](data)
-        else:
-            hi = (data & 0o177400) >> 8  # 1 111 111 100 000 000
-            lo = data & 0o000377  # 0 000 000 011 111 111
-            # print(f'hi:{oct(hi)} lo:{oct(lo)}')
-            self.memory[address + 1] = hi
-            self.memory[address] = lo
-            # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
-
-    def write_byte(self, address, data):
-        """write a byte to memory.
-        address can be even or odd"""
-        if address in self.iomap_writers.keys():
-            print(f'write_byte io({oct(address)}, {oct(data)})')
-            self.iomap_writers[address](data)
-        else:
-            data = data & 0o000377
-            print(f'write_byte({oct(address)}, {oct(data)})')
-            self.memory[address] = data
 
     def set_PSW(self, new_PSW):
         """
@@ -124,7 +128,7 @@ class ram:
         """
         return self.read_word(self.PSW_address)
 
-#    mask_byte = 0o000377
+#    mask_low_byte = 0o000277
 #    mask_word = 0o177777
 #    mask_byte_msb = 0o000200
 #    mask_word_msb = 0o100000
@@ -142,7 +146,7 @@ class ram:
         :return:
         """
         display_bytes = 8 # display this may bytes across the line
-        start = start & ~mask_byte
+        start = start & ~mask_low_byte
         print(f'dump({oct(start)}, {oct(stop)})')
 
         print_line = ""
@@ -169,8 +173,6 @@ class ram:
 class registers:
     def __init__(self):
         print('initializing pdp11Hardware registers')
-        self.bytemask = 0o377
-        self.wordmask = 0o177777
         self.registermask = 0o07
         self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
         self.PC = 0o07  # R7 is the program counter
@@ -192,7 +194,7 @@ class registers:
         :param value:
         """
         #print(f'    set R{register}<-{oct(value)}')
-        self.registers[register & self.registermask] = value & self.wordmask
+        self.registers[register & self.registermask] = value & mask_word
 
     def get_pc(self):
         """get program counter
@@ -211,14 +213,14 @@ class registers:
     def set_pc(self, value, whocalled=''):
         """set program counter to arbitrary value"""
         waspc =  self.registers[self.PC]
-        newpc = value & self.wordmask
+        newpc = value & mask_word
         self.registers[self.PC] = newpc
         print(f'    setpc R7<-{oct(newpc)} {whocalled}')
 
     def set_pc_2x_offset(self, offset, whocalled=''):
         """set program counter to 2x offset"""
         waspc = self.registers[self.PC]
-        newpc = self.registers[self.PC] + 2 * (offset & self.bytemask)
+        newpc = self.registers[self.PC] + 2 * (offset & mask_low_byte)
         self.registers[self.PC] = newpc
         print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
 
@@ -233,7 +235,7 @@ class registers:
 
         :return: new stack pointer"""
         wassp =  self.registers[self.PC]
-        newsp = value & self.wordmask
+        newsp = value & mask_word
         self.registers[self.PC] = newsp
         #print(f'{oct(wassp)} setpc {oct(newsp)}')
         return newsp
@@ -277,9 +279,6 @@ class psw:
         self.Z_mask = 0o000004  # Zero
         self.V_mask = 0o000002  # Overflow
         self.C_mask = 0o000001  # Carry
-
-        self.byte_mask = 0o000377
-        self.word_mask = 0o177777
 
     def set_PSW(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1, PSW=-1):
         """set processor status word by optional parameter
@@ -328,9 +327,9 @@ class psw:
         # set up some masks based on whether this is for Word or Byte
         if B == 'B':
             n_mask = mask_byte_msb
-            z_mask = mask_byte
-            v_mask = mask_byte < 1 & ~mask_byte
-            c_mask = mask_byte < 1 & ~mask_byte
+            z_mask = mask_low_byte
+            v_mask = mask_low_byte < 1 & ~mask_low_byte
+            c_mask = mask_low_byte < 1 & ~mask_low_byte
         else:
             n_mask = mask_word_msb
             z_mask = mask_word
