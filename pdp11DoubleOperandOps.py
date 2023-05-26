@@ -62,49 +62,76 @@ class doubleOperandOps:
         """07 0R SS MUL 4-31
 
         (R, R+1) < (R, R+1) * (src)"""
-        #print(f'MUL unimplememnted')
-        result = register * source
-        return result, "****"
+        # C: set if the result < -2^15 or result >= 2^15-1
+        print(f'    MUL {register} * {source}')
+        a = self.reg.registers[register]
+        result = a * source
+        self.psw.setN('', result)
+        self.psw.setZ('', result)
+        self.psw.set_PSW(V=0)
+        self.psw.set_PSW(C=0) # **** this needs to be handled
+        return result
 
     def DIV(self, register, source):
         """07 1R SS DIV 4-32
 
         (R, R+1) < (R, R+1) / (src)"""
-        #print(f'DIV unimplemented')
-        # *** needs to get word from register and its neighbor
-        # *** needs to get word from source
-        result = register / source
-        return result, "****"
+        # The 32-bit two's complement integer in R andRvl is divided by the source operand.
+        # The quotient is left in R; the remain- der in Rvl.
+        # Division will be performed so that the remainder is of the same sign as the dividend.
+        # R must be even.
+        # N: set if quotient <0; cleared otherwise
+        # Z: set if quotient =0; cleared otherwise
+        # V: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
+        # C: set if divide 0 attempted; cleared otherwise
+        if source == 0:
+            V = 0
+            C = 0
+            self.psw.set_PSW(V=V, C=C)
+            return 0
+
+        R = self.reg.registers[register]
+        Rv1 = self.reg.registers[register+1]
+
+        numerator = (R << 16) + Rv1
+        quotient = numerator // source
+        remainder = numerator % source
+        self.reg.registers[register] = quotient
+        self.reg.registers[register + 1] = remainder
+        self.psw.setN('', quotient)
+        self.psw.setZ('', quotient)
+        self.psw.set_PSW(V=0, C=0)
+        return quotient
 
     def ASH(self, register, source):
         """07 2R SS ASH arithmetic shift 4-33
 
         R < R >> NN """
-        result = register >> source
-        return result, "****"
+        result = self.reg.registers[register] >> source
+        return result
 
     def ASHC(self, register, source):
         """07 3R SS ASHC arithmetic shift combined 4-34
 
         (R, R+1) < (R, R+1) >> N"""
         #print(f'ASHC unimplemented')
-        result = register >> source
-        return result, "****"
+        result = self.reg.registers[register] >> source
+        return result
 
     def XOR(self, register, source):
         """07 4R DD XOR 4-35
 
         (dst) < R ^ (dst)"""
-        result = register ^ source
-        return result, "****"
+        result = self.reg.registers[register] ^ source
+        return result
 
     def SOB(self, register, source):
         """07 7R NN SOB sutract one and branch 4-63
 
         R < R -1, then maybe branch"""
         #print(f'SOB unimplemented')
-        result = register * source
-        return result, "****"
+        result = self.reg.registers[register] * source
+        return result
 
     def is_double_operand_RSS(self, instruction):
         """Using instruction bit pattern, determine whether it's an RSS RDD RNN instruction"""
@@ -127,15 +154,13 @@ class doubleOperandOps:
         opcode = (instruction & 0o077000)
         register = (instruction & 0o000700) >> 6
         source = instruction & 0o000077
-        source_value = self.am.addressing_mode_get('', source)
 
         run = True
-        print(f'    {self.double_operand_RSS_instruction_names[name_opcode]} {oct(instruction)} double_operand_RSS '
-              f'r{register}={oct(self.reg[register])} {oct(source)}={oct(source_value)}')
-        result, code = self.double_operand_RSS_instructions[opcode](self, register, source_value)
+        print(f'    {self.double_operand_RSS_instruction_names[opcode]} {oct(instruction)} double_operand_RSS '
+              f'r{register}={oct(self.reg.registers[register])} {oct(source)}')
+        result = self.double_operand_RSS_instructions[opcode](register, source)
+        print(f'    result:{oct(result)}')
         self.reg.registers[register] = result
-        self.psw.set_condition_codes('W', result, code)
-
         return run
 
     # ****************************************************
@@ -236,9 +261,8 @@ class doubleOperandOps:
         ##print(f'    {oct(source)}={oct(source_value)} {oct(dest)}={oct(dest_value)}')
 
         run = True
-        result, code = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
+        result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
         self.am.addressing_mode_set(BW, dest, result)
-        self.psw.set_condition_codes(BW, result, code)
-        print(f'    result:{oct(result)}   NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}  PC:{oct(self.reg.get_pc())}')
+        print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
 
         return run
