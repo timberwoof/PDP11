@@ -142,94 +142,192 @@ class singleOperandOps:
     def JMP(self, instruction, dest, operand, B):
         """00 01 DD JMP jump 4-56"""
         self.reg.set_pc(operand, 'JMP')
-        return operand, "----" # not affected
+        return operand
 
     def SWAB(self, instruction, dest, operand, B):
         """00 03 DD Swap Bytes 4-17"""
+        # Exchanges high-order byte and low-order byte of the destina- tion word
+        # N: set if high-order bit of low-order byte (bit 7) of result is set; cleared otherwise
+        # Z: set if low-order byte of result = 0; cleared otherwise
+        # V: cleared
+        # C: cleared
         result = ((operand & 0xFF00) >> 8) + ((operand & 0x00FF) << 8)
-        return result, "**00" #
+        self.psw.setN("B", result & 0x00FF)
+        self.psw.setZ("B", result & 0x00FF)
+        self.psw.set_PSW(V=0, C=0)
+        return result
 
     def CLR(self, instruction, dest, operand, B):
         """00 50 DD Clear Destination"""
         result = 0o0
-        return result, "0100" #
+        self.psw.set_PSW(N=0, Z=1, V=0, C=0)
+        return result
 
     def COM(self, instruction, dest, operand, B):
         """00 51 DD Complement Destination"""
-        result = ~operand + 1
-        return result, "**01" #
+        # Replaces the contents of the destination address by their logical complement
+        # (each bit equal to 0 is set and each bit equal to 1 is cleared)
+        result = ~operand
+        self.psw.setN(B, result)
+        self.psw.setZ(B, result)
+        self.psw.set_PSW(V=0, C=1)
+        return result
 
     def INC(self, instruction, dest, operand, B):
         """00 52 DD Increment Destination"""
         result = operand + 1
-        return result, "***-" #
+        self.psw.setV(B, result)
+        self.psw.setN(B, result)
+        self.psw.setZ(B, result)
+        return result
 
     def DEC(self, instruction, dest, operand, B):
         """00 53 DD Decrement Destination"""
         result = operand - 1
-        return result, "***-" #
+        self.psw.setV(B, result)
+        self.psw.setN(B, result)
+        self.psw.setZ(B, result)
+        return result
 
     def NEG(self, instruction, dest, operand, B):
         """00 54 DD negate Destination"""
         result = -operand
-        return self.mask(result, B), "****" #
+        self.psw.setV(B, result)
+        self.psw.setN(B, result)
+        self.psw.setZ(B, result)
+        if result == 0:
+            C = 1
+        else:
+            C = 0
+        return self.mask(result, B)
 
     def ADC(self, instruction, dest, operand, B):
         """00 55 DD Add Carry"""
         result = dest + self.psw.C()
-        return self.mask(result, B), "****" # *** see 4-19
+        return self.mask(result, B)
 
     def SBC(self, instruction, dest, operand, B):
         """00 56 DD Subtract Carry"""
         result = dest - self.psw.C()
-        return self.mask(result, B), "****" # *** see 4-20
+        return self.mask(result, B)
 
     def TST(self, instruction, dest, operand, B):
         """00 57 DD Test Destination"""
-        return dest, "**00" #
+        self.psw.setN(B, dest)
+        self.psw.setZ(B, dest)
+        self.psw.set_PSW(V=0, C=0)
+        return dest
 
     def ROR(self, instruction, dest, operand, B):
         """00 60 DD ROR rotate right"""
-        result = operand >> 1
-        return result, "****" # **** see 4-15 for hoe to set status
+        # Rotates all bits of the destination right one place.
+        # Bit 0 is loaded into the C-bit and
+        # the previous contents of the C-bit are loaded into bit 15 of the destination.
+        # N: set if the high-order bit of the result is set (result < 0); cleared otherwise
+        # Z: set if all bits of result = 0; cleared otherwise
+        # V: loaded with the Exclusive OR of the N-bit and C-bit (as set by the completion of the rotate operation)
+        # C: loaded with the low-order bit of the destination
+        rotatebit = operand & 0o01
+        if B == "B":
+            bits = 8
+        else:
+            bits = 16
+        result = operand >> 1 + rotatebit << bits
+        N = self.psw.setN(B, result)
+        Z = self.psw.setZ(B, result)
+        C = result & 0o01
+        V = N ^ C
+        self.psw.set_PSW(N=N, Z=Z, V=V, C=C)
+        return self.mask(result, B)
 
     def ROL(self, instruction, dest, operand, B):
         """00 61 DD ROL rotate left"""
-        result = operand << 1
-        return result, "****" # **** see 4-16 for hoe to set status
+        # Rotate all bits of the destination left one place.
+        # Bit 15 is loaded into the C·bit of the status word and
+        # the previous contents of the C-bit are loaded into Bit 0 of the destination.
+        # N: set if the high-order bit of the result word is set
+        # (result < 0): cleared otherwise
+        # Z: set if all bits of the result word =0; cleared otherwise
+        # V: loaded with the Exclusive OR of the N-bit and C-bit (as set by the completion of the rotate operation)
+        # C: loaded with the high-order bit of the destination
+        if B == "B":
+            msb = mask_word_msb & operand
+            bits = 8
+        else:
+            msb = mask_byte_msb & operand
+            bits = 16
+        rotatebit = operand & msb
+        result = operand << 1 + rotatebit >> bits
+        N = self.psw.setN(B, result)
+        Z = self.psw.setZ(B, result)
+        C = result & msb >> bits
+        V = N ^ C
+        self.psw.set_PSW(N=N, Z=Z, V=V, C=C)
+        return self.mask(result, B)
 
     def ASR(self, instruction, dest, operand, B):
         """00 62 DD ASR arithmetic shift right"""
+        # Shifts all bits of the destination right one place. Bit 15 is replicated.
+        # N: set if the high-order bit of the result is set (result < 0); cleared otherwise
+        # Z: set if the result = 0; cleared otherwise
+        # V: loaded from the Exclusive OR of theN-bit and C-bit (as set by the completion of the shift operation)
+        # C: loaded from low-order bit of the destination
         if B == "B":
             msb = mask_word_msb & operand
         else:
             msb = mask_byte_msb & operand
         result = (operand >> 1) | msb
-        return result, "****" # **** see 4-13 for hoe to set status
+        N = self.psw.setN(B, result)
+        Z = self.psw.setZ(B, result)
+        C = result & 0o01
+        V = N ^ C
+        self.psw.set_PSW(N=N, Z=Z, V=V, C=C)
+        return result
 
     def ASL(self, instruction, dest, operand, B):
         """00 63 DD ASL arithmetic shift left"""
-        lsb = 0o1 & operand
-        result = (operand << 1) | lsb
-        return result, "****" # **** see 4-14 for hoe to set status
+        # Shifts all bits of the destination left one place. Bit 0 is loaded with an 0.
+        # N: set if high-order bit of the result is set (result < 0); cleared otherwise
+        # Z: set if the result =0; cleared otherwise
+        # V: loaded with the exclusive OR of the N-bit and C-bit (as set by the completion of the shift operation)
+        # C: loaded with the high-order bit of the destination
+        result = operand << 1
+        if B == "B":
+            msb = mask_word_msb & result
+            bits = 8
+        else:
+            msb = mask_byte_msb & result
+            bits = 16
+        N = self.psw.setN(B, result)
+        Z = self.psw.setZ(B, result)
+        C = result & msb >> bits
+        V = N ^ C
+        self.psw.set_PSW(N=N, Z=Z, V=V, C=C)
+        return result
 
     def SXT(self, instruction, dest, operand, B):
         """00 67 DD Sign Extend"""
-        if self.psw.N() == 1:
-            result = -1
+        # (dst)<- 0 if N bit is clear
+        # (dst)<- -1 N bit is set
+        # Z: set if N bit clear
+        if self.psw.N() == 0:
+            result = 0
+            Z = 1
         else:
             result = 1
-        return result, "-*--"
+            Z = self.psw.Z()
+        self.psw.set_PSW(Z=Z)
+        return result
 
     def MFPD(self, instruction, dest, operand, B):
         """10 65 SS Move from previous data space"""
-        #print(f'NOT IMPLEMENTED')
-        return operand, "****"
+        print(f'MFPD NOT IMPLEMENTED')
+        return operand
 
     def MTPD(self, instruction, dest, operand, B):
         """10 66 SS Move to previous data space"""
-        #print(f'NOT IMPLEMENTED')
-        return operand, "****"
+        print(f'MTPD NOT IMPLEMENTED')
+        return operand
 
     def is_single_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -278,8 +376,7 @@ class singleOperandOps:
                   f'{self.single_operand_instruction_texts[opcode]} '
                   f'{oct(instruction)} {oct(source_value)} '
                   f'single-operand instructon register:{oct(register)}  addressmode:{oct(addressmode)}')
-            result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
+            result = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
             self.am.addressing_mode_set(BW, source, result)
-            print(f'    source_value:{oct(source_value)}  result:{oct(result)}   codes:{codes}')
-            self.psw.set_condition_codes(BW, result, codes) # second parameter
+            print(f'    source_value:{oct(source_value)}  result:{oct(result)}')
             return run

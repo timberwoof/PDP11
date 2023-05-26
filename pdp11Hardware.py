@@ -177,8 +177,8 @@ class registers:
 
     def set(self, register, value):
         """set a single register
-        :param register:
-        :param value:
+        :param register: integer 0-7
+        :param value: integer
         """
         #print(f'    set R{register}<-{oct(value)}')
         self.registers[register & self.registermask] = value & mask_word
@@ -299,56 +299,56 @@ class psw:
             self.PSW = (self.PSW & ~self.C_mask) | C
         self.ram.write_word(self.ram.PSW_address, self.PSW)
 
-    def set_condition_codes(self, B, value, pattern):
-        """set condition codes based on value and pattern
+    def setN(self, B, value):
+        """set condition code N based on the msb negative bit
 
         :param B: "B" or "" for Byte or Word
         :param value: value to test
-        :param pattern: string matching DEC specification like --*1
-
-        pattern looks like the Status Word Condition Codes in the DEC manual.
-        Positionally NZVC for Negative, Zero, Overflor, Carry.
-        * = conditionally set; - = not affected; 0 = cleared; 1 = set.
-        Example: "**0-"
         """
-        print(f'    set_condition_codes({B}, {oct(value)}, {pattern})')
-
-        # set up some masks based on whether this is for Word or Byte
         if B == 'B':
             n_mask = mask_byte_msb
-            z_mask = mask_low_byte
-            v_mask = mask_low_byte < 1 & ~mask_low_byte
-            c_mask = mask_low_byte < 1 & ~mask_low_byte
         else:
             n_mask = mask_word_msb
-            z_mask = mask_word
-            v_mask = mask_word < 1 & ~mask_word
-            c_mask = mask_word < 1 & ~mask_word  # *** I dion't know how to test for this
+        if value & n_mask == n_mask:
+            N = 1
+        else:
+            N = 0
+        self.set_PSW(N=N)
+        return N
 
-        codition_code_masks = [n_mask, z_mask, v_mask, c_mask]
-        condition_codes = [0,0,0,0]
-        # check each of the 4 characters
-        for i in range(0,4):
-            code = pattern[i]
-            the_mask = codition_code_masks[i]
-            # check for explicit setting
-            if code == "0" or code == "1":
-                condition_codes[i] = int(code)
-            # check for conditional value
-            elif code == "*":
-                if (value & the_mask) == the_mask:
-                    condition_codes[i] = 1
-                else:
-                    condition_codes[i] = 0
-            # check for unaffected value
-            elif code == "-":
-                value = self.PSW & the_mask
-                if value > 0:
-                    condition_codes[i] = 1
-                else:
-                    condition_codes[i] = 0
-        # Put the codes into the PSW
-        self.set_PSW(N=condition_codes[0], Z=condition_codes[1], V=condition_codes[2], C=condition_codes[3])
+    def setZ(self, B, value):
+        """set condition code Z based on the value
+
+        :param B: "B" or "" for Byte or Word
+        :param value: value to test
+        """
+        if B == 'B':
+            z_mask = mask_low_byte
+        else:
+            z_mask = mask_word
+        if value & z_mask == 0:
+            Z = 1
+        else:
+            Z = 0
+        self.set_PSW(Z=Z)
+        return Z
+
+    def setV(self, B, value):
+        """set condition code V based on the value
+        :param B: "B" or "" for Byte or Word
+        :param value: value to test
+        """
+        if B == 'B':
+            v_mask = mask_word_msb << 1
+        else:
+            v_mask = mask_byte_msb << 1
+        if value & v_mask == v_mask:
+            V = 1
+        else:
+            V = 0
+        self.set_PSW(V=V)
+        return V
+
 
     def N(self):
         """negative status bit of PSW"""
@@ -365,6 +365,9 @@ class psw:
     def C(self):
         """carry status bit of PSW"""
         return (self.PSW & self.C_mask)
+
+    def NZVC(self):
+        return (f'{self.N()}{self.Z()}{self.V()}{self.C()}')
 
     def addb(self, b1, b2):
         """add byte, limit to 8 bits, set PSW"""
@@ -486,34 +489,34 @@ class addressModes:
             increment = 2
 
         if addressmode == 0:
-            print(f'    S mode 0 Register: R{register}: register contains operand')
+            #print(f'    S mode 0 Register: R{register}: register contains operand')
             operand = self.reg.get(register)
             print(f'    S mode 0 R{register} = operand:{oct(operand)}')
         elif addressmode == 1:
-            print(f'    S mode 1 Register Deferred: (R{register}): register contains address of operand')
+            #print(f'    S mode 1 Register Deferred: (R{register}): register contains address of operand')
             address = self.reg.get(register)
             operand = ram_read(address)
             print(f'    S mode 1 @{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 2:
-            print(f'    S mode 2 Autoincrement: (R{register})+: register contains address of operand then incremented')
+            #print(f'    S mode 2 Autoincrement: (R{register})+: register contains address of operand then incremented')
             address = self.reg.get(register)
             operand = ram_read(address)
             self.reg.set(register, self.reg.get(register) + increment)
             print(f'    S mode 2 R{register}={oct(address)} = operand:{oct(operand)}')
         elif addressmode == 3:  # autoincrement deferred
-            print(f'    S mode 3 Autoincrement Deferred: @(R{register})+: register contains address of address of operand, then incremented')
+            #print(f'    S mode 3 Autoincrement Deferred: @(R{register})+: register contains address of address of operand, then incremented')
             address = self.reg.get(register)
             operand = ram_read(address)
             self.reg.set(register, self.reg.get(register) + increment)
             print(f'    S mode 3 @{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 4:  # autodecrement direct
-            print(f'    S mode 4 Autodecrement: -(R{register}): register is decremented, then contains address of operand')
+            #print(f'    S mode 4 Autodecrement: -(R{register}): register is decremented, then contains address of operand')
             self.reg.set(register, self.reg.get(register) - increment)
             address = self.reg.get(register)
             operand = ram_read(address)
             print(f'    S mode 4 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 5:  # autodecrement deferred
-            print(f'    S mode 5 Autodecrement Deferred: @-(R{register}): register is decremented, then contains address of address of operand')
+            #print(f'    S mode 5 Autodecrement Deferred: @-(R{register}): register is decremented, then contains address of address of operand')
             self.reg.set(register, self.reg.get(register) - 2)
             pointer = self.reg.get(register)
             address = ram_read(pointer)
@@ -522,18 +525,18 @@ class addressModes:
         elif addressmode == 6: # index
             X = self.ram.read_word(self.reg.get_pc())
             self.reg.set_pc(self.reg.get_pc() + 2, "address mode 6")
-            print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
+            #print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
             address = self.add_word(self.reg.get(register), X)
-            print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
+            #print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
             print(f'    S mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc())
             self.reg.set_pc(self.reg.get_pc() + 2, "address mode 7")
-            print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
+            #print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
             pointer = self.add_word(self.reg.get(register), X)
             address = ram_read(pointer)
-            print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
+            #print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
@@ -646,12 +649,10 @@ class addressModes:
             B: 'B' or ''
             mode_register: SS or DD
         """
-        print(f'    D addressing_mode_set("{B}", '
-              f'mode_register:{oct(mode_register)}, result:{oct(result)})')
 
         addressmode = (mode_register & 0o70) >> 3
         register = mode_register & 0o07
-        print(f'    D addressing_mode_set {B} mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
+        print(f'    D addressing_mode_set "{B}" mode:{oct(addressmode)} reg:{register} result:{oct(result)}')
 
         if B == 'B':
             ram_read = self.ram.read_byte
@@ -665,35 +666,35 @@ class addressModes:
             increment = 2
 
         if addressmode == 0:  # register direct
-            print(f'    D mode 0 register: R{register}: register contains operand')
+            #print(f'    D mode 0 register: R{register}: register contains operand')
             self.reg.set(register, result)
             print(f'    D mode 0 R{register} = operand:{oct(result)}')
         if addressmode == 1:  # register deferred
-            print(f'    D mode 1 register deferred: (R{register}): register contains address of operand')
+            #print(f'    D mode 1 register deferred: (R{register}): register contains address of operand')
             address = self.reg.get(register)
             ram_write(address, result)
             print(f'    D mode 1 @{oct(address)} = operand:{oct(result)}')
         elif addressmode == 2:  # autoincrement direct - R has address, then increment
-            print(f'    D mode 2 autoincrement: (R{register})+: register contains address of operand then incremented')
+            #print(f'    D mode 2 autoincrement: (R{register})+: register contains address of operand then incremented')
             address = self.reg.get(register)
             self.reg.set(register, self.reg.get(register) + increment)
             ram_write(address, result)
             print(f'    D mode 2 R{register}={oct(address)} = operand:{oct(result)}')
         elif addressmode == 3:  # autoincrement deferred - R has handle, then increment
-            print(f'    D mode 3 autoincrement deferred: @(R{register})+: register contains address of address of operand, then incremented')
+            #print(f'    D mode 3 autoincrement deferred: @(R{register})+: register contains address of address of operand, then incremented')
             pointer = self.reg.get(register)
             self.reg.set(register, self.reg.get(register)+2)
             address = self.ram.read_word(pointer)
             ram_write(address, result)
             print(f'    D mode 3 @{oct(address)} = operand:{oct(result)}')
         elif addressmode == 4:  # autodecrement direct - decrement, then R has address
-            print(f'    D mode 4 autodecrement: -(R{register}): register is decremented, then contains address of operand')
+            #print(f'    D mode 4 autodecrement: -(R{register}): register is decremented, then contains address of operand')
             self.reg.set(register, self.reg.get(register) - increment)
             address = self.reg.get(register)
             ram_write(address, result)
             print(f'    D mode 4 R{register}=@{oct(address)} = operand:{oct(result)}')
         elif addressmode == 5:  # autodecrement deferred - decrement, then R has handle
-            print(f'    D mode 5 autodecrement deferred: @-(R{register}): register is decremented, then contains address of address of operand')
+            #print(f'    D mode 5 autodecrement deferred: @-(R{register}): register is decremented, then contains address of address of operand')
             self.reg.set(register, self.reg.get(register)-2)
             pointer = self.reg.get(register)
             address = self.ram.read_word(pointer)
@@ -708,7 +709,7 @@ class addressModes:
             ram_write(operand, result)
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc()+2)
-            print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
+            #print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
             pointer = self.add_word(self.reg.get(register), X)
             address = self.ram.read_word(pointer)
             ram_write(address, result)
