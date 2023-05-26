@@ -1,10 +1,10 @@
 """pdp11other - other instructions"""
 
-from pdp11psw import psw
-from pdp11ram import ram
-from pdp11reg import reg
-from pdp11AddressMode import am
-from pdp11Stack import stack
+from pdp11Hardware import ram
+from pdp11Hardware import registers as reg
+from pdp11Hardware import psw
+from pdp11Hardware import addressModes as am
+from pdp11Hardware import stack
 
 # masks for accessing words and bytes
 mask_byte = 0o000377
@@ -12,13 +12,13 @@ mask_word = 0o177777
 mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 
-class other:
-    def __init__(self, psw, ram, reg):
-        print('initializing pdp11other')
+class otherOps:
+    def __init__(self, psw, ram, reg, am ):
+        #print('initializing otherOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
-        self.am = am(psw, ram, reg)
+        self.am = am
 
 
     # ****************************************************
@@ -33,7 +33,7 @@ class other:
         """
         R = instruction & 0o000700 >> 6
         DD = instructuion & 0o000077
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} JSR r{R} {oct(DD)}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
         tmp = DD
         self.stack.push(self.reg.get(R))
         self.reg.set(self.reg.get_pc())
@@ -46,27 +46,27 @@ class other:
         | reg <- (SP)^
         """
         R = instruction & 0o000007
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
         self.reg.set_pc(self.reg.get(R), "RTS")
         reg.set(R, self.stack.pop())
 
     def MARK(instruction):
         """00 64 NN mark 46-1"""
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MARK unimplemented')
+        print(f'    MARK {oct(instruction)} unimplemented')
 
     def MFPI(instruction):
         """00 65 SS move from previous instruction space 4-77"""
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MFPI unimplemented')
+        print(f'    MFPI {oct(instruction)} unimplemented')
 
     def MTPI(instruction, dest, operand):
         """00 66 DD move to previous instruction space 4-78"""
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} MTPI unimplemented')
+        print(f'    MTPI {oct(instruction)} unimplemented')
 
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} other_opcode')
-        result = True
+        print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
         if instruction & 0o177000 == 0o002000:
             self.RTS(instruction)
         elif instruction & 0o177000 == 0o004000:
@@ -78,7 +78,7 @@ class other:
         elif instruction & 0o177700 == 0o006600:
             self.MTPI(instruction)
         else:
-            print(f'{oct(instruction)} is an unknown instruction')
+            #print(f'{oct(instruction)} is an unknown instruction')
             self.reg.set_pc(0o0, "other_opcode")
-            result = False
-        return result
+            return False
+        return True

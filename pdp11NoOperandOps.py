@@ -1,13 +1,13 @@
-"""pdp11NoOperand.py - no-operand instructions 00 00 00 through 00 00 06"""
+"""pdp11NoOperandOps.py - no-operand instructions 00 00 00 through 00 00 06"""
 
-from pdp11psw import psw
-from pdp11ram import ram
-from pdp11reg import reg
-from pdp11Stack import stack
+from pdp11Hardware import ram
+from pdp11Hardware import registers as reg
+from pdp11Hardware import psw
+from pdp11Hardware import stack
 
-class noopr:
+class noOperandOps:
     def __init__(self, psw, ram, reg, stack):
-        print('initializing pdp11noopr')
+        #print('initializing noOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -39,7 +39,7 @@ class noopr:
 
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
-        print(f'WAIT unimplemented')
+        #print(f'WAIT unimplemented')
         return False
 
     def RTI(self, instruction):
@@ -52,7 +52,7 @@ class noopr:
 
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
-        print(f'BPT unimplemented')
+        #print(f'BPT unimplemented')
         return False
 
     def IOT(self, instruction):
@@ -80,7 +80,7 @@ class noopr:
         """00 00 06 RTT return from interrupt 4-70"""
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop())
-        self.psw.set_condition_codes(self.reg.get_sp(), '', "***")
+        self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
         return True
 
     def NOP(self, instruction):
@@ -94,7 +94,7 @@ class noopr:
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
-        print(f'{oct(self.reg.get_pc()-2)} {oct(instruction)} {self.no_operand_instruction_namess[instruction]}')
+        print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
         result = True
         result = self.no_operand_instructions[instruction](instruction)
         return result
