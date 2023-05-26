@@ -1,16 +1,22 @@
 """pdp11SingleOperandOps.py single oprand instructions"""
 
-from pdp11Hardware import ram
-from pdp11Hardware import registers as reg
-from pdp11Hardware import psw
-from pdp11Hardware import addressModes as am
-
 """self.single_operand_instructions
     :param instruction: opcode
     :param dest: address
     :param operand: operand
     :param B: 'B' for byte instruction, '' for word
 """
+
+from pdp11Hardware import ram
+from pdp11Hardware import registers as reg
+from pdp11Hardware import psw
+from pdp11Hardware import addressModes as am
+
+mask_word = 0o177777
+mask_word_msb = 0o100000
+mask_byte_msb = 0o000200
+mask_low_byte = 0o000377
+mask_high_byte = 0o177400
 
 class singleOperandOps:
     def __init__(self, psw, ram, reg, am):
@@ -93,78 +99,127 @@ class singleOperandOps:
         self.single_operand_instruction_names[0o106500] = "MFPD"
         self.single_operand_instruction_names[0o106600] = "MTPD"
 
+        self.single_operand_instruction_texts = {}
+        self.single_operand_instruction_texts[0o000100] = "jump"
+        self.single_operand_instruction_texts[0o000300] = "swap bytes"
+        self.single_operand_instruction_texts[0o005000] = "clear destination"
+        self.single_operand_instruction_texts[0o005100] = "complement"
+        self.single_operand_instruction_texts[0o005200] = "increment"
+        self.single_operand_instruction_texts[0o005300] = "decrement"
+        self.single_operand_instruction_texts[0o005400] = "negative"
+        self.single_operand_instruction_texts[0o005500] = "add carry"
+        self.single_operand_instruction_texts[0o005600] = "subtract carry"
+        self.single_operand_instruction_texts[0o005700] = "test"
+        self.single_operand_instruction_texts[0o006000] = "rotate right"
+        self.single_operand_instruction_texts[0o006100] = "rotate left"
+        self.single_operand_instruction_texts[0o006200] = "arithmetic shift right"
+        self.single_operand_instruction_texts[0o006300] = "srithmetic shift left"
+        # self.single_operand_instruction_texts[0o006400] = "subroutine cleanup"
+        # self.single_operand_instruction_texts[0o006500] = "move from previous instruction space"
+        # self.single_operand_instruction_texts[0o006600] = "move to previous instruction space"
+        self.single_operand_instruction_texts[0o006700] = "sign extend"
+        self.single_operand_instruction_texts[0o105000] = "clear destination byte"
+        self.single_operand_instruction_texts[0o105100] = "complement byte"
+        self.single_operand_instruction_texts[0o105200] = "increment byte"
+        self.single_operand_instruction_texts[0o105300] = "decrement byte"
+        self.single_operand_instruction_texts[0o105400] = "negative byte"
+        self.single_operand_instruction_texts[0o105500] = "add carry byte"
+        self.single_operand_instruction_texts[0o105600] = "subtract carry byte"
+        self.single_operand_instruction_texts[0o105700] = "test byte"
+        self.single_operand_instruction_texts[0o106000] = "rotate right byte"
+        self.single_operand_instruction_texts[0o106100] = "rotate left byte"
+        self.single_operand_instruction_texts[0o106200] = "arithmetic shift right byte"
+        self.single_operand_instruction_texts[0o106300] = "arithmetic shift left byte"
+        self.single_operand_instruction_texts[0o106500] = "move from previous data space"
+        self.single_operand_instruction_texts[0o106600] = "move to previous data space"
+
+    def mask(self, value, B):
+        if B == "B":
+            return value & mask_byte
+        else:
+            return value & mask_word
+
     def JMP(self, instruction, dest, operand, B):
         """00 01 DD JMP jump 4-56"""
         self.reg.set_pc(operand, 'JMP')
-        return operand, "----"
+        return operand, "----" # not affected
 
     def SWAB(self, instruction, dest, operand, B):
         """00 03 DD Swap Bytes 4-17"""
         result = ((operand & 0xFF00) >> 8) + ((operand & 0x00FF) << 8)
-        return result, "**00"
+        return result, "**00" #
 
     def CLR(self, instruction, dest, operand, B):
         """00 50 DD Clear Destination"""
         result = 0o0
-        return result, "0000"
+        return result, "0100" #
 
     def COM(self, instruction, dest, operand, B):
         """00 51 DD Complement Destination"""
-        result = ~operand
-        return result, "**01"
+        result = ~operand + 1
+        return result, "**01" #
 
     def INC(self, instruction, dest, operand, B):
         """00 52 DD Increment Destination"""
         result = operand + 1
-        return result, "***-"
+        return result, "***-" #
 
     def DEC(self, instruction, dest, operand, B):
         """00 53 DD Decrement Destination"""
         result = operand - 1
-        return result, "***-"
+        return result, "***-" #
 
     def NEG(self, instruction, dest, operand, B):
         """00 54 DD negate Destination"""
         result = -operand
-        return result, "****"
+        return self.mask(result, B), "****" #
 
     def ADC(self, instruction, dest, operand, B):
         """00 55 DD Add Carry"""
         result = dest + self.psw.C()
-        return result, "****"
+        return self.mask(result, B), "****" # *** see 4-19
 
     def SBC(self, instruction, dest, operand, B):
         """00 56 DD Subtract Carry"""
-        result = dest - operand
-        return result, "****"
+        result = dest - self.psw.C()
+        return self.mask(result, B), "****" # *** see 4-20
 
     def TST(self, instruction, dest, operand, B):
         """00 57 DD Test Destination"""
-        return dest, "**00"
+        return dest, "**00" #
 
     def ROR(self, instruction, dest, operand, B):
         """00 60 DD ROR rotate right"""
         result = operand >> 1
-        return result, "****"
+        return result, "****" # **** see 4-15 for hoe to set status
 
     def ROL(self, instruction, dest, operand, B):
         """00 61 DD ROL rotate left"""
         result = operand << 1
-        return result, "****"
+        return result, "****" # **** see 4-16 for hoe to set status
 
     def ASR(self, instruction, dest, operand, B):
         """00 62 DD ASR arithmetic shift right"""
-        result = operand >> 1
-        return result, "****"
+        if B == "B":
+            msb = mask_word_msb & operand
+        else:
+            msb = mask_byte_msb & operand
+        result = (operand >> 1) | msb
+        return result, "****" # **** see 4-13 for hoe to set status
 
     def ASL(self, instruction, dest, operand, B):
         """00 63 DD ASL arithmetic shift left"""
-        result = operand << 1
-        return result, "****"
+        lsb = 0o1 & operand
+        result = (operand << 1) | lsb
+        return result, "****" # **** see 4-14 for hoe to set status
 
     def SXT(self, instruction, dest, operand, B):
         """00 67 DD Sign Extend"""
-        return result, "****"
+        if self.psw.N() == 1:
+            result = -1
+        else:
+            result = 1
+        return result, "-*--"
 
     def MFPD(self, instruction, dest, operand, B):
         """10 65 SS Move from previous data space"""
@@ -219,10 +274,12 @@ class singleOperandOps:
         else:
             source_value = self.am.addressing_mode_get(BW, source)
             run = True
-            print(f'    {self.single_operand_instruction_names[opcode]} {oct(source_value)}'
-                  f'{oct(instruction)} single-operand instructon register:{oct(register)}  addressmode:{oct(addressmode)}')
+            print(f'    {self.single_operand_instruction_names[opcode]} '
+                  f'{self.single_operand_instruction_texts[opcode]} '
+                  f'{oct(instruction)} {oct(source_value)} '
+                  f'single-operand instructon register:{oct(register)}  addressmode:{oct(addressmode)}')
             result, codes = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
-            source_value = self.am.addressing_mode_set(BW, source, result)
-            print(f'    source_value:{source_value}  result:{result}   codes:{codes}')
+            self.am.addressing_mode_set(BW, source, result)
+            print(f'    source_value:{oct(source_value)}  result:{oct(result)}   codes:{codes}')
             self.psw.set_condition_codes(BW, result, codes) # second parameter
             return run

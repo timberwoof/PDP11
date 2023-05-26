@@ -645,7 +645,6 @@ class addressModes:
         Parameters:
             B: 'B' or ''
             mode_register: SS or DD
-            result: what to store there
         """
         print(f'    D addressing_mode_set("{B}", '
               f'mode_register:{oct(mode_register)}, result:{oct(result)})')
