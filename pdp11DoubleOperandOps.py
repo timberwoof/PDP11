@@ -236,7 +236,7 @@ class doubleOperandOps:
         (dst) < (src)"""
         result = source
         #print(f'    source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
-        return result, "**0-"
+        return result #, "**0-"
 
     def CMP(self, BW, source, dest):
         """compare 4-24
@@ -246,9 +246,8 @@ class doubleOperandOps:
         # but don't change the destination
         result = source - dest
         ##print(f'    CMP source:{source} dest:{dest} result:{result}')
-        self.psw.set_condition_codes(BW, result, "****")
         ##print(f'    CMP NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}')
-        return dest, "----"
+        return dest #, "----"
 
     def BIT(self, BW, source, dest):
         """bit test 4-28
@@ -259,20 +258,20 @@ class doubleOperandOps:
         # The contents of the source are unaffected.
         result = source & dest
         print(f'    BIT source:{source} dest:{dest} result:{result}')
-        return result, "**0-"
+        return result #, "**0-"
 
     def BIC(self, BW, source, dest):
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
         result = ~source & dest
-        return result, "**0-"
+        return result #, "**0-"
 
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) v (dst)"""
         result = source | dest
-        return result, "**0-"
+        return result #, "**0-"
 
     def ADDSUB(self, BW, source, dest):
         """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
@@ -282,7 +281,7 @@ class doubleOperandOps:
             result = source + dest
         else:
             result = abs(source + ~dest + 1)
-        return result, "****"
+        return result #, "****"
 
     def is_double_operand_SSDD(self, instruction):
         """Using instruction bit pattern, determine whether it's a souble operand instruction"""
