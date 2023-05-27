@@ -5,6 +5,12 @@ from pdp11Hardware import registers as reg
 from pdp11Hardware import psw
 from pdp11Hardware import addressModes as am
 
+mask_word = 0o177777
+mask_word_msb = 0o100000
+mask_byte_msb = 0o000200
+mask_low_byte = 0o000377
+mask_high_byte = 0o177400
+
 class doubleOperandOps:
     def __init__(self, psw, ram, reg, am):
         #print('initializing doubleOperandOps')
@@ -107,29 +113,84 @@ class doubleOperandOps:
         """07 2R SS ASH arithmetic shift 4-33
 
         R < R >> NN """
-        result = self.reg.registers[register] >> source
+        # The contents of the register are shifted right or left
+        # the number of times specified by the shift count.
+        # The shift count is taken as the low order 6 bits of the source operand.
+        # This number ranges from -32 to + 31.
+        # Negative is a a right shift and positive is a left shift.
+        #
+        # N: set if result <0; cleared otherwise
+        # Z: set if result ..0; cleared otherwise
+        # V: set if sign of register changed during shift; cleared other- wise
+        # C: loaded from last bit shifted out of register
+        register_sign = register & 0o100000
+        shifts = source & 0o037
+        shift_sign = source & 0o040
+        if shift_sign == 0:
+            result = self.reg.registers[register] << shifts
+        else:
+            result = self.reg.registers[register] >> (shifts+1)
+        self.psw.setN('', result)
+        self.psw.setZ('', result)
+        result_sign = result & 0o100000
+        if result_sign != register_sign:
+            V = 1
+        else:
+            V = 0
+        # *** need to calculate Carry status
+        self.psw.set_PSW(V=V, C=0)
         return result
 
     def ASHC(self, register, source):
         """07 3R SS ASHC arithmetic shift combined 4-34
 
         (R, R+1) < (R, R+1) >> N"""
-        #print(f'ASHC unimplemented')
+        # The contents of the register and the register ORed with
+        # one are treated as one 32 bit word, R + 1 (bits 0-15)
+        # and R (bits 16-31) are shifted right or left the number
+        # of times specified by the shift count The shift count
+        # is taken as the low order 6 bits of the source operand.
+        # This number ranges from -32 to +31. Negative is a right
+        # shift and positive is a left shift When the register
+        # chosen is an odd number the register and the register
+        # OR'ed with one are the same. In this case the right shift
+        # becomes a rotate (for up to a shift of 16). The 16 bit
+        # word is rotated right the number of bits specified by
+        # the shift count
+
+        # N: set if result <0; cleared otherwise
+        # Z: set if result =0; cleared otherwise
+        # V: set if sign bit changes during the shift; cleared otherwise
+        # C: loaded with high order bit when left Shift;
+        #    loaded with low order bit when right shift
+        #    (loaded with the last bit shifted out of the 32-bit operand)
+
         result = self.reg.registers[register] >> source
+        self.psw.setN('', result)
+        self.psw.setZ('', result)
         return result
 
     def XOR(self, register, source):
         """07 4R DD XOR 4-35
 
         (dst) < R ^ (dst)"""
+        # The exclusive OR of the register and destination operand
+        # is stored in the destination address. Contents of register
+        # are unaffected. Assembler format is: XOR R.D
+        # N: set if the result <0: cleared otherwise
+        # Z set if result = 0: cleared otherwise
+        # V: cleared
+        # C: unaffected
         result = self.reg.registers[register] ^ source
+        self.psw.setN('', result)
+        self.psw.setZ('', result)
         return result
 
     def SOB(self, register, source):
         """07 7R NN SOB sutract one and branch 4-63
 
         R < R -1, then maybe branch"""
-        #print(f'SOB unimplemented')
+        print(f'SOB unimplemented')
         result = self.reg.registers[register] * source
         return result
 
