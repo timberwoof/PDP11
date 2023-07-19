@@ -87,12 +87,18 @@ class branchOps:
 
     def BNE(self, instruction, offset):
         """00 10 XXX branch if not equal Z=0"""
+        # Tests the state of the Z-bit and causes a branch if the Z-bit is clear.
+        print (f"    BNE Z:{self.psw.Z()}")
         if self.psw.Z() == 0:
+            print (f'    BNE branch')
             self.reg.set_pc_2x_offset(offset, "BNE")
+        else:
+            print (f'    BNE no branch')
         return True
 
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
+        # Tests the state of the Z-bit and causes a branch if Z is set
         if self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
