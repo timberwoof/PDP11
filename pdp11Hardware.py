@@ -166,7 +166,7 @@ class ram:
         :param address:
         :param data:
         """
-        print(f'    write_word({oct(address)}, {oct(data)})')
+        #print(f'    write_word({oct(address)}, {oct(data)})')
         if address in self.iomap_writers.keys():
             self.iomap_writers[address](data)
         else:
@@ -286,34 +286,34 @@ class psw:
         :param PSW:
         :return:
         """
-        print(f'set_PSW(mode={mode}, priority={priority}, trap={trap}, N={N}, Z={Z}, V={V}, C={C}, PSW={PSW})')
-        print(f'set_PSW self.PSW:{self.PSW}')
+        #print(f'set_PSW(mode={mode}, priority={priority}, trap={trap}, N={N}, Z={Z}, V={V}, C={C}, PSW={PSW})')
+        #print(f'set_PSW self.PSW:{self.PSW}')
         if PSW > -1:
             self.PSW = PSW
-            print (f'set_PSW PSW self.PSW:{self.PSW}')
+            #print (f'set_PSW PSW self.PSW:{self.PSW}')
         if mode > -1:
             oldmode = (self.PSW & self.mode_mask)
             self.PSW = (self.PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
-            print(f'set_PSW mode self.PSW:{self.PSW}')
+            #print(f'set_PSW mode self.PSW:{self.PSW}')
         if priority > -1:
             self.PSW = (self.PSW & ~self.priority_mask) | (priority << 5)
-            print(f'set_PSW priority self.PSW:{self.PSW}')
+            #print(f'set_PSW priority self.PSW:{self.PSW}')
         if trap > -1:
             self.PSW = (self.PSW & ~self.trap_mask) | (trap << 4)
-            print(f'set_PSW trap self.PSW:{self.PSW}')
+            #print(f'set_PSW trap self.PSW:{self.PSW}')
         if N > -1:
             self.PSW = (self.PSW & ~self.N_mask) | (N << 3)
-            print(f'set_PSW N self.PSW:{self.PSW}')
+            #print(f'set_PSW N self.PSW:{self.PSW}')
         if Z > -1:
             self.PSW = (self.PSW & ~self.Z_mask) | (Z << 2)
-            print(f'set_PSW Z self.PSW:{self.PSW}')
+            #print(f'set_PSW Z self.PSW:{self.PSW}')
         if V > -1:
             self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
-            print(f'set_PSW V self.PSW:{self.PSW}')
+            #print(f'set_PSW V self.PSW:{self.PSW}')
         if C > -1:
             self.PSW = (self.PSW & ~self.C_mask) | C
-            print(f'set_PSW C self.PSW:{self.PSW}')
-        print(f'set_PSW will write {oct(self.PSW)} to {oct(self.PSW_address)}')
+            #print(f'set_PSW C self.PSW:{self.PSW}')
+        #print(f'set_PSW will write {oct(self.PSW)} to {oct(self.PSW_address)}')
         self.ram.write_word(self.PSW_address, self.PSW)
 
     def setN(self, B, value):
@@ -550,7 +550,7 @@ class addressModes:
             address = self.add_word(self.reg.get(register), X)
             #print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
-            reg.self.PC_increment = reg.self.PC_increment + increment
+            self.reg.PC_increment = self.reg.PC_increment + increment
             print(f'    S mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc())
@@ -559,7 +559,7 @@ class addressModes:
             address = ram_read(pointer)
             #print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
-            reg.self.PC_increment = reg.self.PC_increment + increment
+            self.reg.PC_increment = self.reg.PC_increment + increment
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
         print(f'    addressing_mode_get returns operand:{operand}')

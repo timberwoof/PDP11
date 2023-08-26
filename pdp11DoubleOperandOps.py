@@ -317,7 +317,7 @@ class doubleOperandOps:
         # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
-        reg.self.PC_increment = 0
+        self.reg.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
             BW = 'B'
         else:
@@ -335,7 +335,7 @@ class doubleOperandOps:
         run = True
         result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
         self.am.addressing_mode_set(BW, dest, result)
-        self.reg.inc_pc(operand, 2+self.reg.PC_increment, self.single_operand_instruction_names[opcode])
+        self.reg.inc_pc(2+self.reg.PC_increment, self.double_operand_SSDD_instruction_names[opcode])
         print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
 
         return run

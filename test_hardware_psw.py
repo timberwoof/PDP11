@@ -24,7 +24,7 @@ class TestClass():
     am = am(reg, ram, psw)
 
     def test_psw_address(self):
-        assert psw.PSW_address == ram.top_of_memory - 1
+        assert self.psw.PSW_address == ram.top_of_memory - 1
 
     def test_psw_set(self):
         test_value = 0o123236

@@ -68,10 +68,10 @@ class noOperandOps:
         # Used to call the 1/0 Executive routine lOX in the paper tape software system,
         # and for error reporting in the Disk Oper- ating System.
 
-        self.stack.push(self.ram.get_PSW()) # this shows that get-PSW should be in reg
+        self.stack.push(self.psw.PSW)
         self.stack.push(self.reg.get_pc())
-        self.reg.set_pc(o20)
-        self.reg.set_ps(o22)
+        self.reg.set_pc(0o20)
+        self.reg.set_sp(0o22)
         return True
 
     def RESET(self, instruction):

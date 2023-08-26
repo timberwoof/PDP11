@@ -17,7 +17,7 @@ class pdp11():
         print('initializing pdp11')
         self.reg = reg()
         self.ram = ram()
-        self.psw = psw(ram)
+        self.psw = psw(self.ram)
         self.br = br(self.reg, self.ram, self.psw)
         self.stack = stack(self.reg, self.ram, self.psw)
         self.nopr = nopr(self.reg, self.ram, self.psw, self.stack)
@@ -54,7 +54,7 @@ class pdp11():
         run = True
 
         if self.br.is_branch(instruction):
-            br.do_branch(instruction)
+            self.br.do_branch(instruction)
 
         elif self.nopr.is_no_operand(instruction):
             run = self.nopr.do_no_operand(instruction)
