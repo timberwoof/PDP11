@@ -7,8 +7,8 @@
     :param B: 'B' for byte instruction, '' for word
 """
 
-from pdp11Hardware import ram
 from pdp11Hardware import registers as reg
+from pdp11Hardware import ram
 from pdp11Hardware import psw
 from pdp11Hardware import addressModes as am
 
@@ -19,11 +19,11 @@ mask_low_byte = 0o000377
 mask_high_byte = 0o177400
 
 class singleOperandOps:
-    def __init__(self, psw, ram, reg, am):
+    def __init__(self, reg, ram, psw, am):
         print('initializing singleOperandOps')
-        self.psw = psw
-        self.ram = ram
         self.reg = reg
+        self.ram = ram
+        self.psw = psw
         self.am = am
 
         # ****************************************************

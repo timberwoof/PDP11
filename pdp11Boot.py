@@ -1,13 +1,13 @@
 """PDP11 bootstrap utilities"""
 
-from pdp11Hardware import ram
 from pdp11Hardware import registers as reg
+from pdp11Hardware import ram
 
 class boot:
-    def __init__(self, ram, reg):
-        #print('initializing pdp11Boot')
-        self.ram = ram
+    def __init__(self, reg, ram):
+        print('initializing pdp11Boot')
         self.reg = reg
+        self.ram = ram
 
     # from pdp-11/40 book
     bootstrap_loader = [0o016701, # MOV 0o67:0o0 0o1:0o0
@@ -91,7 +91,7 @@ class boot:
         :param file: path to file
         :return: address specified in the file
         """
-        print (f'read_PDP11_assembly_file "{file}"')
+        #print (f'read_PDP11_assembly_file "{file}"')
         base = 0
         text = open(file, 'r')
         for line in text:
@@ -126,4 +126,6 @@ class boot:
                 # log what we got. octal, octal, decimal, decimal
                 #print(part0, part1, address, value1)
                 self.ram.write_word(address, value1)
-        return base, address
+
+        print(f'read_PDP11_assembly_file "{file}" returns base address:{oct(base)}')
+        return base

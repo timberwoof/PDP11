@@ -13,11 +13,11 @@ mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 
 class otherOps:
-    def __init__(self, psw, ram, reg, am ):
-        #print('initializing otherOps')
-        self.psw = psw
-        self.ram = ram
+    def __init__(self, reg, ram, psw, am ):
+        print('initializing otherOps')
         self.reg = reg
+        self.ram = ram
+        self.psw = psw
         self.am = am
 
 

@@ -1,7 +1,7 @@
 """pdp11BranchOps.py branch instructions"""
 
-from pdp11Hardware import ram
 from pdp11Hardware import registers as reg
+from pdp11Hardware import ram
 from pdp11Hardware import psw
 
 # masks for accessing words and bytes
@@ -18,11 +18,12 @@ mask_byte_msb = 0o000200
 # add to PC to make branch address
 
 class branchOps:
-    def __init__(self, psw, ram, reg):
-        #print('initializing branchOps')
-        self.psw = psw
-        self.ram = ram
+    def __init__(self, reg, ram, psw):
+        print('initializing branchOps')
         self.reg = reg
+        self.ram = ram
+        self.psw = psw
+
         self.branch_instructions = {}
         self.branch_instructions[0o000400] = self.BR
         self.branch_instructions[0o001000] = self.BNE

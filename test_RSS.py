@@ -1,6 +1,6 @@
 import pytest
-from pdp11Hardware import ram
 from pdp11Hardware import registers as reg
+from pdp11Hardware import ram
 from pdp11Hardware import psw
 from pdp11Hardware import stack
 from pdp11Hardware import addressModes as am
@@ -16,9 +16,9 @@ class TestClass():
     reg = reg()
     ram = ram()
     psw = psw(ram)
-    stack = stack(psw, ram, reg)
-    am = am(psw, ram, reg)
-    dopr = dopr(psw, ram, reg, am)
+    stack = stack(reg, ram, psw)
+    am = am(reg, ram, psw)
+    dopr = dopr(reg, ram, psw, am)
 
 
     def test_MUL(self):

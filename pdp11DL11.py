@@ -3,7 +3,9 @@ from pdp11Hardware import ram
 
 class dl11:
     def __init__(self, ram, base_address):
-        #print(f'initializing dl11({oct(base_address)})')
+        """dlss(ram object, base address for this device)
+        """
+        print(f'initializing dl11({oct(base_address)})')
         self.ram = ram
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2
@@ -65,11 +67,11 @@ class dl11:
 
     def register_with_ram(self):
         #print(f'dl11.register_with_ram')
-        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
         self.ram.register_io_reader(self.RCSR_address, self.read_RCSR)
-        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
+        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
         self.ram.register_io_reader(self.RBUF_address, self.read_RBUF)
-        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
+        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
         self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
-        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF)
+        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
         self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
+        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF)

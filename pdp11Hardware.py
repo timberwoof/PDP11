@@ -1,4 +1,4 @@
-"""PDP11 RAM, Registers, PSW"""
+"""PDP11 Registers, RAM, PSW"""
 
 import sys
 
@@ -8,6 +8,81 @@ mask_word_msb = 0o100000
 mask_byte_msb = 0o000200
 mask_low_byte = 0o000377
 mask_high_byte = 0o177400
+
+class registers:
+    """PDP11 registers including PC and SP"""
+    def __init__(self):
+        print('initializing pdp11Hardware registers')
+        self.registermask = 0o07
+        self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
+        self.PC = 0o07  # R7 is the program counter
+        self.PC_increment = 0 # for counting variable-length instructions
+        # During operand decoding, PC points to the instruction being decoded.
+        self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
+
+    def get(self, register):
+        """read a single register
+
+        :param register: integer 0-7
+        :return: register contents"""
+        result = self.registers[register & self.registermask]
+        #print(f'    get R{register}={oct(result)}')
+        return result
+
+    def set(self, register, value):
+        """set a single register
+        :param register: integer 0-7
+        :param value: integer
+        """
+        #print(f'    set R{register}<-{oct(value)}')
+        self.registers[register & self.registermask] = value & mask_word
+
+    def get_pc(self):
+        """get program counter.
+        The Program Counter points to the current instruction being interpreted.
+
+        :return: program counter"""
+        return self.registers[self.PC]
+
+    def inc_pc(self, value=2, whocalled=''):
+        """increment progran counter by 2
+        The Program Counter points to the current instruction being interpreted.
+
+        :return: new program counter"""
+        self.registers[self.PC] = self.registers[self.PC] + 2
+        #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
+        return self.registers[self.PC]
+
+    def set_pc(self, value=2, whocalled=''):
+        """set program counter to arbitrary value"""
+        print(f"set_pc({oct(value)}, {whocalled})")
+        newpc = value & mask_word
+        self.registers[self.PC] = newpc
+        print(f'    setpc R7<-{oct(newpc)} {whocalled}')
+
+    def set_pc_2x_offset(self, offset=0, whocalled=''):
+        """set program counter to 2x offset byte"""
+        waspc = self.registers[self.PC]
+        newpc = self.registers[self.PC] + 2 * (offset & mask_low_byte)
+        self.registers[self.PC] = newpc
+        print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
+
+    def get_sp(self):
+        """get stack pointer
+
+        :return: stack pointer"""
+        return self.registers[self.SP]
+
+    def set_sp(self, value, whocalled=''):
+        """set stack pointer
+
+        :return: new stack pointer"""
+        #wassp =  self.registers[self.PC]
+        newsp = value & mask_word
+        self.registers[self.SP] = newsp
+        #print(f'{oct(wassp)} setpc {oct(newsp)}')
+        return newsp
+
 
 class ram:
     """PDP11 Random Access Memory 64kB including io page"""
@@ -24,8 +99,6 @@ class ram:
     memory = bytearray(top_of_memory + 1)
     # +1 because I want to be able to index self.top_of_memory
 
-    # PSW is stored here
-    PSW_address = top_of_memory - 1  # 0o177776
     Stack_Limit_Register = top_of_memory - 3  # 0o177774
     # the io page is the top 4k words (8kB) of memory
     io_space = top_of_memory - 0o020000 # 0o160000
@@ -48,22 +121,21 @@ class ram:
         #self.write_word(self.TKS, 0o000000)
         #self.write_word(self.TPS, 0b0000000011000000) # always xmit ready and interrupt enabled
 
-        print(f'top_of_memory:{oct(self.top_of_memory)}')
-        print(f'PSW_address:{oct(self.PSW_address)}')
+        print(f'    top_of_memory: {oct(self.top_of_memory)}')
         # psw class handles updating PSW in ram.
         # Only a pdp11 program should read this from ram.
-        print(f'io_space:{oct(self.io_space)}')
+        print(f'    io_space: {oct(self.io_space)}')
 
         # io map is two dictionaries of addresses and methods
         self.iomap_readers = {}
         self.iomap_writers = {}
 
     def register_io_writer(self, device_address, method):
-        print(f'register_io_writer({oct(device_address)}, {method.__name__})')
+        print(f'    register_io_writer({oct(device_address)}, {method.__name__})')
         self.iomap_writers[device_address] = method
 
     def register_io_reader(self, device_address, method):
-        print(f'register_io_reader({oct(device_address)}, {method.__name__})')
+        print(f'    register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
 
     def write_byte(self, address, data):
@@ -71,10 +143,10 @@ class ram:
         address can be even or odd"""
         data = data & mask_low_byte
         if address in self.iomap_writers.keys():
-            print(f'write_byte io({oct(address)}, {oct(data)})')
+            #print(f'write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            print(f'write_byte({oct(address)}, {oct(data)})')
+            #print(f'write_byte({oct(address)}, {oct(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
@@ -94,7 +166,7 @@ class ram:
         :param address:
         :param data:
         """
-        #print(f'    writeword({oct(address)}, {oct(data)})')
+        print(f'    write_word({oct(address)}, {oct(data)})')
         if address in self.iomap_writers.keys():
             self.iomap_writers[address](data)
         else:
@@ -158,83 +230,6 @@ class ram:
                 print_line = print_line + char
             print(print_line)
 
-
-
-
-class registers:
-    """PDP11 registers including PC and SP"""
-    def __init__(self):
-        print('initializing pdp11Hardware registers')
-        self.registermask = 0o07
-        self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
-        self.PC = 0o07  # R7 is the program counter
-        self.PC_increment = 0 # for counting variable-length instructions
-        # During operand decoding, PC points to the instruction being decoded.
-        self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
-
-    def get(self, register):
-        """read a single register
-
-        :param register: integer 0-7
-        :return: register contents"""
-        result = self.registers[register & self.registermask]
-        #print(f'    get R{register}={oct(result)}')
-        return result
-
-    def set(self, register, value):
-        """set a single register
-        :param register: integer 0-7
-        :param value: integer
-        """
-        #print(f'    set R{register}<-{oct(value)}')
-        self.registers[register & self.registermask] = value & mask_word
-
-    def get_pc(self):
-        """get program counter.
-        The Program Counter points to the current instruction being interpreted.
-
-        :return: program counter"""
-        return self.registers[self.PC]
-
-    def inc_pc(self, value=2, whocalled=''):
-        """increment progran counter by 2
-        The Program Counter points to the current instruction being interpreted.
-
-        :return: new program counter"""
-        self.registers[self.PC] = self.registers[self.PC] + 2
-        #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
-        return self.registers[self.PC]
-
-    def set_pc(self, value, whocalled=''):
-        """set program counter to arbitrary value"""
-        waspc =  self.registers[self.PC]
-        newpc = value & mask_word
-        self.registers[self.PC] = newpc
-        print(f'    setpc R7<-{oct(newpc)} {whocalled}')
-
-    def set_pc_2x_offset(self, offset, whocalled=''):
-        """set program counter to 2x offset byte"""
-        waspc = self.registers[self.PC]
-        newpc = self.registers[self.PC] + 2 * (offset & mask_low_byte)
-        self.registers[self.PC] = newpc
-        print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
-
-    def get_sp(self):
-        """get stack pointer
-
-        :return: stack pointer"""
-        return self.registers[self.SP]
-
-    def set_sp(self, value, whocalled=''):
-        """set stack pointer
-
-        :return: new stack pointer"""
-        #wassp =  self.registers[self.PC]
-        newsp = value & mask_word
-        self.registers[self.SP] = newsp
-        #print(f'{oct(wassp)} setpc {oct(newsp)}')
-        return newsp
-
 class psw:
     """PDP11 Processor Status Word"""
 
@@ -259,6 +254,9 @@ class psw:
         # 0 C result had carry      0o000001
 
         self.ram = ram
+        self.PSW_address = ram.top_of_memory - 1  # 0o177776
+        print(f'    PSW_address: {oct(self.PSW_address)}')
+
         # This class keeps the deinitive version of the PSW.
         # When it changes, this class sets it into RAM.
         self.PSW = 0o0
@@ -288,24 +286,35 @@ class psw:
         :param PSW:
         :return:
         """
+        print(f'set_PSW(mode={mode}, priority={priority}, trap={trap}, N={N}, Z={Z}, V={V}, C={C}, PSW={PSW})')
+        print(f'set_PSW self.PSW:{self.PSW}')
         if PSW > -1:
             self.PSW = PSW
+            print (f'set_PSW PSW self.PSW:{self.PSW}')
         if mode > -1:
             oldmode = (self.PSW & self.mode_mask)
             self.PSW = (self.PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
+            print(f'set_PSW mode self.PSW:{self.PSW}')
         if priority > -1:
             self.PSW = (self.PSW & ~self.priority_mask) | (priority << 5)
+            print(f'set_PSW priority self.PSW:{self.PSW}')
         if trap > -1:
             self.PSW = (self.PSW & ~self.trap_mask) | (trap << 4)
+            print(f'set_PSW trap self.PSW:{self.PSW}')
         if N > -1:
             self.PSW = (self.PSW & ~self.N_mask) | (N << 3)
+            print(f'set_PSW N self.PSW:{self.PSW}')
         if Z > -1:
             self.PSW = (self.PSW & ~self.Z_mask) | (Z << 2)
+            print(f'set_PSW Z self.PSW:{self.PSW}')
         if V > -1:
             self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
+            print(f'set_PSW V self.PSW:{self.PSW}')
         if C > -1:
             self.PSW = (self.PSW & ~self.C_mask) | C
-        self.ram.write_word(self.ram.PSW_address, self.PSW)
+            print(f'set_PSW C self.PSW:{self.PSW}')
+        print(f'set_PSW will write {oct(self.PSW)} to {oct(self.PSW_address)}')
+        self.ram.write_word(self.PSW_address, self.PSW)
 
     def setN(self, B, value):
         """set condition code N based on the msb negative bit
@@ -415,11 +424,11 @@ class psw:
 
 class stack:
     """PDP11 Stack"""
-    def __init__(self, psw, ram, reg):
+    def __init__(self, reg, ram, psw):
         print('initializing pdp11Hardware stack')
-        self.psw = psw
-        self.ram = ram
         self.reg = reg
+        self.ram = ram
+        self.psw = psw
 
     # ****************************************************
     # stack methods for use by instructions
@@ -451,11 +460,11 @@ class addressModes:
     by 1 in byte instructions, by 2 in word instructions,
     and by 2 whenever a deferred mode is used,
     since the quantity the register addresses is a (word) pointer.'''
-    def __init__(self, psw, ram, reg):
+    def __init__(self, reg, ram, psw):
         print('initializing pdp11Hardware addressModes')
-        self.psw = psw
-        self.ram = ram
         self.reg = reg
+        self.ram = ram
+        self.psw = psw
 
     def fix_sign(selfself, word):
         """fix a negative word so it will work with python math"""
@@ -488,7 +497,7 @@ class addressModes:
         addressmode = (mode_register & 0o70) >> 3
         register = mode_register & 0o07
 
-        print(f'    S addressing_mode_get({B}, {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
+        print(f'    S addressing_mode_get("{B}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
 
         if B == 'B':
             ram_read = self.ram.read_byte
