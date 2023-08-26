@@ -101,7 +101,6 @@ while run:
     PC = reg.get_pc()
     instruction = ram.read_word(PC)
     print(f'{oct(PC)} {oct(instruction)}')
-    reg.inc_pc('processor loop')
     log_registers()
 
     # decode and execute opcode

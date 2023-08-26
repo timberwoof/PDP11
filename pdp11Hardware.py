@@ -10,21 +10,25 @@ mask_low_byte = 0o000377
 mask_high_byte = 0o177400
 
 class ram:
+    """PDP11 Random Access Memory 64kB including io page"""
+    # Sixteen-bit words are stored little-endian
+    # (with least significant bytes first).
+
     # overall size of memory: 64kB
     top_of_memory = 0o177777
-    # 16 bits   0o177777 = 0x0000FFFF
-    # 18 bits   0o777777 = 0x0003FFFF
-    # 22 bits 0o17777777 = 0x003FFFFF
+    # 16 bits   0o177777 = 0x0000FFFF 64kB 32kw
+    # 18 bits   0o777777 = 0x0003FFFF 256kB 128kw
+    # 22 bits 0o17777777 = 0x003FFFFF 4MB 4096kB 2048kw
 
     # the actual array for simuating RAM.
     memory = bytearray(top_of_memory + 1)
     # +1 because I want to be able to index self.top_of_memory
 
     # PSW is stored here
-    PSW_address = top_of_memory - 1  # 0o377776
-    Stack_Limit_Register = top_of_memory - 3  # 0o377774
-    # the io page is the top 4kB of memory
-    io_space = top_of_memory - 0o1000
+    PSW_address = top_of_memory - 1  # 0o177776
+    Stack_Limit_Register = top_of_memory - 3  # 0o177774
+    # the io page is the top 4k words (8kB) of memory
+    io_space = top_of_memory - 0o020000 # 0o160000
 
     def __init__(self):
         print('initializing pdp11Hardware ram')
@@ -103,9 +107,9 @@ class ram:
 
     def read_word(self, address):
         """Read a word of memory.
-        Low bytes are stored at even-numbered memory locations
-        and high bytes at are stored at odd-numbered memory locations.
         Returns a two-byte value"""
+        # Low bytes are stored at even-numbered memory locations
+        # and high bytes at are stored at odd-numbered memory locations.
         if address in self.iomap_readers.keys():
             return self.iomap_readers[address]()
         else:
@@ -115,13 +119,13 @@ class ram:
             #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
             return result
 
-#    mask_low_byte = 0o000277
-#    mask_word = 0o177777
-#    mask_byte_msb = 0o000200
-#    mask_word_msb = 0o100000
-# 16 bits   0o177777 = 0x0000FFFF
-# 18 bits   0o777777 = 0x0003FFFF
-# 22 bits 0o17777777 = 0x003FFFFF
+    #    mask_low_byte = 0o000277
+    #    mask_word = 0o177777
+    #    mask_byte_msb = 0o000200
+    #    mask_word_msb = 0o100000
+    # 16 bits   0o177777 = 0x0000FFFF
+    # 18 bits   0o777777 = 0x0003FFFF
+    # 22 bits 0o17777777 = 0x003FFFFF
 
     def dump(self, start, stop):
         """Print out memory from a nice address before start to a nice address after stop.
@@ -158,18 +162,20 @@ class ram:
 
 
 class registers:
+    """PDP11 registers including PC and SP"""
     def __init__(self):
         print('initializing pdp11Hardware registers')
         self.registermask = 0o07
         self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
         self.PC = 0o07  # R7 is the program counter
+        self.PC_increment = 0 # for counting variable-length instructions
         # During operand decoding, PC points to the instruction being decoded.
         self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
     def get(self, register):
         """read a single register
 
-        :param register:
+        :param register: integer 0-7
         :return: register contents"""
         result = self.registers[register & self.registermask]
         #print(f'    get R{register}={oct(result)}')
@@ -184,13 +190,15 @@ class registers:
         self.registers[register & self.registermask] = value & mask_word
 
     def get_pc(self):
-        """get program counter
+        """get program counter.
+        The Program Counter points to the current instruction being interpreted.
 
         :return: program counter"""
         return self.registers[self.PC]
 
-    def inc_pc(self, whocalled=''):
+    def inc_pc(self, value=2, whocalled=''):
         """increment progran counter by 2
+        The Program Counter points to the current instruction being interpreted.
 
         :return: new program counter"""
         self.registers[self.PC] = self.registers[self.PC] + 2
@@ -205,7 +213,7 @@ class registers:
         print(f'    setpc R7<-{oct(newpc)} {whocalled}')
 
     def set_pc_2x_offset(self, offset, whocalled=''):
-        """set program counter to 2x offset"""
+        """set program counter to 2x offset byte"""
         waspc = self.registers[self.PC]
         newpc = self.registers[self.PC] + 2 * (offset & mask_low_byte)
         self.registers[self.PC] = newpc
@@ -228,7 +236,7 @@ class registers:
         return newsp
 
 class psw:
-    """PDP11 PSW"""
+    """PDP11 Processor Status Word"""
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
@@ -406,6 +414,7 @@ class psw:
         return result
 
 class stack:
+    """PDP11 Stack"""
     def __init__(self, psw, ram, reg):
         print('initializing pdp11Hardware stack')
         self.psw = psw
@@ -437,7 +446,11 @@ class addressModes:
     '''Implements the 6 standrad address modes of the PDP11 instruction set.
     Every instruction that needs to set these up calls addressing_mode_get to get the praneter,
     addressing_mode_jmp to implement program counter jmps, and
-    addressing_mode_set to hndle addres smodes for destination register'''
+    addressing_mode_set to hndle addres smodes for destination register.
+    Autoincrement and autodecrement operations on a register are
+    by 1 in byte instructions, by 2 in word instructions,
+    and by 2 whenever a deferred mode is used,
+    since the quantity the register addresses is a (word) pointer.'''
     def __init__(self, psw, ram, reg):
         print('initializing pdp11Hardware addressModes')
         self.psw = psw
@@ -467,11 +480,11 @@ class addressModes:
         :param mode_register: bits of opcode that contain address mode and register number
         :return: the parameter
         """
-        # B sets the byte/word mode. It is empty for word nd 'B' for byte mode.
+        # B sets the byte/word mode. It is empty for word and 'B' for byte mode.
         # Thus it is useful as the mode indicator and to label instructions in log correctly.
         # mode_register contains the six bits that specify the mode and the register.
         # This could be for either of the two parameters of an SSDD instruction.
-        # PC points to NEXT word in memory after the instruction
+        # PC points to the instruction.
         addressmode = (mode_register & 0o70) >> 3
         register = mode_register & 0o07
 
@@ -523,21 +536,21 @@ class addressModes:
             operand = ram_read(address)
             print(f'    S mode 5 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 6: # index
-            X = self.ram.read_word(self.reg.get_pc())
-            self.reg.set_pc(self.reg.get_pc() + 2, "address mode 6")
+            X = self.ram.read_word(self.reg.get_pc() + 2)
             #print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
             address = self.add_word(self.reg.get(register), X)
             #print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
+            reg.self.PC_increment = reg.self.PC_increment + increment
             print(f'    S mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc())
-            self.reg.set_pc(self.reg.get_pc() + 2, "address mode 7")
             #print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
             pointer = self.add_word(self.reg.get(register), X)
             address = ram_read(pointer)
             #print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
+            reg.self.PC_increment = reg.self.PC_increment + increment
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
         print(f'    addressing_mode_get returns operand:{operand}')
@@ -589,7 +602,7 @@ class addressModes:
 
         run = True
         if addressmode == 0:
-            print(f'    S mode 07: JMP direct illegal register address')
+            print(f'    S mode 07: JMP direct illegal register address; halt')
             run = False
         elif addressmode == 1:
             print(f'    S mode 17: JMP register deferred. R{register} contains the address of the operand. Weird.')
@@ -635,7 +648,7 @@ class addressModes:
 
         print(f'    addressmode:{addressmode}  register:{register}')
         if (addressmode == 6 or addressmode == 7) and register != 7:
-            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_set")
+            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_set")  # *** this makes no sense
             print(f'    D increment PC to {oct(self.reg.get_pc())}')
 
         print(f'    addressing_mode_jmp returns run:{run}, operand:{operand}  ')
@@ -722,3 +735,4 @@ class addressModes:
     def addressing_mode_set_jmp(self, result):
         self.reg.set(7, result);
         print(f'    D 7 set PC to {oct(result)}')
+

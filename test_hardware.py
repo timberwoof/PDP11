@@ -26,7 +26,7 @@ class TestClass():
     def test_ram_basic(self):
         assert ram.top_of_memory == 0o177777
         assert ram.PSW_address   == ram.top_of_memory - 1
-        assert ram.io_space      == ram.top_of_memory - 0o1000
+        assert ram.io_space      == ram.top_of_memory - 0o020000
 
     def test_ram_byte_1(self):
         test_value = 0o107
@@ -138,6 +138,9 @@ class TestClass():
         self.reg.set_pc(test_value)
         assert self.reg.get_pc() == expected_value
         self.reg.inc_pc()
+        assert self.reg.get_pc() == expected_value + 2
+        self.reg.set_pc(test_value)
+        self.reg.inc_pc(2)
         assert self.reg.get_pc() == expected_value + 2
 
         test_offset = 0o123232

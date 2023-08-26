@@ -64,6 +64,15 @@ class doubleOperandOps:
     # Double-Operand RSS instructions - 07 0R SS through 07 7R SS
     # ****************************************************
 
+    # Where a register pair is used
+    # (written below as "(Reg, Reg+1)",
+    # the first register contains the low-order portion of the operand
+    # and must be an even numbered register.
+    # The next higher numbered register contains
+    # the high-order portion of the operand (or the remainder).
+    # An exception is the multiply instruction; Reg may be odd,
+    # but if it is, the high 16 bits of the result are not stored.
+
     def MUL(self, register, source):
         """07 0R SS MUL 4-31
 
@@ -276,6 +285,8 @@ class doubleOperandOps:
     def ADDSUB(self, BW, source, dest):
         """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
         | 16 SS DD: SUB 4-26 (dst) < (dst) + ~(src) + 1
+        The ADD and SUB instructions use word addressing,
+        and have no byte-oriented variations.
         """
         if BW == 'W':
             result = source + dest
@@ -306,6 +317,7 @@ class doubleOperandOps:
         # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
+        reg.self.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
             BW = 'B'
         else:
@@ -323,6 +335,7 @@ class doubleOperandOps:
         run = True
         result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
         self.am.addressing_mode_set(BW, dest, result)
+        self.reg.inc_pc(operand, 2+self.reg.PC_increment, self.single_operand_instruction_names[opcode])
         print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
 
         return run

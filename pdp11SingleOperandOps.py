@@ -20,7 +20,7 @@ mask_high_byte = 0o177400
 
 class singleOperandOps:
     def __init__(self, psw, ram, reg, am):
-        #print('initializing singleOperandOps')
+        print('initializing singleOperandOps')
         self.psw = psw
         self.ram = ram
         self.reg = reg
@@ -358,6 +358,7 @@ class singleOperandOps:
         # 15 is 0 to indicate a word instruction
         # 5-0 dst
 
+        self.reg.PC_increment = 0
         if (instruction & 0o100000) == 0o100000:
             BW = 'B'
         else:
@@ -379,4 +380,5 @@ class singleOperandOps:
             result = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
             self.am.addressing_mode_set(BW, source, result)
             print(f'    source_value:{oct(source_value)}  result:{oct(result)}')
+            self.reg.inc_pc(2+self.reg.PC_increment, self.single_operand_instruction_names[opcode])
             return run

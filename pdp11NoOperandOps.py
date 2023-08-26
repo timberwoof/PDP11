@@ -39,7 +39,8 @@ class noOperandOps:
 
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
-        #print(f'WAIT unimplemented')
+        print(f'WAIT unimplemented')
+        self.reg.inc_pc(operand, 'WAIT')
         return False
 
     def RTI(self, instruction):
@@ -52,7 +53,8 @@ class noOperandOps:
 
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
-        #print(f'BPT unimplemented')
+        print(f'BPT unimplemented')
+        self.reg.inc_pc(operand, 'BPT')
         return False
 
     def IOT(self, instruction):
@@ -68,12 +70,14 @@ class noOperandOps:
 
         self.stack.push(self.ram.get_PSW()) # this shows that get-PSW should be in reg
         self.stack.push(self.reg.get_pc())
-        #self.reg.set_pc(20) # why this magic value?
-        #self.reg.set_ps(22) # what are we setting? why this magic value?
+        self.reg.set_pc(o20)
+        self.reg.set_ps(o22)
         return True
 
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
+        print(f'BPT unimplemented')
+        self.reg.inc_pc(operand, 'BPT')
         return True
 
     def RTT(self, instruction):
@@ -85,6 +89,7 @@ class noOperandOps:
 
     def NOP(self, instruction):
         """00 02 40 NOP no operation"""
+        self.reg.inc_pc(operand, 'BPT')
         return True
 
     def is_no_operand(self, instruction):
