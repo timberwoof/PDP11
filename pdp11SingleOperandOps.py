@@ -380,5 +380,4 @@ class singleOperandOps:
             result = self.single_operand_instructions[opcode](instruction, source_value, source_value, BW)
             self.am.addressing_mode_set(BW, source, result)
             print(f'    source_value:{oct(source_value)}  result:{oct(result)}')
-            self.reg.inc_pc(2, self.single_operand_instruction_names[opcode])
             return run

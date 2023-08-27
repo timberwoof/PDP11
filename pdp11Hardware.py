@@ -477,8 +477,8 @@ class stack:
 class addressModes:
     '''Implements the 6 standrad address modes of the PDP11 instruction set.
     Every instruction that needs to set these up calls addressing_mode_get to get the praneter,
-    addressing_mode_jmp to implement program counter jmps, and
-    addressing_mode_set to hndle addres smodes for destination register.
+    addressing_mode_jmp to implement program counter jumps, and
+    addressing_mode_set to handle address modes for destination register.
     Autoincrement and autodecrement operations on a register are
     by 1 in byte instructions, by 2 in word instructions,
     and by 2 whenever a deferred mode is used,
@@ -574,7 +574,7 @@ class addressModes:
             operand = ram_read(address)
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
-        print(f'    addressing_mode_get returns operand:{operand}')
+        print(f'    addressing_mode_get returns operand:{oct(operand)}')
         return operand
 
     # https://retrocomputing.stackexchange.com/questions/9248/pdp-11-jmp-and-jsr-how-was-the-target-specified

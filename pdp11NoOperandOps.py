@@ -77,7 +77,6 @@ class noOperandOps:
     def RESET(self, instruction):
         """00 00 05 RESET reset external bus 4-76"""
         print(f'BPT unimplemented')
-        self.reg.inc_pc(operand, 'BPT')
         return True
 
     def RTT(self, instruction):
@@ -89,7 +88,6 @@ class noOperandOps:
 
     def NOP(self, instruction):
         """00 02 40 NOP no operation"""
-        self.reg.inc_pc(operand, 'BPT')
         return True
 
     def is_no_operand(self, instruction):

@@ -193,5 +193,4 @@ class branchOps:
         offset = (instruction & mask_low_byte)
         print(f'    {oct(instruction)}:{self.branch_instruction_names[opcode]} offset:{oct(offset)}')
         result = self.branch_instructions[opcode](instruction, offset)
-        self.reg.inc_pc(2, "branch instruction decode")
         return result

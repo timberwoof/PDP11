@@ -105,6 +105,7 @@ class pdp11():
             PC = self.reg.get_pc()
             instruction = self.ram.read_word(PC)
             print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
+            self.reg.inc_pc(2, "fetched instruction")
             self.log_registers()
 
             # decode and execute opcode
