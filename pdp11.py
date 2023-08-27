@@ -69,7 +69,7 @@ class pdp11():
             run = self.dopr.do_double_operand_SSDD(instruction)
 
         else:
-            run = other.other_opcode(instruction)
+            run = self.other.other_opcode(instruction)
 
         return run
 

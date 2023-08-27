@@ -245,6 +245,9 @@ class doubleOperandOps:
         (dst) < (src)"""
         result = source
         #print(f'    source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
+        self.psw.setN(BW, source)
+        self.psw.setZ(BW, source)
+        self.psw.set_PSW(V=0)
         return result #, "**0-"
 
     def CMP(self, BW, source, dest):
@@ -255,18 +258,24 @@ class doubleOperandOps:
         # but don't change the destination
         result = source - dest
         ##print(f'    CMP source:{source} dest:{dest} result:{result}')
-        ##print(f'    CMP NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}')
-        return dest #, "----"
+        self.psw.setN(BW, result)
+        self.psw.setZ(BW, result)
+        self.psw.setV(BW, result)
+        return dest #, "***-"
 
     def BIT(self, BW, source, dest):
         """bit test 4-28
 
         (src) ^ (dst)"""
-        # Clears each bit in the destination that corresponds to a set bit in the source.
-        # The original contents of the destination are lost.
-        # The contents of the source are unaffected.
+        #
+        # Performs logical "and" comparison of the source and destination
+        # and modifies condition codes accordingly.
+        # Neither the source nor destination operands are affected.
         result = source & dest
         print(f'    BIT source:{source} dest:{dest} result:{result}')
+        self.psw.setN(BW, result)
+        self.psw.setZ(BW, result)
+        self.psw.set_PSW(V=0)
         return result #, "**0-"
 
     def BIC(self, BW, source, dest):
@@ -274,12 +283,19 @@ class doubleOperandOps:
 
         (dst) < ~(src)&(dst)"""
         result = ~source & dest
+        self.psw.setN(BW, result)
+        self.psw.setZ(BW, result)
+        self.psw.set_PSW(V=0)
         return result #, "**0-"
 
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) v (dst)"""
         result = source | dest
+        print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
+        self.psw.setN(BW, result)
+        self.psw.setZ(BW, result)
+        self.psw.set_PSW(V=0)
         return result #, "**0-"
 
     def ADDSUB(self, BW, source, dest):
@@ -288,10 +304,15 @@ class doubleOperandOps:
         The ADD and SUB instructions use word addressing,
         and have no byte-oriented variations.
         """
+        # SUB is the "byte" version of ADD
         if BW == 'W':
             result = source + dest
         else:
             result = abs(source + ~dest + 1)
+        self.psw.setN(BW, result)
+        self.psw.setZ(BW, result)
+        self.psw.setV(BW, result)
+        # need to detect overflow, truncate result
         return result #, "****"
 
     def is_double_operand_SSDD(self, instruction):

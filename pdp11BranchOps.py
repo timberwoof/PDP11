@@ -72,16 +72,8 @@ class branchOps:
     # ****************************************************
 
     def BR(self, instruction, offset):
-        print(f'BR instruction:{oct(instruction)} offset:{oct(offset)}')
+        print(f'    BR instruction:{oct(instruction)} offset:{oct(offset)}')
         """00 04 XXX Branch"""
-        if offset & 0o200 == 0o200:
-            # offset is negative, say 0o0371 0o11111001
-            offset = offset - 0o377
-        oldpc = self.reg.get_pc()
-        newpc = self.reg.get_pc() + 2 * offset #-2
-        if oldpc == newpc:
-            print(f'PC:{oldpc} did not update on Branch. Halting.')
-            return False
         self.reg.set_pc_2x_offset(offset, "BR")
         return True
         # with the Branch instruction at location 500 see p. 4-37
@@ -97,6 +89,7 @@ class branchOps:
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         # Tests the state of the Z-bit and causes a branch if Z is set
+        print (f"    BEQ Z:{self.psw.Z()}")
         if self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
