@@ -171,20 +171,20 @@ class ram:
         address can be even or odd"""
         data = data & mask_low_byte
         if address in self.iomap_writers.keys():
-            #print(f'write_byte io({oct(address)}, {oct(data)})')
+            print(f'write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            #print(f'write_byte({oct(address)}, {oct(data)})')
+            print(f'write_byte({oct(address)}, {oct(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
         """Read one byte of memory."""
         if address in self.iomap_readers.keys():
             result = self.iomap_readers[address]()
-            #print(f'read_byte io({oct(address)} returns {oct(result)}')
+            print(f'read_byte io({oct(address)}) returns {oct(result)}')
         else:
             result = self.memory[address]
-            #print(f'read_byte ({oct(address)} returns {oct(result)}')
+            #print(f'read_byte ({oct(address)}) returns {oct(result)}')
         return result
 
     def write_word(self, address, data):
@@ -196,6 +196,7 @@ class ram:
         """
         #print(f'    write_word({oct(address)}, {oct(data)})')
         if address in self.iomap_writers.keys():
+            print(f'write_word io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
             hi = (data & mask_high_byte) >> 8  # 1 111 111 100 000 000
@@ -211,6 +212,7 @@ class ram:
         # Low bytes are stored at even-numbered memory locations
         # and high bytes at are stored at odd-numbered memory locations.
         if address in self.iomap_readers.keys():
+            print(f'read_word io({oct(address)})')
             return self.iomap_readers[address]()
         else:
             hi = self.memory[address + 1]
@@ -746,15 +748,16 @@ class addressModes:
             PC = self.reg.get_pc()
             X = self.ram.read_word(self.reg.get_pc())
             print(f'    D mode 6 index: X(R{register}): immediate value @{oct(PC)}={oct(X)} is added to R{register} to produce address of operand')
-            self.reg.inc_pc(2, 'addressmode 7')
-            address = add_word(self.reg.get(register), X)
+            self.reg.inc_pc(2, 'addressmode 6')
+            address = address_offset(self.reg.get(register), X)
             operand = self.ram.read_word(address)
+            print(f'    ram_write address:{oct(address)} operand:{oct(operand)} result:{oct(result)}')
             ram_write(operand, result)
         elif addressmode == 7:  # index deferred
             X = self.ram.read_word(self.reg.get_pc())
             self.reg.inc_pc(2, 'addressmode 7')
             print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
-            pointer = add_word(self.reg.get(register), X)
+            pointer = address_offset(self.reg.get(register), X)
             address = self.ram.read_word(pointer)
             ram_write(address, result)
             print(f'    D mode 7 R{register}=@{oct(address)} = operand:{oct(result)}')

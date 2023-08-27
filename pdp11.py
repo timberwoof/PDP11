@@ -81,7 +81,6 @@ class pdp11():
         self.log_registers()
 
         #boot.load_machine_code(boot.bootstrap_loader, bootaddress)
-        #boot.load_machine_code(boot.hello_world, boot.hello_address)
         #reg.set_pc(0o2000, "load_machine_code")
         #self.ram.dump(0o2000, 0o2064)
 
