@@ -543,11 +543,12 @@ class addressModes:
             self.reg.set(register, self.reg.get(register) + increment)
             print(f'    S mode 2 R{register}={oct(address)} = operand:{oct(operand)}')
         elif addressmode == 3:  # autoincrement deferred
-            #print(f'    S mode 3 Autoincrement Deferred: @(R{register})+: register contains address of address of operand, then incremented')
-            address = self.reg.get(register)
+            #print(f'    S mode 3 Autoincrement Deferred: @(R{register})+: register contains pointer to address of operand, then incremented')
+            pointer = self.reg.get(register)
+            address = self.ram.read_word(pointer)
             operand = ram_read(address)
             self.reg.set(register, self.reg.get(register) + increment)
-            print(f'    S mode 3 @{oct(address)} = operand:{oct(operand)}')
+            print(f'    S mode 3 R{register} pointer:{oct(pointer)} @{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 4:  # autodecrement direct
             #print(f'    S mode 4 Autodecrement: -(R{register}): register is decremented, then contains address of operand')
             self.reg.set(register, self.reg.get(register) - increment)
@@ -558,7 +559,7 @@ class addressModes:
             #print(f'    S mode 5 Autodecrement Deferred: @-(R{register}): register is decremented, then contains address of address of operand')
             self.reg.set(register, self.reg.get(register) - 2)
             pointer = self.reg.get(register)
-            address = ram_read(pointer)
+            address = self.ram.read_word(pointer)
             operand = ram_read(address)
             print(f'    S mode 5 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 6: # index
@@ -574,7 +575,7 @@ class addressModes:
             self.reg.inc_pc(2, 'addressmode 7')
             #print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
             pointer = address_offset(self.reg.get(register), X)
-            address = ram_read(pointer)
+            address = self.ram.read_word(pointer)
             #print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
