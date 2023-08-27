@@ -9,6 +9,23 @@ mask_byte_msb = 0o000200
 mask_low_byte = 0o000377
 mask_high_byte = 0o177400
 
+
+def fix_sign(word):
+    """fix a negative word so it will work with python math"""
+    if word & mask_word_msb:
+        more_bits = sys.maxsize & ~mask_word
+        field = sys.maxsize - (word & mask_word | more_bits) + 1
+        result = -field
+    else:
+        result = word
+    return result
+
+def add_word(a, b):
+    """add two-byte words with sign handling"""
+    # print(f'add_word({oct(a)}, {oct(b)})  mask_word_msb:{oct(mask_word_msb)}')
+    result = fix_sign(a) + fix_sign(b)
+    return result
+
 class registers:
     """PDP11 registers including PC and SP"""
     def __init__(self):
@@ -16,7 +33,6 @@ class registers:
         self.registermask = 0o07
         self.SP = 0o06  # R6 is frequentluy referred to as the stack pointer
         self.PC = 0o07  # R7 is the program counter
-        self.PC_increment = 0 # for counting variable-length instructions
         # During operand decoding, PC points to the instruction being decoded.
         self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
@@ -61,11 +77,18 @@ class registers:
         print(f'    setpc R7<-{oct(newpc)} {whocalled}')
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
-        """set program counter to 2x offset byte"""
+        """set program counter to 2x offset byte;
+        adjust for sign bit and PC"""
+        # Bit 7 of the offset is the sign.
+        # If it is set then the offset is negative.
         waspc = self.registers[self.PC]
-        newpc = self.registers[self.PC] + 2 * (offset & mask_low_byte)
+        offset = 2 * (offset & mask_low_byte)
+        if offset > mask_low_byte:
+            offset = offset | mask_high_byte # this is now signed word
+            offset = fix_sign(offset)
+        newpc = self.registers[self.PC] + offset + 2
         self.registers[self.PC] = newpc
-        print(f'    set_pc_2x_offset R7<-{oct(newpc)} (was:{oct(waspc)}) {whocalled}')
+        print(f'    set_pc_2x_offset {whocalled} offsets pc:{oct(waspc)} by {oct(offset)} to {oct(newpc)}')
 
     def get_sp(self):
         """get stack pointer
@@ -466,21 +489,7 @@ class addressModes:
         self.ram = ram
         self.psw = psw
 
-    def fix_sign(selfself, word):
-        """fix a negative word so it will work with python math"""
-        if word & mask_word_msb:
-            more_bits = sys.maxsize & ~mask_word
-            field = sys.maxsize - (word & mask_word | more_bits) + 1
-            result = -field
-        else:
-            result = word
-        return result
-
-    def add_word(self, a, b):
-        """add two-byte words with sign handling"""
-        #print(f'add_word({oct(a)}, {oct(b)})  mask_word_msb:{oct(mask_word_msb)}')
-        result = self.fix_sign(a) + self.fix_sign(b)
-        return result
+        self.address_modes_used = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
 
     def addressing_mode_get(self, B, mode_register):
         """copy the value from the location indicated by byte_register
@@ -495,6 +504,9 @@ class addressModes:
         # This could be for either of the two parameters of an SSDD instruction.
         # PC points to the instruction.
         addressmode = (mode_register & 0o70) >> 3
+
+        self.address_modes_used[addressmode] = self.address_modes_used[addressmode] + 1
+
         register = mode_register & 0o07
 
         print(f'    S addressing_mode_get("{B}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
@@ -545,21 +557,21 @@ class addressModes:
             operand = ram_read(address)
             print(f'    S mode 5 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 6: # index
-            X = self.ram.read_word(self.reg.get_pc() + 2)
+            self.reg.inc_pc(2, 'addressmode 6')
+            X = self.ram.read_word(self.reg.get_pc())
             #print(f'    S mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
-            address = self.add_word(self.reg.get(register), X)
+            address = add_word(self.reg.get(register), X)
             #print(f'    S mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
-            self.reg.PC_increment = self.reg.PC_increment + increment
             print(f'    S mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
+            self.reg.inc_pc(2, 'addressmode 7')
             X = self.ram.read_word(self.reg.get_pc())
             #print(f'    S mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
-            pointer = self.add_word(self.reg.get(register), X)
+            pointer = add_word(self.reg.get(register), X)
             address = ram_read(pointer)
             #print(f'    S mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
-            self.reg.PC_increment = self.reg.PC_increment + increment
             print(f'    S mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
         print(f'    addressing_mode_get returns operand:{operand}')
@@ -642,16 +654,18 @@ class addressModes:
         elif addressmode == 6:
             # The expression E, plus the contents of the PC,
             # yield the effective address of the operand.
-            X = self.ram.read_word(self.reg.get_pc()+2)
+            self.reg.inc_pc(2)
+            X = self.ram.read_word(self.reg.get_pc())
             print(f'    S mode 67: JMP relative. immediate value {oct(X)} plus PC gets address.')
-            address = self.add_word(self.reg.get(register), X)
+            address = add_word(self.reg.get(register), X)
             operand = self.ram.read_word(address)
         elif addressmode == 7:
             # The expression E, plus the contents of the PC
             # yield a pointer to the effective address of the operand.
-            X = self.ram.read_word(self.reg.get_pc()+2)
+            self.reg.inc_pc(2)
+            X = self.ram.read_word(self.reg.get_pc())
             print(f'    S mode 77: JMP relative deferred. immediate value {oct(X)} plus PC gets pointer to address.')
-            pointer = self.add_word(self.reg.get(register), X)
+            pointer = add_word(self.reg.get(register), X)
             address = self.ram.read_word(pointer)
             operand = self.ram.read_word(address)
 
@@ -726,22 +740,22 @@ class addressModes:
             PC = self.reg.get_pc()
             X = self.ram.read_word(self.reg.get_pc()+2)
             print(f'    D mode 6 index: X(R{register}): immediate value @{oct(PC+2)}={oct(X)} is added to R{register} to produce address of operand')
-            address = self.add_word(self.reg.get(register), X)
+            address = add_word(self.reg.get(register), X)
             operand = self.ram.read_word(address)
             ram_write(operand, result)
         elif addressmode == 7:  # index deferred
-            X = self.ram.read_word(self.reg.get_pc()+2)
-            #print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
-            pointer = self.add_word(self.reg.get(register), X)
+            X = self.ram.read_word(self.reg.get_pc()+2) # *** this is probably wrong
+            print(f'    D mode 7 index deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
+            pointer = add_word(self.reg.get(register), X)
             address = self.ram.read_word(pointer)
             ram_write(address, result)
             print(f'    D mode 7 R{register}=@{oct(address)} = operand:{oct(result)}')
-
-        if (addressmode == 6 or addressmode == 7) and register != 7:
-            self.reg.set_pc(self.reg.get_pc()+2, "addressing_mode_set") # should we do this?
-            print(f'    D increment PC to {oct(self.reg.get_pc())}')
 
     def addressing_mode_set_jmp(self, result):
         self.reg.set(7, result);
         print(f'    D 7 set PC to {oct(result)}')
 
+    def address_mode_report(self):
+        print ('address modes used:')
+        for addressmode in range(0,8):
+            print (f'{addressmode}:{self.address_modes_used[addressmode]}')

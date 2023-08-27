@@ -49,7 +49,7 @@ class pdp11():
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        print(f'dispatch_opcode {oct(instruction)}')
+        #print(f'dispatch_opcode {oct(instruction)}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -98,6 +98,7 @@ class pdp11():
         #self.ram.dump(0o165000, 0o165000+32)
 
         # start the processor loop
+        instructions_executed = 0
         run = True
         while run:
             # fetch opcode
@@ -109,6 +110,12 @@ class pdp11():
             # decode and execute opcode
             run = self.dispatch_opcode(instruction)
             self.log_registers()
+            instructions_executed = instructions_executed + 1
+            if instructions_executed > 100:
+                break
 
         if self.reg.get_pc() > 0o200:
             self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
+
+        print (f'instructions_executed: {instructions_executed}')
+        self.am.address_mode_report()
