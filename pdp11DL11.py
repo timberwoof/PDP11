@@ -22,47 +22,20 @@ class dl11:
         print(f'    dl11 XBUF:{oct(self.XBUF_address)}')
 
         self.RCSR = 0   # receive
+        self.RCSR_ready_bit = 0o2000
         self.RBUF = 0   # receive buffer
-        self.XCSR = 0o0200   # transmit status register always ready
+        self.XCSR = 0o0200   # transmit status register ready on init
+        self.XCSR_ready_bit = 0o2000
         self.XBUF = 0   # transmit buffer
         self.bigbuf = ''
 
-    def makeWindow(self):
-        # PySimpleGUI
-        print(f'dl11 makeWindow begins\n')
-        layout = [[sg.Multiline(size=(80, 24), autoscroll=True, key='crt')],
-                  [sg.InputText(size=(80, 1), key='keyboard')],
-                  [sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
-        self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18))
-        print('dl11 makeWindow done')
+    # DL11 Internal Interface to PDP-11 Emulator
 
-    def terminalWindowLoop(self, cpuRun):
-        windowRun = True
-        event, values = self.window.read(timeout=20)
-
-        if self.RBUF != 0:
-            char = chr(self.RBUF)
-            self.RBUF = 0
-            self.window['crt'].update(self.bigbuf)
-        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
-            windowRun = False
-        elif event == "Run":
-            cpuRun = True
-        elif event == "Halt":
-            cpuRun = False
-        elif event == "Exit":
-            cpuRun = False
-            windowRun = False
-
-        return windowRun, cpuRun
-
-    def terminalCloseWindow(self):
-        self.window.close()
-
-    # Receiver Status Register
+    # Receiver receives characters from a terminal.
+    # RCSR Receiver Status Register
     # 7: set when character has been received (ro)
     # 6: receiver interrupt enable (rw)
-    # 0: reader enable (wo)
+    # 0: reader enable (wo) clears 7
     def write_RCSR(self, byte):
         """write to receiver status register"""
         print(f'    dl11.write_RCSR({oct(byte)})')
@@ -73,23 +46,34 @@ class dl11:
         print(f'    dl11.read_RCSR() returns {oct(self.RCSR)}')
         return self.RCSR
 
-    # reciever data buffer (ro)
+    # RBUF reciever data buffer (ro)
     # 15: error
     # 14: overrun
     # 13: framing error
     # 12: receive parity error
     # 7-0 received data
     def write_RBUF(self, byte):
-        """write to receiver buffer register"""
+        """write to receiver buffer register and set ready bit"""
         print(f'    dl11.write_RBUF({oct(byte)}):{chr(byte)}')
         self.RBUF = byte
+        self.write_RCSR(self.RCSR_ready_bit)
 
     def read_RBUF(self):
-        """read from receiver buffer register"""
+        """read from receiver buffer register. Read once only and reset ready bit"""
         print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:{chr(self.RBUF)}')
-        return self.RBUF
+        self.write_RCSR(0)
+        resilt = self.RBUF
+        self.RBUF = 0
+        return result
 
-    # transmit status register (rw)
+    def RBUF_ready(self):
+        if self.read_RCSR() & self.RCSR_ready_bit == self.RCSR_ready_bit:
+            return True
+        else:
+            return False
+
+    # Transmitter enables CPU to send characters to a terminal.
+    # XCSR transmit status register (rw)
     # 7: transmitter ready (ro).
     #   Cleared when XBUF is loaded.
     #   Set when XBUF can accept another character.
@@ -106,18 +90,29 @@ class dl11:
         print(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
         return self.XCSR
 
-    # transmit data buffer (wo)
+    def XBUF_ready(self):
+        if self.XCSR & self.XCSR_ready_bit == 0:
+            return True
+        else:
+            return False
+
+    # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
-        """write to transitter buffer register"""
+        """write to transitter buffer register.
+        Generally called by the CPU"""
         print(f'    dl11.write_XBUF({oct(byte)}):{chr(byte)}')
         self.XBUF = byte
+        # self.XCSR_ready_bit is cleared when XBUF is loaded
+        self.XCSR = self.XCSR & ~self.XCSR_ready_bit
         self.bigbuf = self.bigbuf + chr(byte)
-        #self.window['crt'].update(values[chr(byte)], append=True)
 
     def read_XBUF(self):
-        """read from transitter buffer register"""
+        """read from transitter buffer register.
+        Generally called by some outside process"""
         print(f'    dl11.read_XBUF() returns {oct(self.XBUF)}:{chr(self.XBUF)}')
+        # self.XCSR_ready_bit is set when XBUF can accept another character
+        self.XCSR = self.XCSR | self.XCSR_ready_bit
         return self.XBUF
 
     def register_with_ram(self):
@@ -134,3 +129,45 @@ class dl11:
 
     def dumpBuffer(self):
         print(f'dl11 buffer: {self.bigbuf}')
+
+    # PySimpleGUI Interface
+
+    def makeWindow(self):
+        """create the DL11 emulated terminal using PySimpleGUI"""
+        print(f'dl11 makeWindow begins\n')
+        layout = [[sg.Multiline(size=(80, 24), key='crt')],
+                  [sg.InputText(size=(80, 1), key='keyboard')],
+                  [sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
+        self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
+        print('dl11 makeWindow done')
+
+        # autoscroll=True,
+
+    def terminalWindowCycle(self, cpuRun):
+        """Run one iteration of the PySimpleGUI terminal window loop"""
+        windowRun = True
+
+        # maybe get character from dl11 transmit buffer
+        if self.XBUF_ready():
+            print('terminalWindowCycle XBUF_ready')
+            newchar = chr(self.read_XBUF())
+            text = self.window['crt']
+            text.update(text.get()+newchar)
+
+        event, values = self.window.read(timeout=1)
+
+        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
+            windowRun = False
+        elif event == "Run":
+            cpuRun = True
+        elif event == "Halt":
+            cpuRun = False
+        elif event == "Exit":
+            cpuRun = False
+            windowRun = False
+
+        return windowRun, cpuRun
+
+    def terminalCloseWindow(self):
+        self.window.close()
+

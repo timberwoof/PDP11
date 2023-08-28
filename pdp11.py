@@ -90,12 +90,12 @@ class pdp11CPU():
         return run
 
     def instructionCycle(self):
-        # fetch opcode
+        """Run one PDP11 fetch-decode-execute cycle"""
+        # fetch opcode and increment PC
         PC = self.reg.get_pc()
         instruction = self.ram.read_word(PC)
         print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
         self.reg.inc_pc(2, "fetched instruction")
-
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.log_registers()
@@ -120,6 +120,7 @@ class pdp11Run():
 
         # start the processor loop
         instructions_executed = 0
+        timeStart = time.time()
         while True:
             self.pdp11.instructionCycle()
             instructions_executed = instructions_executed + 1
@@ -129,12 +130,20 @@ class pdp11Run():
         if self.reg.get_pc() > 0o200:
             self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
 
-        print (f'instructions_executed: {instructions_executed}')
+        print (f'run instructions_executed: {instructions_executed}')
+        timeEnd = time.time()
+        timeElapsed = (timeEnd - timeStart)
+        print (f'timeElapsed: {timeElapsed}:.2f seconds')
+        ops_per_sec = instructions_executed / timeElapsed
+        print (f'executed {ops_per_sec:.2f} instructions per second')
+        if self.reg.get_pc() > 0o200:
+            self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
         self.am.address_mode_report()
         self.dl11.dumpBuffer()
 
     def runThreaded(self, dl11, event):
-        """Run PDP11 emulator without terminal process"""
+        """Run PDP11 emulator in thread with main terminal process.
+        Runs instructionCycle in a loop"""
         print('runThreaded begin PDP11 emulator\n')
         # this must eventually be definable in a file so it has to be here
         print('runThreaded log_registers()')
@@ -142,10 +151,9 @@ class pdp11Run():
 
         # start the processor loop
         instructions_executed = 0
+        timeStart = time.time()
         while True:
-            print('runThreaded event.wait')
-            event.wait()
-            #while event.isSet():
+            event.wait() # This is the only difference
             try:
                 self.pdp11.instructionCycle()
             except:
@@ -154,10 +162,14 @@ class pdp11Run():
             if instructions_executed > 200:
                 break
 
+        print (f'runThreaded instructions_executed: {instructions_executed}')
+        timeEnd = time.time()
+        timeElapsed = (timeEnd - timeStart)
+        print (f'timeElapsed: {timeElapsed}:.2f seconds')
+        ops_per_sec = instructions_executed / timeElapsed
+        print (f'executed {ops_per_sec:.2f} instructions per second')
         if self.reg.get_pc() > 0o200:
             self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
-
-        print (f'runThreaded instructions_executed: {instructions_executed}')
         self.am.address_mode_report()
         self.dl11.dumpBuffer()
 
@@ -173,10 +185,10 @@ class pdp11Run():
 
         # Run the PDP11 emulator as a separate thread
         event = threading.Event()
-        cpu_thread = Thread(target=self.runThreaded, args=(self.dl11, event,), daemon=True)
+        #cpu_thread = Thread(target=self.runThreaded, args=(self.dl11, event,), daemon=True)
         # Threads marked as daemon automatically die when every other non-daemon thread is dead.
-        print('runInTerminal cpu_thread.start')
-        cpu_thread.start()
+        #print('runInTerminal cpu_thread.start')
+        #cpu_thread.start()
 
         # Create and run the terminal window in PySimpleGUI
         print('runInTerminal dl11.makeWindow')
@@ -185,10 +197,14 @@ class pdp11Run():
         cpuRun = False
         while windowRun:
             # run window bits
-            windowRun, cpuRun = self.dl11.terminalWindowLoop(cpuRun)
             if cpuRun:
-                event.set()
-            else:
-                event.clear()
+                self.pdp11.instructionCycle()
+            windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun)
+            #if cpuRun:
+            #    event.set()
+            #else:
+            #    event.clear()
 
+        print('runInTerminal dl11.dumpBuffer:')
+        self.dl11.dumpBuffer()
         print('runInTerminal ends')
