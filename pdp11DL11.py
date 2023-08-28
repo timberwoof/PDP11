@@ -21,13 +21,12 @@ class dl11:
         print(f'    dl11 XCSR:{oct(self.XCSR_address)}')
         print(f'    dl11 XBUF:{oct(self.XBUF_address)}')
 
+        self.RCSR_ready_bit = 0o0200
         self.RCSR = 0   # receive
-        self.RCSR_ready_bit = 0o2000
         self.RBUF = 0   # receive buffer
-        self.XCSR = 0o0200   # transmit status register ready on init
-        self.XCSR_ready_bit = 0o2000
+        self.XCSR_ready_bit = 0o0200
+        self.XCSR = self.XCSR_ready_bit   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
-        self.bigbuf = ''
 
     # DL11 Internal Interface to PDP-11 Emulator
 
@@ -105,7 +104,6 @@ class dl11:
         self.XBUF = byte
         # self.XCSR_ready_bit is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_ready_bit
-        self.bigbuf = self.bigbuf + chr(byte)
 
     def read_XBUF(self):
         """read from transitter buffer register.
@@ -126,9 +124,6 @@ class dl11:
         self.ram.register_io_reader(self.RBUF_address, self.read_RBUF)
         self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
         self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
-
-    def dumpBuffer(self):
-        print(f'dl11 buffer: {self.bigbuf}')
 
     # PySimpleGUI Interface
 

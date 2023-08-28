@@ -28,13 +28,17 @@ hello_world = [0o012702,  # 2000 start:  MOV 0o27 0o2
                0o000771,  # 2024         BR nxtchr      ; transmit next character
                0o000000,  # 2026         halt
                0o000763,  # 2030         br start
-               0o62510, 0o66154, 0o26157, 0o73440, 0o71157, 0o62154, 0o12]
+               0o62510, 0o66154, 0o26157, 0o73440, 0o71157, 0o62154, 0o6441, 0o012]
 # Following are bytes, not words.
-# 0o110,     0o145,     0o154,  # .ascii /Hello, world/
-# 0o154,     0o157,     0o054,
-# 0o040,     0o167,     0o157,
-# 0o162,     0o154,     0o144,
-# 0o012,     0o000]    # lf, end
+# .ascii /Hello, world!/
+# 0o110,    0o145,
+# 0o154,    0o154,
+# 0o157,    0o054,
+# 0o040,    0o167,
+# 0o157,    0o162,
+# 0o154,    0o144,
+# 0o041,    0o015,
+# 0o012,    0o000]    # lf, end
 hello_address = 0o2000
 
 class TestClass():

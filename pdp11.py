@@ -14,8 +14,6 @@ from pdp11BranchOps import branchOps as br
 from pdp11OtherOps import otherOps as other
 from pdp11DL11 import dl11 as dl11
 from pdp11Boot import pdp11Boot as boot
-from threading import Thread
-from threading import Event
 import time
 import traceback
 
@@ -99,6 +97,7 @@ class pdp11CPU():
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.log_registers()
+        return run
 
 
 class pdp11Run():
@@ -141,54 +140,14 @@ class pdp11Run():
         self.am.address_mode_report()
         self.dl11.dumpBuffer()
 
-    def runThreaded(self, dl11, event):
-        """Run PDP11 emulator in thread with main terminal process.
-        Runs instructionCycle in a loop"""
-        print('runThreaded begin PDP11 emulator\n')
-        # this must eventually be definable in a file so it has to be here
-        print('runThreaded log_registers()')
-        self.pdp11.log_registers()
-
-        # start the processor loop
-        instructions_executed = 0
-        timeStart = time.time()
-        while True:
-            event.wait() # This is the only difference
-            try:
-                self.pdp11.instructionCycle()
-            except:
-                traceback.print_exc()
-            instructions_executed = instructions_executed + 1
-            if instructions_executed > 200:
-                break
-
-        print (f'runThreaded instructions_executed: {instructions_executed}')
-        timeEnd = time.time()
-        timeElapsed = (timeEnd - timeStart)
-        print (f'timeElapsed: {timeElapsed}:.2f seconds')
-        ops_per_sec = instructions_executed / timeElapsed
-        print (f'executed {ops_per_sec:.2f} instructions per second')
-        if self.reg.get_pc() > 0o200:
-            self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
-        self.am.address_mode_report()
-        self.dl11.dumpBuffer()
-
     def runInTerminal(self):
-        """run PDP11 as a separae thread and launch a PySimpleGUI terminal window."""
+        """run PDP11 with a PySimpleGUI terminal window."""
         print('runInTerminal begin')
 
         DL11 = 0o177560  # reader status register 177560
         self.dl11 = dl11(self.pdp11.ram, DL11, terminal=True)
         self.dl11.register_with_ram()
-        # this must eventually be definable in a file so it has to be here
         self.pdp11.log_registers()
-
-        # Run the PDP11 emulator as a separate thread
-        event = threading.Event()
-        #cpu_thread = Thread(target=self.runThreaded, args=(self.dl11, event,), daemon=True)
-        # Threads marked as daemon automatically die when every other non-daemon thread is dead.
-        #print('runInTerminal cpu_thread.start')
-        #cpu_thread.start()
 
         # Create and run the terminal window in PySimpleGUI
         print('runInTerminal dl11.makeWindow')
@@ -198,13 +157,7 @@ class pdp11Run():
         while windowRun:
             # run window bits
             if cpuRun:
-                self.pdp11.instructionCycle()
+                cpuRun = self.pdp11.instructionCycle()
             windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun)
-            #if cpuRun:
-            #    event.set()
-            #else:
-            #    event.clear()
 
-        print('runInTerminal dl11.dumpBuffer:')
-        self.dl11.dumpBuffer()
         print('runInTerminal ends')
