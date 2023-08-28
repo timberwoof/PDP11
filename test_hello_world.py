@@ -4,8 +4,9 @@
 # pip install -U pytest
 
 import pytest
-from pdp11 import pdp11
-from pdp11Boot import boot
+from pdp11 import pdp11CPU
+from pdp11 import pdp11Run
+from pdp11Boot import pdp11Boot
 
 mask_word = 0o177777
 mask_word_msb = 0o100000
@@ -39,10 +40,14 @@ hello_address = 0o2000
 class TestClass():
 
     def test_hello_world(self):
-        self.pdp11 = pdp11()
-        self.boot = boot(self.pdp11.reg, self.pdp11.ram)
-        self.boot.load_machine_code(hello_world, hello_address)
-        self.pdp11.reg.set_pc(0o2000, "load_machine_code")
-        self.pdp11.ram.dump(0o2000, 0o2064)
-        self.pdp11.run()
+        print('test_hello_world pdp11CPU()')
+        pdp11 = pdp11CPU()
+        print('test_hello_world pdp11Boot()')
+        boot = pdp11Boot(pdp11.reg, pdp11.ram)
+        print('test_hello_world load_machine_code()')
+        boot.load_machine_code(hello_world, hello_address)
+        pdp11.reg.set_pc(0o2000, "load_machine_code")
+        pdp11.ram.dump(0o2000, 0o2064)
+        run = pdp11Run(pdp11)
+        run.runInTerminal()
 

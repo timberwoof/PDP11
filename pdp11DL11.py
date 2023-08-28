@@ -6,7 +6,7 @@ from pdp11Hardware import ram
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
 
 class dl11:
-    def __init__(self, ram, base_address):
+    def __init__(self, ram, base_address, terminal=False):
         """dlss(ram object, base address for this device)
         """
         print(f'initializing dl11({oct(base_address)})')
@@ -27,29 +27,34 @@ class dl11:
         self.XBUF = 0   # transmit buffer
         self.bigbuf = ''
 
+    def makeWindow(self):
         # PySimpleGUI
-        print(f'dl11 terminalWindow begins\n')
+        print(f'dl11 makeWindow begins\n')
         layout = [[sg.Multiline(size=(80, 24), autoscroll=True, key='crt')],
-                  [sg.InputText(size=(80, 1), key='keyboard')]]
+                  [sg.InputText(size=(80, 1), key='keyboard')],
+                  [sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18))
-        print('dl11 initialize complete')
+        print('dl11 makeWindow done')
 
-    def terminalWidnowLoop(self):
-        # https://pypi.org/project/PySimpleGUI/3.39.0/
-        # A truly non-blocking Read call looks like this:
-        # event, values = window.Read(timeout=0)
-        # You can learn more about these async / non-blocking windows toward the end of this document.
-        # To run non-blocked, specify timeout=0on the Read call.
-        # event, values = sg.Read(timeout=0)
-        # You fucker. This doesn't work: AttributeError: 'dl11' object has no attribute 'Read'
-        event, values = self.window.read(timeout=10)
+    def terminalWindowLoop(self, cpuRun):
+        windowRun = True
+        event, values = self.window.read(timeout=20)
 
         if self.RBUF != 0:
             char = chr(self.RBUF)
             self.RBUF = 0
             self.window['crt'].update(self.bigbuf)
         if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
-            result = False
+            windowRun = False
+        elif event == "Run":
+            cpuRun = True
+        elif event == "Halt":
+            cpuRun = False
+        elif event == "Exit":
+            cpuRun = False
+            windowRun = False
+
+        return windowRun, cpuRun
 
     def terminalCloseWindow(self):
         self.window.close()
@@ -114,8 +119,6 @@ class dl11:
         """read from transitter buffer register"""
         print(f'    dl11.read_XBUF() returns {oct(self.XBUF)}:{chr(self.XBUF)}')
         return self.XBUF
-
-
 
     def register_with_ram(self):
         print(f'dl11 register_with_ram')

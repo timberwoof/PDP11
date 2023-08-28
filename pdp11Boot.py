@@ -3,7 +3,7 @@
 from pdp11Hardware import registers as reg
 from pdp11Hardware import ram
 
-class boot:
+class pdp11Boot:
     def __init__(self, reg, ram):
         print('initializing pdp11Boot')
         self.reg = reg
