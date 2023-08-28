@@ -1,7 +1,6 @@
 """PDP11 DL11 communications console"""
 import tkinter as tk
 import PySimpleGUI as sg
-
 from pdp11Hardware import ram
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
@@ -28,10 +27,32 @@ class dl11:
         self.XBUF = 0   # transmit buffer
         self.bigbuf = ''
 
-        #self.layout = [[sg.Multiline(size=(80, 24), autoscroll=True, key='crt')],
-        #               [sg.InputText(size=(80, 1), key='keyboard')]]
-        #self.window = sg.Window('PDP-11 Console', self.layout, font=('Arial', 18))
-        #event, values = self.window.read()
+        # PySimpleGUI
+        print(f'dl11 terminalWindow begins\n')
+        layout = [[sg.Multiline(size=(80, 24), autoscroll=True, key='crt')],
+                  [sg.InputText(size=(80, 1), key='keyboard')]]
+        self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18))
+        print('dl11 initialize complete')
+
+    def terminalWidnowLoop(self):
+        # https://pypi.org/project/PySimpleGUI/3.39.0/
+        # A truly non-blocking Read call looks like this:
+        # event, values = window.Read(timeout=0)
+        # You can learn more about these async / non-blocking windows toward the end of this document.
+        # To run non-blocked, specify timeout=0on the Read call.
+        # event, values = sg.Read(timeout=0)
+        # You fucker. This doesn't work: AttributeError: 'dl11' object has no attribute 'Read'
+        event, values = self.window.read(timeout=10)
+
+        if self.RBUF != 0:
+            char = chr(self.RBUF)
+            self.RBUF = 0
+            self.window['crt'].update(self.bigbuf)
+        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
+            result = False
+
+    def terminalCloseWindow(self):
+        self.window.close()
 
     # Receiver Status Register
     # 7: set when character has been received (ro)
@@ -97,7 +118,7 @@ class dl11:
 
 
     def register_with_ram(self):
-        print(f'    dl11.register_with_ram')
+        print(f'dl11 register_with_ram')
         self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
         self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
         self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
@@ -109,4 +130,4 @@ class dl11:
         self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
 
     def dumpBuffer(self):
-        print(f'    dl11 buffer: {self.bigbuf}')
+        print(f'dl11 buffer: {self.bigbuf}')

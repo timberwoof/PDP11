@@ -100,6 +100,8 @@ class pdp11():
         instructions_executed = 0
         run = True
         while run:
+            self.dl11.terminalWidnowLoop()
+
             # fetch opcode
             PC = self.reg.get_pc()
             instruction = self.ram.read_word(PC)
@@ -109,9 +111,12 @@ class pdp11():
             # decode and execute opcode
             run = self.dispatch_opcode(instruction)
             self.log_registers()
+
             instructions_executed = instructions_executed + 1
             if instructions_executed > 200:
                 break
+
+        self.dl11.terminalCloseWindow()
 
         if self.reg.get_pc() > 0o200:
             self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
