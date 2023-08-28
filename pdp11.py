@@ -105,13 +105,12 @@ class pdp11():
             instruction = self.ram.read_word(PC)
             print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
             self.reg.inc_pc(2, "fetched instruction")
-            self.log_registers()
 
             # decode and execute opcode
             run = self.dispatch_opcode(instruction)
             self.log_registers()
             instructions_executed = instructions_executed + 1
-            if instructions_executed > 100:
+            if instructions_executed > 200:
                 break
 
         if self.reg.get_pc() > 0o200:
@@ -119,3 +118,5 @@ class pdp11():
 
         print (f'instructions_executed: {instructions_executed}')
         self.am.address_mode_report()
+
+        self.dl11.dumpBuffer()

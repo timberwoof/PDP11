@@ -72,7 +72,7 @@ class branchOps:
     # ****************************************************
 
     def BR(self, instruction, offset):
-        print(f'    BR instruction:{oct(instruction)} offset:{oct(offset)}')
+        #print(f'    BR instruction:{oct(instruction)} offset:{oct(offset)}')
         """00 04 XXX Branch"""
         self.reg.set_pc_2x_offset(offset, "BR")
         return True
@@ -89,7 +89,7 @@ class branchOps:
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         # Tests the state of the Z-bit and causes a branch if Z is set
-        print (f"    BEQ Z:{self.psw.Z()}")
+        #print (f"    BEQ Z:{self.psw.Z()}")
         if self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
@@ -120,7 +120,7 @@ class branchOps:
 
     def BPL(self, instruction, offset):
         """01 00 XXX branch if positive N=0"""
-        if self.psw.N() == 0 and self.psw.Z() == 0:
+        if self.psw.N() == 0:
             self.reg.set_pc_2x_offset(offset, 'BPL')
         return True
 
@@ -176,7 +176,7 @@ class branchOps:
         blankbits = instruction & 0o070000 == 0o000000
         lowbits0 = instruction & 0o107400 in [          0o000400, 0o001000, 0o001400, 0o002000, 0o002400, 0o003000, 0o003400]
         lowbits1 = instruction & 0o107400 in [0o100000, 0o100400, 0o101000, 0o101400, 0o102000, 0o102400, 0o103000, 0o103400]
-        ##print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
+        #print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
         return blankbits and (lowbits0 or lowbits1)
 
     def do_branch(self, instruction):
