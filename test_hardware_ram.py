@@ -115,3 +115,4 @@ class TestClass():
 
             assert low_byte == expected_low_byte
             assert high_byte == expected_high_byte
+            assert sum == value

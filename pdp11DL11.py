@@ -22,7 +22,7 @@ class dl11:
         print(f'    dl11 XBUF:{oct(self.XBUF_address)}')
 
         self.RCSR_ready_bit = 0o0200
-        self.RCSR = 0   # receive
+        self.RCSR = self.RCSR_ready_bit   # receive
         self.RBUF = 0   # receive buffer
         self.XCSR_ready_bit = 0o0200
         self.XCSR = self.XCSR_ready_bit   # transmit status register ready on init
@@ -60,9 +60,9 @@ class dl11:
     def read_RBUF(self):
         """read from receiver buffer register. Read once only and reset ready bit"""
         print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:{chr(self.RBUF)}')
-        self.write_RCSR(0)
-        resilt = self.RBUF
+        result = self.RBUF
         self.RBUF = 0
+        self.RCSR = self.RCSR_ready_bit
         return result
 
     def RBUF_ready(self):
@@ -130,8 +130,8 @@ class dl11:
     def makeWindow(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         print(f'dl11 makeWindow begins\n')
-        layout = [[sg.Multiline(size=(80, 24), key='crt')],
-                  [sg.InputText(size=(80, 1), key='keyboard')],
+        layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
+                  [sg.InputText('', size=(80, 1), key='keyboard')],
                   [sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
         print('dl11 makeWindow done')
@@ -149,7 +149,7 @@ class dl11:
             text = self.window['crt']
             text.update(text.get()+newchar)
 
-        event, values = self.window.read(timeout=1)
+        event, values = self.window.read(timeout=0)
 
         if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
             windowRun = False
@@ -160,6 +160,12 @@ class dl11:
         elif event == "Exit":
             cpuRun = False
             windowRun = False
+        kbd = values['keyboard']
+        if kbd != '':
+            print(kbd)
+            self.window['keyboard'].Update('')
+            if self.RBUF_ready():
+                self.write_RBUF(ord(kbd))
 
         return windowRun, cpuRun
 

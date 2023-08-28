@@ -40,10 +40,11 @@ class pdp11CPU():
         self.reg = reg()
         self.ram = ram()
         self.psw = psw(self.ram)
-        self.br = br(self.reg, self.ram, self.psw)
         self.stack = stack(self.reg, self.ram, self.psw)
-        self.nopr = nopr(self.reg, self.ram, self.psw, self.stack)
         self.am = am(self.reg, self.ram, self.psw)
+
+        self.br = br(self.reg, self.ram, self.psw)
+        self.nopr = nopr(self.reg, self.ram, self.psw, self.stack)
         self.sopr = sopr(self.reg, self.ram, self.psw, self.am)
         self.dopr = dopr(self.reg, self.ram, self.psw, self.am)
         self.other = other(self.reg, self.ram, self.psw, self.am)
