@@ -4,6 +4,8 @@ import PySimpleGUI as sg
 from pdp11Hardware import ram
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
+CIRCLE = '⚫'
+CIRCLE_OUTLINE = '⚪'
 
 class dl11:
     def __init__(self, ram, base_address, terminal=False):
@@ -53,13 +55,13 @@ class dl11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """write to receiver buffer register and set ready bit"""
-        print(f'    dl11.write_RBUF({oct(byte)}):{chr(byte)}')
+        print(f'    dl11.write_RBUF({oct(byte)}):"{chr(byte)}"')
         self.RBUF = byte
         self.write_RCSR(self.RCSR_ready_bit)
 
     def read_RBUF(self):
         """read from receiver buffer register. Read once only and reset ready bit"""
-        print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:{chr(self.RBUF)}')
+        print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:"{chr(self.RBUF)}"')
         result = self.RBUF
         self.RBUF = 0
         self.RCSR = self.RCSR_ready_bit
@@ -90,7 +92,7 @@ class dl11:
         return self.XCSR
 
     def XBUF_ready(self):
-        if self.XCSR & self.XCSR_ready_bit == 0:
+        if self.XCSR & self.XCSR_ready_bit == 0 and self.XBUF != 0:
             return True
         else:
             return False
@@ -100,7 +102,7 @@ class dl11:
     def write_XBUF(self, byte):
         """write to transitter buffer register.
         Generally called by the CPU"""
-        print(f'    dl11.write_XBUF({oct(byte)}):{chr(byte)}')
+        print(f'    dl11.write_XBUF({oct(byte)}):"{chr(byte)}"')
         self.XBUF = byte
         # self.XCSR_ready_bit is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_ready_bit
@@ -108,7 +110,7 @@ class dl11:
     def read_XBUF(self):
         """read from transitter buffer register.
         Generally called by some outside process"""
-        print(f'    dl11.read_XBUF() returns {oct(self.XBUF)}:{chr(self.XBUF)}')
+        print(f'    dl11.read_XBUF() returns {oct(self.XBUF)}:"{chr(self.XBUF)}"')
         # self.XCSR_ready_bit is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_ready_bit
         return self.XBUF
@@ -125,15 +127,16 @@ class dl11:
         self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
         self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
 
+    # *********************
     # PySimpleGUI Interface
-
     def makeWindow(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         print(f'dl11 makeWindow begins\n')
-        layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
+        layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
                   [sg.InputText('', size=(80, 1), key='keyboard')],
-                  [sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
+                  [sg.Text(CIRCLE, text_color='green', key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
+        self.window['keyboard'].bind("<Return>", "_Enter")
         print('dl11 makeWindow done')
 
         # autoscroll=True,
@@ -145,27 +148,35 @@ class dl11:
         # maybe get character from dl11 transmit buffer
         if self.XBUF_ready():
             print('terminalWindowCycle XBUF_ready')
-            newchar = chr(self.read_XBUF())
-            text = self.window['crt']
-            text.update(text.get()+newchar)
+            newchar = self.read_XBUF()
+            sg.cprint(chr(newchar), end="")
 
+        # handle the window
         event, values = self.window.read(timeout=0)
-
         if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
             windowRun = False
         elif event == "Run":
             cpuRun = True
+            text = self.window['runLED']
+            text.update(CIRCLE_OUTLINE)
         elif event == "Halt":
             cpuRun = False
+            text = self.window['runLED']
+            text.update(CIRCLE)
         elif event == "Exit":
             cpuRun = False
             windowRun = False
+        elif event == 'keyboard_Enter':
+            print ('keyboard_Enter')
+            self.window['keyboard'].Update('')
+            if self.RBUF_ready():
+                self.write_RBUF(ord('\n'))
         kbd = values['keyboard']
         if kbd != '':
             print(kbd)
             self.window['keyboard'].Update('')
             if self.RBUF_ready():
-                self.write_RBUF(ord(kbd))
+                self.write_RBUF(ord(kbd[0:1]))
 
         return windowRun, cpuRun
 

@@ -124,11 +124,6 @@ class pdp11Run():
         while True:
             self.pdp11.instructionCycle()
             instructions_executed = instructions_executed + 1
-            if instructions_executed > 200:
-                break
-
-        if self.reg.get_pc() > 0o200:
-            self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
 
         print (f'run instructions_executed: {instructions_executed}')
         timeEnd = time.time()
