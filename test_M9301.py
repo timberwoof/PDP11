@@ -11,7 +11,6 @@ class TestClass():
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         Boot0 = pdp11.boot.read_PDP11_assembly_file('source/M9301-YA.txt')
         pdp11.reg.set_pc(0o165000, "test_M9301-YA") # 0o165000
-        pdp11.ram.dump(0o165000, 0o165007)
         run = pdp11Run(pdp11)
         run.runInTerminal()
 
@@ -21,7 +20,6 @@ class TestClass():
         pdp11 = pdp11CPU()
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         Boot0 = pdp11.boot.read_PDP11_assembly_file('source/M9301-YA.txt')
-        pdp11.reg.set_pc(0o165000, "test_M9301-YB") # 0o165000
-        pdp11.ram.dump(0o165000, 0o165007)
+        pdp11.reg.set_pc(0o173000, "test_M9301-YB") # 0o165000
         run = pdp11Run(pdp11)
         run.runInTerminal()

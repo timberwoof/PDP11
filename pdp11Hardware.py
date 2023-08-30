@@ -74,12 +74,12 @@ class registers:
         #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
-    def set_pc(self, value=2, whocalled=''):
+    def set_pc(self, value=0o24, whocalled=''):
         """set program counter to arbitrary value"""
-        print(f"set_pc({oct(value)}, {whocalled})")
+        #print(f"set_pc({oct(value)}, {whocalled})")
         newpc = value & mask_word
         self.registers[self.PC] = newpc
-        print(f'    setpc R7<-{oct(newpc)} {whocalled}')
+        print(f'setpc R7<-{oct(newpc)} {whocalled}')
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
         """set program counter to 2x offset byte;
@@ -285,7 +285,6 @@ class psw:
 
         self.ram = ram
         self.PSW_address = ram.top_of_memory - 1  # 0o177776
-        print(f'    PSW_address: {oct(self.PSW_address)}')
 
         # This class keeps the deinitive version of the PSW.
         # When it changes, this class sets it into RAM.
@@ -302,6 +301,8 @@ class psw:
         self.Z_mask = 0o000004  # Zero
         self.V_mask = 0o000002  # Overflow
         self.C_mask = 0o000001  # Carry
+
+        print(f'psw initilialized @{oct(self.PSW_address)}')
 
     def set_PSW(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1, PSW=-1):
         """set processor status word by optional parameter

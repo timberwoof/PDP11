@@ -1,7 +1,7 @@
 """PDP-11 Emulator"""
-import threading
 import time
 
+import pdp11Hardware
 from pdp11Hardware import registers as reg
 from pdp11Hardware import ram
 from pdp11Hardware import psw
@@ -14,8 +14,7 @@ from pdp11BranchOps import branchOps as br
 from pdp11OtherOps import otherOps as other
 from pdp11DL11 import dl11 as dl11
 from pdp11Boot import pdp11Boot as boot
-import time
-import traceback
+from pdp11m9301 import m9301 as m9301
 
 # boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 # reg.set_pc(0o2000, "load_machine_code")
@@ -49,7 +48,7 @@ class pdp11CPU():
         self.dopr = dopr(self.reg, self.ram, self.psw, self.am)
         self.other = other(self.reg, self.ram, self.psw, self.am)
         self.boot = boot(self.reg, self.ram)
-        print(f'pdp11CPU init PSW_address:{oct(self.psw.PSW_address)}') # *** this WORKS!
+        self.m9301 = m9301(self.reg, self.ram, self.boot)
 
     def log_registers(self):
         """print all the registers in the log"""

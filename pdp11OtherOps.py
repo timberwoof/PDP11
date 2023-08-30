@@ -78,7 +78,7 @@ class otherOps:
         elif instruction & 0o177700 == 0o006600:
             self.MTPI(instruction)
         else:
-            #print(f'{oct(instruction)} is an unknown instruction')
+            print(f'{oct(instruction)} is an unknown instruction')
             self.reg.set_pc(0o0, "other_opcode")
             return False
         return True

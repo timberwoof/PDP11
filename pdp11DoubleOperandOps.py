@@ -13,7 +13,7 @@ mask_high_byte = 0o177400
 
 class doubleOperandOps:
     def __init__(self, reg, ram, psw, am):
-        print('initializing doubleOperandOps')
+        #print('initializing doubleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -78,7 +78,7 @@ class doubleOperandOps:
 
         (R, R+1) < (R, R+1) * (src)"""
         # C: set if the result < -2^15 or result >= 2^15-1
-        print(f'    MUL {register} * {source}')
+        #print(f'    MUL {register} * {source}')
         a = self.reg.registers[register]
         result = a * source
         self.psw.setN('', result)
@@ -226,8 +226,8 @@ class doubleOperandOps:
         source = instruction & 0o000077
 
         run = True
-        #print(f'    {self.double_operand_RSS_instruction_names[opcode]} {oct(instruction)} double_operand_RSS '
-        #      f'r{register}={oct(self.reg.registers[register])} {oct(source)}')
+        print(f'    {self.double_operand_RSS_instruction_names[opcode]} {oct(instruction)} double_operand_RSS '
+              f'r{register}={oct(self.reg.registers[register])} {oct(source)}')
         result = self.double_operand_RSS_instructions[opcode](register, source)
         #print(f'    result:{oct(result)}')
         self.reg.registers[register] = result
@@ -244,7 +244,7 @@ class doubleOperandOps:
 
         (dst) < (src)"""
         result = source
-        print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
+        #print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         self.psw.setN(BW, source)
         self.psw.setZ(BW, source)
         self.psw.set_PSW(V=0)
@@ -257,7 +257,7 @@ class doubleOperandOps:
         # set the condition code based on that result
         # but don't change the destination
         result = source - dest
-        print(f'    CMP source:{source} dest:{dest} result:{result}')
+        #print(f'    CMP source:{source} dest:{dest} result:{result}')
         self.psw.setN(BW, result)
         self.psw.setZ(BW, result)
         self.psw.setV(BW, result)
@@ -272,7 +272,7 @@ class doubleOperandOps:
         # and modifies condition codes accordingly.
         # Neither the source nor destination operands are affected.
         result = source & dest
-        print(f'    BIT source:{source} dest:{dest} result:{result}')
+        #print(f'    BIT source:{source} dest:{dest} result:{result}')
         self.psw.setN(BW, result)
         self.psw.setZ(BW, result)
         self.psw.set_PSW(V=0)
@@ -292,7 +292,7 @@ class doubleOperandOps:
         """bit set 4-30
         (dst) < (src) v (dst)"""
         result = source | dest
-        print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
+        #print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
         self.psw.setN(BW, result)
         self.psw.setZ(BW, result)
         self.psw.set_PSW(V=0)
@@ -318,7 +318,7 @@ class doubleOperandOps:
     def is_double_operand_SSDD(self, instruction):
         """Using instruction bit pattern, determine whether it's a souble operand instruction"""
         # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
-        # print (f'is_double_operand_SSDD {oct(instruction)}&0o070000={instruction & 0o070000}')
+        #print (f'is_double_operand_SSDD {oct(instruction)}&0o070000={instruction & 0o070000}')
         bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
         return bits14_12
 
@@ -345,17 +345,17 @@ class doubleOperandOps:
             BW = 'W'
         opcode = (instruction & 0o070000)
         name_opcode = (instruction & 0o170000)
-        #print(f'    {self.double_operand_SSDD_instruction_names[name_opcode]} {oct(instruction)} double_operand_SSDD ')
+        print(f'    {self.double_operand_SSDD_instruction_names[name_opcode]} {oct(instruction)} double_operand_SSDD ')
 
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
-        source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-        dest_value, out_register, out_address = self.am.addressing_mode_get(BW, dest)
-        #print(f'    {oct(source)}={oct(source_value)} {oct(dest)}={oct(dest_value)}')
+        source_value, source_register, source_address = self.am.addressing_mode_get(BW, source)
+        dest_value, dest_register, dest_address = self.am.addressing_mode_get(BW, dest)
+        print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
         result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
         #print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
-        self.am.addressing_mode_set(BW, result, out_register, out_address)
+        self.am.addressing_mode_set(BW, result, dest_register, dest_address)
 
         return run

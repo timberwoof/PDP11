@@ -102,18 +102,20 @@ class dl11:
     def write_XBUF(self, byte):
         """write to transitter buffer register.
         Generally called by the CPU"""
-        print(f'    dl11.write_XBUF({oct(byte)}):"{chr(byte)}"')
+        print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
         self.XBUF = byte
         # self.XCSR_ready_bit is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_ready_bit
 
     def read_XBUF(self):
-        """read from transitter buffer register.
+        """read from transmitter buffer register.
         Generally called by some outside process"""
-        print(f'    dl11.read_XBUF() returns {oct(self.XBUF)}:"{chr(self.XBUF)}"')
+        result = self.XBUF
+        print(f'    dl11.read_XBUF() returns {oct(result)}')#:"{chr(self.XBUF)}"')
+        #self.XBUF = 0 # there's no reason it can't be read twice
         # self.XCSR_ready_bit is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_ready_bit
-        return self.XBUF
+        return result
 
     def register_with_ram(self):
         print(f'dl11 register_with_ram')
@@ -133,7 +135,7 @@ class dl11:
         """create the DL11 emulated terminal using PySimpleGUI"""
         print(f'dl11 makeWindow begins\n')
         layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
-                  [sg.InputText('', size=(80, 1), key='keyboard')],
+                  [sg.InputText('', size=(80, 1), focus=True, key='keyboard')],
                   [sg.Text(CIRCLE, text_color='green', key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
         self.window['keyboard'].bind("<Return>", "_Enter")
@@ -147,9 +149,8 @@ class dl11:
 
         # maybe get character from dl11 transmit buffer
         if self.XBUF_ready():
-            print('terminalWindowCycle XBUF_ready')
             newchar = self.read_XBUF()
-            sg.cprint(chr(newchar), end="")
+            sg.cprint(chr(newchar), end='')
 
         # handle the window
         event, values = self.window.read(timeout=0)
@@ -167,16 +168,14 @@ class dl11:
             cpuRun = False
             windowRun = False
         elif event == 'keyboard_Enter':
-            print ('keyboard_Enter')
             self.window['keyboard'].Update('')
             if self.RBUF_ready():
                 self.write_RBUF(ord('\n'))
         kbd = values['keyboard']
         if kbd != '':
-            print(kbd)
             self.window['keyboard'].Update('')
             if self.RBUF_ready():
-                self.write_RBUF(ord(kbd[0:1]))
+                self.write_RBUF(ord(kbd[0:]))
 
         return windowRun, cpuRun
 
