@@ -15,6 +15,7 @@ from pdp11OtherOps import otherOps as other
 from pdp11DL11 import dl11 as dl11
 from pdp11Boot import pdp11Boot as boot
 from pdp11m9301 import m9301 as m9301
+from pdp11rk11 import rk11 as rk11
 
 # boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 # reg.set_pc(0o2000, "load_machine_code")
@@ -49,6 +50,7 @@ class pdp11CPU():
         self.other = other(self.reg, self.ram, self.psw, self.am)
         self.boot = boot(self.reg, self.ram)
         self.m9301 = m9301(self.reg, self.ram, self.boot)
+        self.rk11 = rk11(self.ram)
 
     def log_registers(self):
         """print all the registers in the log"""
@@ -141,7 +143,6 @@ class pdp11Run():
 
         DL11 = 0o177560  # reader status register 177560
         self.dl11 = dl11(self.pdp11.ram, DL11, terminal=True)
-        self.dl11.register_with_ram()
         self.pdp11.log_registers()
 
         # Create and run the terminal window in PySimpleGUI

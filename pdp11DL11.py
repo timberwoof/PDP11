@@ -18,10 +18,15 @@ class dl11:
         self.XCSR_address = base_address + 4
         self.XBUF_address = base_address + 6
 
-        print(f'    dl11 RCSR:{oct(self.RCSR_address)}')
-        print(f'    dl11 RBUF:{oct(self.RBUF_address)}')
-        print(f'    dl11 XCSR:{oct(self.XCSR_address)}')
-        print(f'    dl11 XBUF:{oct(self.XBUF_address)}')
+        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
+        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
+        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
+        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF)
+
+        self.ram.register_io_reader(self.RCSR_address, self.read_RCSR)
+        self.ram.register_io_reader(self.RBUF_address, self.read_RBUF)
+        self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
+        self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
 
         self.RCSR_ready_bit = 0o0200
         self.RCSR = self.RCSR_ready_bit   # receive
@@ -29,6 +34,8 @@ class dl11:
         self.XCSR_ready_bit = 0o0200
         self.XCSR = self.XCSR_ready_bit   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
+        print(f'initializing dl11 done')
+
 
     # DL11 Internal Interface to PDP-11 Emulator
 
@@ -116,18 +123,6 @@ class dl11:
         # self.XCSR_ready_bit is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_ready_bit
         return result
-
-    def register_with_ram(self):
-        print(f'dl11 register_with_ram')
-        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
-        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
-        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
-        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF)
-
-        self.ram.register_io_reader(self.RCSR_address, self.read_RCSR)
-        self.ram.register_io_reader(self.RBUF_address, self.read_RBUF)
-        self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
-        self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
 
     # *********************
     # PySimpleGUI Interface
