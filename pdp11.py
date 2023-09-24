@@ -38,7 +38,7 @@ class pdp11CPU():
         """instantiate toe PDP11 emulator components"""
         print('pdp11CPU initializing')
         self.reg = reg()
-        self.ram = ram()
+        self.ram = ram(self.reg)
         self.psw = psw(self.ram)
         self.stack = stack(self.reg, self.ram, self.psw)
         self.am = am(self.reg, self.ram, self.psw)
@@ -93,9 +93,8 @@ class pdp11CPU():
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment PC
         PC = self.reg.get_pc()
-        instruction = self.ram.read_word(PC)
+        instruction = self.ram.read_word_from_PC()
         print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
-        self.reg.inc_pc(2, "fetched instruction")
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.log_registers()
@@ -134,8 +133,7 @@ class pdp11Run():
         print (f'executed {ops_per_sec:.2f} instructions per second')
         if self.reg.get_pc() > 0o200:
             self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
-        self.am.address_mode_report()
-        self.dl11.dumpBuffer()
+        self.pdp11.am.address_mode_report()
 
     def runInTerminal(self):
         """run PDP11 with a PySimpleGUI terminal window."""
@@ -157,3 +155,4 @@ class pdp11Run():
             windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun)
 
         print('runInTerminal ends')
+        self.pdp11.am.address_mode_report()

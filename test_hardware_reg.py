@@ -37,7 +37,7 @@ class TestClass():
         self.reg.inc_pc()
         assert self.reg.get_pc() == expected_value + 2
         self.reg.set_pc(test_value)
-        self.reg.inc_pc(2)
+        self.reg.inc_pc()
         assert self.reg.get_pc() == expected_value + 2
 
         test_offset = 0o123232

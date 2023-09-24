@@ -357,7 +357,6 @@ class singleOperandOps:
         # 15 is 0 to indicate a word instruction
         # 5-0 dst
 
-        self.reg.PC_increment = 0
         if (instruction & 0o100000) == 0o100000:
             BW = 'B'
         else:
@@ -367,17 +366,18 @@ class singleOperandOps:
         addressmode = (opcode & 0o0070) >> 3
         register = (opcode & 0o0007)
         # special handling for JMP with R7
+        run = True
         if instruction & 0o177700 == 0o000100: # JMP R7
-            print(f'    JMP {oct(source)}')
-            return self.am.addressing_mode_jmp(source)
+            run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
         else:
             source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-            run = True
+
+        if run:
             print(f'    {self.single_operand_instruction_names[opcode]} '
                   f'{self.single_operand_instruction_texts[opcode]} '
                   f'{oct(instruction)} {oct(source_value)} '
-                  f'single-operand instructon register:{oct(register)}  addressmode:{oct(addressmode)}')
+                  f'single-operand instructon register:{oct(out_register)}  addressmode:{oct(addressmode)}')
             result = self.single_operand_instructions[opcode](instruction, source_value, BW)
-            #print(f'    source_value:{oct(source_value)}  result:{oct(result)}')
+            print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
             self.am.addressing_mode_set(BW, result, out_register, out_address)
-            return run
+        return run
