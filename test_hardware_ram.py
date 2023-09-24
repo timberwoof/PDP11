@@ -17,7 +17,8 @@ mask_low_byte = 0o000377
 mask_high_byte = 0o177400
 
 class TestClass():
-    ram = ram()
+    reg = reg()
+    ram = ram(reg)
 
     def test_ram_basic(self):
         assert ram.top_of_memory == 0o177777

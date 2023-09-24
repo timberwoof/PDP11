@@ -81,12 +81,15 @@ class registers:
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
         """set program counter to 2x offset byte;
-        adjust for sign bit and PC"""
-        # Bit 7 of the offset is the sign.
+        adjust for sign bit and PC.
+        Bit 7 of the offset is the sign.
+
+        0o377 < offset < 0o177 """
+        #
         # If it is set then the offset is negative.
         waspc = self.registers[self.PC]
-        offset = 2 * (offset & mask_low_byte)
-        if offset > mask_low_byte:
+        offset = 2 * offset
+        if offset > mask_low_byte: # if we overflowed with the sign bit
             offset = offset | mask_high_byte # this is now signed word
             offset = fix_sign(offset)
         newpc = self.registers[self.PC] + offset

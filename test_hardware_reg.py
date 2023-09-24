@@ -18,7 +18,7 @@ mask_high_byte = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = ram()
+    ram = ram(reg)
     psw = psw(ram)
     stack = stack(reg, ram, psw)
     am = am(reg, ram, psw)
@@ -40,9 +40,14 @@ class TestClass():
         self.reg.inc_pc()
         assert self.reg.get_pc() == expected_value + 2
 
-        test_offset = 0o123232
+        test_offset = 0o123
         self.reg.set_pc_2x_offset(test_offset)
         expected_value = expected_value + 2 + (test_offset & mask_low_byte) * 2
+        assert self.reg.get_pc() == expected_value
+
+        test_offset = 0o277
+        self.reg.set_pc_2x_offset(test_offset)
+        expected_value = 0o32273
         assert self.reg.get_pc() == expected_value
 
     def test_sp(self):
