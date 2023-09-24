@@ -47,7 +47,7 @@ class registers:
         :param register: integer 0-7
         :return: register contents"""
         result = self.registers[register & self.registermask]
-        print(f'    get R{register}={oct(result)}')
+        #print(f'    get R{register}={oct(result)}')
         return result
 
     def set(self, register, value):
@@ -55,7 +55,7 @@ class registers:
         :param register: integer 0-7
         :param value: integer
         """
-        print(f'    set R{register}<-{oct(value)}')
+        #print(f'    set R{register}<-{oct(value)}')
         self.registers[register & self.registermask] = value & mask_word
 
     def get_pc(self):
@@ -72,10 +72,10 @@ class registers:
         #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} {whocalled}')
         return self.registers[self.PC]
 
-    def set_pc(self, value=0o24, whocalled=''):
+    def set_pc(self, newpc=0o24, whocalled=''):
         """set program counter to arbitrary value"""
-        #print(f"set_pc({oct(value)}, {whocalled})")
-        newpc = value & mask_word
+        #print(f"set_pc({oct(newpc)}, {whocalled})")
+        newpc = newpc & mask_word
         self.registers[self.PC] = newpc
         print(f'setpc R7<-{oct(newpc)} {whocalled}')
 

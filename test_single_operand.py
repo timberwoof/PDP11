@@ -14,7 +14,7 @@ mask_high_byte = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = ram()
+    ram = ram(reg)
     psw = psw(ram)
     stack = stack(reg, ram, psw)
     am = am(reg, ram, psw)
