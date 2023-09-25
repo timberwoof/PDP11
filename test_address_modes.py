@@ -4,6 +4,7 @@ from pdp11Hardware import ram
 from pdp11Hardware import psw
 from pdp11Hardware import stack
 from pdp11Hardware import addressModes as am
+from pdp11SingleOperandOps import singleOperandOps as sopr
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
 
 mask_word = 0o177777
@@ -19,6 +20,7 @@ class TestClass():
     stack = stack(reg, ram, psw)
     am = am(reg, ram, psw)
     dopr = dopr(reg, ram, psw, am)
+    sopr = sopr(reg, ram, psw, am)
 
     R0 = 0
     R1 = 1
@@ -223,7 +225,7 @@ class TestClass():
     # Register contains pointer to address of operand
     # then is incremented by 2
 
-    def test_mode_3(self):
+    def test_mode_3_S(self):
         print('test_mode_3 autoincrement deferred source')
         address = 0o2763
         a = 0o101
@@ -248,10 +250,10 @@ class TestClass():
         assert condition_codes == "0000"
 
 
-    #def test_mode_3(self):
+    #def test_mode_3_D(self):
     #    print('test_mode_3 autoincrement deferred destination')
 
-    #def test_mode_3(self):
+    #def test_mode_3_SD(self):
     #    print('test_mode_3 autoincrement deferred source destination')
 
     # *****************************************
@@ -340,7 +342,7 @@ class TestClass():
 
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
-        print(oct(instruction))
+        print(f'opcode: {oct(instruction)}')
         assert self.dopr.is_double_operand_SSDD(instruction)
 
         # store the instruction
@@ -364,8 +366,7 @@ class TestClass():
 
         expected_sum = operanda + operandb # 1183
 
-        print(f'test_mode_6 set_pc:{oct(instruction_address)}')
-        self.reg.set_pc(instruction_address)
+        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
         self.dopr.do_double_operand_SSDD(instruction)
 
         actual_sum = self.reg.get(2)
@@ -389,9 +390,247 @@ class TestClass():
 
     def test_mode_7(self):
         print('test_mode_7 index deferred source')
+        # build the instruction ADD X(R1),R2
+        instruction = self.ADD(modeS=7, regS=1, modeD=0, regD=2)
+        print(f'opcode: {oct(instruction)}')
+        assert self.dopr.is_double_operand_SSDD(instruction)
+
+        # store the instruction
+        instruction_address = 0o2763
+        self.ram.write_word(instruction_address, instruction)
+
+        # Value X, stored in a word following the instruction,
+        X = 0o2050
+        self.ram.write_word(instruction_address+2, X)
+
+        operanda = 0o101 # 65
+        self.reg.set(1, operanda)
+
+        # is added to the register.
+        # The sum is used as a pointer to the address of the operand.
+        operand_pointer = X + operanda
+        operand_address = 0o5432
+        self.ram.write_word(operand_address, operanda)
+        self.ram.write_word(operand_pointer, operand_address)
+
+        operandb = 0o2136 # 1118
+        self.reg.set(2, operandb)
+
+        expected_sum = operanda + operandb # 1183
+
+        self.reg.set_pc(instruction_address+2, 'test_mode_7')  # +2 because we just read the PC in the instruciton cycle
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        actual_sum = self.reg.get(2)
+        assert actual_sum == expected_sum
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
 
     #def test_mode_7(self):
     #    print('test_mode_7 index deferred destination')
 
     #def test_mode_7(self):
     #    print('test_mode_7 index deferred source destination')
+
+    # Program Counter and Address Modes
+    # Four modes are useful for position-independent code.
+    # The special PC modes are the same as modes described
+    # in sections 3.3 and 3.4, but the general register is R7, the program counter.
+
+    def test_PC_mode_0(self):
+        print('test_PC_mode_0')
+        # jump
+
+        a = 3
+        b = 1
+
+        self.psw.set_PSW(PSW=0)
+        self.reg.set(1, a)
+        self.reg.set(2, b)
+        instruction = self.ADD(modeS=0, regS=1, modeD=0, regD=2)
+        print(oct(instruction))
+        assert self.dopr.is_double_operand_SSDD(instruction)
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        sum = self.reg.get(2)
+        assert sum == a + b
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_2(self):
+        print('test_PC_mode_2 immediate')
+        # #n operand follows instruction
+        # ADD #10,R0
+        instruction = self.ADD(modeS=2, regS=7, modeD=0, regD=0)
+        print(oct(instruction))
+        assert instruction == 0o062700
+        assert self.dopr.is_double_operand_SSDD(instruction)
+
+        address = 0o1020
+        self.ram.write_word(address, instruction)
+        self.ram.write_word(address+2, 0o000010)
+        self.reg.set(0, 0o000020)
+        self.reg.set_pc(address)
+        self.reg.log_registers()
+        self.reg.set_pc(address+2)
+        self.dopr.do_double_operand_SSDD(instruction)
+        self.reg.log_registers()
+
+        assert self.reg.get(0) == 0o000030
+        assert self.reg.get_pc() == 0o1024
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_3(self):
+        print('test_PC_mode_3 absolute')
+        # ADD @#2000,R3 Absolute address of operand follows instruction
+        instruction = self.ADD(modeS=3, regS=7, modeD=0, regD=3)
+        print(oct(instruction))
+        assert instruction == 0o063703
+        assert self.dopr.is_double_operand_SSDD(instruction)
+        a = 0o00300
+        b = 0o00500
+        pc = 0o20
+        address = 0o2000
+        self.ram.write_word(pc, instruction)
+        self.ram.write_word(pc+2, address)
+        self.ram.write_word(address, 0o00300)
+        self.reg.set(3, b)
+        self.reg.set_pc(pc)
+        self.reg.log_registers()
+        self.reg.set_pc(pc+2)
+        self.dopr.do_double_operand_SSDD(instruction)
+        self.reg.log_registers()
+
+        assert self.reg.get(3) == a + b
+        assert self.reg.get_pc() == pc+4
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_4(self):
+        print('test_PC_mode_4')
+        address = 0o2763
+        a = 0o101
+        b = 0o2136
+
+        self.ram.write_word(address, a)
+        self.reg.set(1, address+2)
+        self.reg.set(2, b)
+        expected_sum = a + b
+
+        instruction = self.ADD(modeS=4, regS=1, modeD=0, regD=2)
+        print(oct(instruction))
+        assert self.dopr.is_double_operand_SSDD(instruction)
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        actual_sum = self.reg.get(2)
+        assert actual_sum == expected_sum
+
+        r1 = self.reg.get(1)
+        assert address == r1
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_5(self):
+        print('test_PC_mode_5 relative')
+        # INC A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
+        instruction = 0o005267
+        assert self.sopr.is_single_operand(instruction)
+        a = 0o000054
+        pc = 0o1020
+        address = 0o1100
+        self.ram.write_word(pc, instruction)
+        self.ram.write_word(pc+2, a)
+        self.ram.write_word(address, 0o00000)
+        self.reg.set_pc(pc)
+
+        #self.reg.log_registers()
+        #self.ram.dump(0o1020, 0o1100)
+
+        self.reg.set_pc(pc+2)
+        self.sopr.do_single_operand(instruction)
+
+        #self.reg.log_registers()
+        #self.ram.dump(0o1020, 0o1100)
+
+        assert self.reg.get_pc() == 0o1024
+        assert self.ram.read_word(0o1100) == 0o01
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_6(self):
+        print('test_PC_mode_6 Relative')
+        # A - Relative Address (index vlaue) follows the instruction
+
+        # build the instruction ADD X(R1),R2
+        instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
+        print(f'opcode: {oct(instruction)}')
+        assert self.dopr.is_double_operand_SSDD(instruction)
+
+        # store the instruction
+        instruction_address = 0o2763
+        self.ram.write_word(instruction_address, instruction)
+
+        # Value X, stored in a word following the instruction,
+        X = 0o2050
+        self.ram.write_word(instruction_address+2, X)
+
+        operanda = 0o101 # 65
+        self.reg.set(1, operanda)
+
+        # is added to the resgiter.
+        # The sum contains the address of the operand.
+        operand_address = X + operanda
+        self.ram.write_word(operand_address, operanda)
+
+        operandb = 0o2136 # 1118
+        self.reg.set(2, operandb)
+
+        expected_sum = operanda + operandb # 1183
+
+        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        actual_sum = self.reg.get(2)
+        assert actual_sum == expected_sum
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0000"
+
+    def test_PC_mode_7(self):
+        print('test_mode_7 Relative Deferred')
+        # OPR@X(PC)
+        # CLR @A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
+        instruction = 0o005077
+        assert self.sopr.is_single_operand(instruction)
+        a = 0o000020
+        pc = 0o1020
+        pointer = 0o1044
+        address = 0o1060
+        self.ram.write_word(pc, instruction)
+        self.ram.write_word(pc + 2, a)
+        self.ram.write_word(pointer, address)
+        self.ram.write_word(address, 0o100001)
+        self.reg.set_pc(pc)
+
+        #self.reg.log_registers()
+        #self.ram.dump(0o1020, 0o1060)
+
+        self.reg.set_pc(pc + 2)
+        self.sopr.do_single_operand(instruction)
+
+        #self.reg.log_registers()
+        #self.ram.dump(0o1020, 0o1060)
+
+        assert self.reg.get_pc() == 0o1024
+        assert self.ram.read_word(address) == 0o0
+
+        condition_codes = self.psw.NZVC()
+        assert condition_codes == "0100"

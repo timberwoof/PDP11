@@ -52,17 +52,6 @@ class pdp11CPU():
         self.m9301 = m9301(self.reg, self.ram, self.boot)
         self.rk11 = rk11(self.ram)
 
-    def log_registers(self):
-        """print all the registers in the log"""
-        # *** this ought to go into hardware
-        index = 0
-        report = '    '
-        for register in self.reg.registers:
-            report = report + f'R{index}: {oct(register)}  '
-            index = index + 1
-        report = report + f'NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}'
-        print(report)
-
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
         #print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
@@ -97,7 +86,7 @@ class pdp11CPU():
         print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
-        self.log_registers()
+        self.reg.log_registers()
         return run
 
 
@@ -116,7 +105,7 @@ class pdp11Run():
         self.dl11 = dl11(self.ram, DL11, terminal=False)
         self.dl11.register_with_ram()
         # this must eventually be definable in a file so it has to be here
-        self.log_registers()
+        self.reg.log_registers()
 
         # start the processor loop
         instructions_executed = 0

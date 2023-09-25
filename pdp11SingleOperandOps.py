@@ -376,7 +376,7 @@ class singleOperandOps:
             print(f'    {self.single_operand_instruction_names[opcode]} '
                   f'{self.single_operand_instruction_texts[opcode]} '
                   f'{oct(instruction)} {oct(source_value)} '
-                  f'single-operand instructon register:{oct(out_register)}  addressmode:{oct(addressmode)}')
+                  f'single-operand instruction register:{oct(out_register)}  addressmode:{oct(addressmode)}')
             result = self.single_operand_instructions[opcode](instruction, source_value, BW)
             print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
             self.am.addressing_mode_set(BW, result, out_register, out_address)
