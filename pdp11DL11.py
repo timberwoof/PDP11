@@ -71,7 +71,7 @@ class dl11:
         print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:"{chr(self.RBUF)}"')
         result = self.RBUF
         self.RBUF = 0
-        self.RCSR = self.RCSR_ready_bit
+        self.RCSR = self.RCSR | self.RCSR_ready_bit
         return result
 
     def RBUF_ready(self):

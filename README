@@ -10,30 +10,36 @@ test of the code is a hello world program and published PDP11 CPU test code.
 
 Modules
 =======
-main.py
+- this section is out of date.
+pdp11.py
 -------
 Startup
 instruction dispatch
 processor loop
 
-pdp11ram.py
-----------
-implements 64kB of byte-addressible RAM.
+pdp11Hardware
+-------------
+Contains various "hardware" classes.
+They have dependencies, so the class pdp11CPU references and initializes them all.
+
+registers implements the register file.
+Provides access primitives that implement various PDP11 ways of doing things.
+
+ram implements byte-addressible RAM.
 Provides access primitives and two convenience functions,
 octal-to-decimal conversion and to read an assembled assembly file into RAM.
 Provides one io device, the serial output.
 
-pdp11psw.py
------------
-implements the Processtor Status Word.
+psw implements the Processtor Status Word.
 Does some initializations and provides access primitives.
 Provides a neat way to set the PSW after instructions.
 Calls resemble PDP-11 processor handbook notation.
 
-pdp11.reg.py
-------------
-implements the register file.
-Provides access primitives that implement various PDP11 ways of doing things.
+stack implements the stack.
+Does some initializations and provides access primitives.
+Implements built-in pdp11 stack operations and limit checks.
+
+addressModes implements the 8 standrad address modes of the PDP11 instruction set.
 
 pdp11Boot.py
 ------------
@@ -42,38 +48,48 @@ Sets up the instruction dispatch tables
 Reads the (hard-coded for now) assembly file into ram.
 Starts the processor loop.
 
-pdp11Branch.py - implements branch instructions
-pdp11NoOperand.py - implements no-operand instructions
-pdp11SingleOperand.py - implements single-operand instructions
-pdp11DoubleOperand.py - implements double-operand instructions
-pdp11Other.py - implements other instrucutions
-pdp11AddressMode.py - sets up and takes down source and destination for the address modes.
+Instructions
+------------
+Instruction methods are grouped by type into these classes:
+pdp11BranchOps.py - implements branch instructions
+pdp11DoubleOperandOps.py - implements double-operand instructions
+pdp11NoOperandOps.py - implements no-operand instructions
+pdp11OtherOps.py - implements other instrucutions
+pdp11SingleOperandOps.py - implements single-operand instructions
 
+Peripherals
+-----------
+pdp11DL11 - serial terminal
+pdp11m9301 - boot rom and diagnostics
+pdp11rk11 - hard disk interface (stubbed out; not implemented)
+
+Pytest
+======
+The classes named test_*.py are pytest modules.
+Each one, of course, is responsible for some class or set of instructions.
 
 Installation
 ============
 Grab the repository.
 Open it in your favorite IDE.
-Run.
+Ultimately runpdp11.py will start the whole thing.
 
 Current State of the Project
 ============================
-Runs Hellow World project.
-Runs much of M9301-YA. Pukes pretty quickly on the others.
-
+Runs Hello World project.
+DL11 emulator is mostly running.
+    M9301-YA breaks becuase DL11 doesn't properly set ready bits.
+M9301 emulator is running.
+Runs much of test_M9301_YA.
+Pytest tests pass and must continue to run.
 
 To Do
 =====
-Proper logging with settable log levels. FUck logging.
-    PyCharm and Logging don't get along and it's too much work reading through nonsplanations.
-
-Provide a proper DL11 console as a separate Python window connected to a serial terminal.
-
-Set up Pytest.
-    set up the thing as a proper application that will load and run some code.
-Provide stack access methods.
-Get the diagnostics running
-Get a virtual disk running
+DL11 emulator needs its character-ready bits to work.
+Proper logging with settable log levels.
+    PyCharm and Logging don't get along nicely.
+    This will take some research to get this working right.
+Get a virtual disk running (RK11),
 Get a small OS running. mini-unix (no MMU needed)
 Get PacMan or Space Wars running
 FP-11
@@ -81,6 +97,8 @@ Implement ODT https://gunkies.org/wiki/QBUS_CPU_ODT
 Get that assembler running.
 
 
+Notes
+=====
 RK02 1.22MB
 03 2.45MB
 05 2.45MB
@@ -106,7 +124,6 @@ dcrbuf 2
 dctcsr 4
 dctbuf 6
 
-
 DH11 communications controller
 RK05 images - munixrks.zip
 installation tape - munix-tap
@@ -124,13 +141,3 @@ and that needs to be able to set up the emulated
 tapes and drives and to slam stuff into memory
 wants an 11/20
 sim>quit should write simulated disk to disk file
-
-branch Glom
-combine all those disparate class into one library
-ram - rename this pdp11Hardware
-reg - move into pdp11Hardware
-psw - move into pdp11Hardware
-stack - needs psw, ram, reg
-addressModes  - needs psw, ram, reg
-
-• load system mystr be able to deal with bytes and words
