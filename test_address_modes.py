@@ -473,9 +473,9 @@ class TestClass():
         self.ram.write_word(address, instruction)
         self.ram.write_word(address+2, 0o000010)
         self.reg.set(0, 0o000020)
-        self.reg.set_pc(address)
+        self.reg.set_pc(address, "test_PC_mode_2")
         self.reg.log_registers()
-        self.reg.set_pc(address+2)
+        self.reg.set_pc(address+2, "test_PC_mode_2")
         self.dopr.do_double_operand_SSDD(instruction)
         self.reg.log_registers()
 
@@ -500,9 +500,9 @@ class TestClass():
         self.ram.write_word(pc+2, address)
         self.ram.write_word(address, 0o00300)
         self.reg.set(3, b)
-        self.reg.set_pc(pc)
+        self.reg.set_pc(pc, "test_PC_mode_3")
         self.reg.log_registers()
-        self.reg.set_pc(pc+2)
+        self.reg.set_pc(pc+2, "test_PC_mode_3")
         self.dopr.do_double_operand_SSDD(instruction)
         self.reg.log_registers()
 
@@ -548,12 +548,12 @@ class TestClass():
         self.ram.write_word(pc, instruction)
         self.ram.write_word(pc+2, a)
         self.ram.write_word(address, 0o00000)
-        self.reg.set_pc(pc)
+        self.reg.set_pc(pc, "test_PC_mode_5")
 
         #self.reg.log_registers()
         #self.ram.dump(0o1020, 0o1100)
 
-        self.reg.set_pc(pc+2)
+        self.reg.set_pc(pc+2, "test_PC_mode_5")
         self.sopr.do_single_operand(instruction)
 
         #self.reg.log_registers()
@@ -618,12 +618,12 @@ class TestClass():
         self.ram.write_word(pc + 2, a)
         self.ram.write_word(pointer, address)
         self.ram.write_word(address, 0o100001)
-        self.reg.set_pc(pc)
+        self.reg.set_pc(pc, "test_PC_mode_7")
 
         #self.reg.log_registers()
         #self.ram.dump(0o1020, 0o1060)
 
-        self.reg.set_pc(pc + 2)
+        self.reg.set_pc(pc + 2, "test_PC_mode_7")
         self.sopr.do_single_operand(instruction)
 
         #self.reg.log_registers()

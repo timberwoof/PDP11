@@ -45,6 +45,6 @@ class m9301:
             PC = m9301StartAddress + switch81_3 + switch81_6
             reg.set_pc(PC, "M9301")  # 0o165000
         else:
-            reg.set_pc()  # 0o165000
+            reg.set_pc(0o24,"M9301 else")  # 0o165000
 
         print(f'initializing M9301 done. PC:{oct(reg.get_pc())}')

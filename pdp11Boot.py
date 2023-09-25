@@ -105,5 +105,5 @@ class pdp11Boot:
                 #print(part0, part1, address, value1)
                 self.ram.write_word(address, value1)
 
-        print(f'read_PDP11_assembly_file "{file}" returns base address:{oct(base)}')
+        print(f'    read_PDP11_assembly_file "{file}" returns base address:{oct(base)}')
         return base

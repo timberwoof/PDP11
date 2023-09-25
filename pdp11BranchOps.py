@@ -89,7 +89,7 @@ class branchOps:
     def BEQ(self, instruction, offset):
         """00 14 XXX branch if equal Z=1"""
         # Tests the state of the Z-bit and causes a branch if Z is set
-        #print (f"    BEQ Z:{self.psw.Z()}")
+        print (f"    BEQ Z:{self.psw.Z()}")
         if self.psw.Z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
@@ -151,7 +151,7 @@ class branchOps:
     def BVS(self, instruction, offset):
         """10 24 XXX Branch if overflow is set V=1"""
         if self.psw.V() == 1:
-            self.reg.set_pc_2x_offset(offset, ' BVS')
+            self.reg.set_pc_2x_offset(offset, 'BVS')
         return True
 
     def BCC(self, instruction, offset):
@@ -184,6 +184,6 @@ class branchOps:
         #parameter: opcode of form X 000 0XX X** *** ***
         opcode = (instruction & mask_high_byte)
         offset = (instruction & mask_low_byte)
-        print(f'    {oct(instruction)}:{self.branch_instruction_names[opcode]} offset:{oct(offset)}')
+        print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} offset:{oct(offset)}')
         result = self.branch_instructions[opcode](instruction, offset)
         return result

@@ -40,7 +40,7 @@ class noOperandOps:
     def WAIT(self, instruction):
         """00 00 01 Wait 4-75"""
         print(f'WAIT unimplemented')
-        self.reg.inc_pc(operand, 'WAIT')
+        self.reg.inc_pc('WAIT')
         return False
 
     def RTI(self, instruction):
@@ -54,7 +54,7 @@ class noOperandOps:
     def BPT(self, instruction):
         """00 00 03 BPT breakpoint trap 4-67"""
         print(f'BPT unimplemented')
-        self.reg.inc_pc(operand, 'BPT')
+        self.reg.inc_pc('BPT')
         return False
 
     def IOT(self, instruction):
@@ -70,8 +70,8 @@ class noOperandOps:
 
         self.stack.push(self.psw.PSW)
         self.stack.push(self.reg.get_pc())
-        self.reg.set_pc(0o20)
-        self.reg.set_sp(0o22)
+        self.reg.set_pc(0o20, "IOT")
+        self.reg.set_sp(0o22, "IOT")
         return True
 
     def RESET(self, instruction):
@@ -82,7 +82,7 @@ class noOperandOps:
     def RTT(self, instruction):
         """00 00 06 RTT return from interrupt 4-70"""
         self.reg.set_pc(self.stack.pop(), "RTT")
-        self.reg.set_sp(self.stack.pop())
+        self.reg.set_sp(self.stack.pop(), "RTT")
         self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
         return True
 

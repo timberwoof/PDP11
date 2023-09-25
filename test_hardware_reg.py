@@ -32,21 +32,21 @@ class TestClass():
     def test_pc(self):
         test_value = 0o1232225
         expected_value = test_value & mask_word
-        self.reg.set_pc(test_value)
+        self.reg.set_pc(test_value, "test_pc")
         assert self.reg.get_pc() == expected_value
-        self.reg.inc_pc()
+        self.reg.inc_pc("test_pc")
         assert self.reg.get_pc() == expected_value + 2
-        self.reg.set_pc(test_value)
-        self.reg.inc_pc()
+        self.reg.set_pc(test_value, "test_pc")
+        self.reg.inc_pc("test_pc")
         assert self.reg.get_pc() == expected_value + 2
 
         test_offset = 0o123
-        self.reg.set_pc_2x_offset(test_offset)
+        self.reg.set_pc_2x_offset(test_offset, "test_pc")
         expected_value = expected_value + 2 + (test_offset & mask_low_byte) * 2
         assert self.reg.get_pc() == expected_value
 
         test_offset = 0o277
-        self.reg.set_pc_2x_offset(test_offset)
+        self.reg.set_pc_2x_offset(test_offset, "test_pc")
         expected_value = 0o32273
         assert self.reg.get_pc() == expected_value
 

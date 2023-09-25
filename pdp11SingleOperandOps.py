@@ -140,6 +140,7 @@ class singleOperandOps:
 
     def JMP(self, instruction, operand, B):
         """00 01 DD JMP jump 4-56"""
+        #print(f'JMP calling set_pc({oct(operand)})')
         self.reg.set_pc(operand, 'JMP')
         return operand
 
@@ -369,10 +370,12 @@ class singleOperandOps:
         run = True
         if instruction & 0o177700 == 0o000100: # JMP R7
             run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
+            print(f'    {self.single_operand_instruction_names[opcode]} '
+                  f'{self.single_operand_instruction_texts[opcode]} '
+                  f'{oct(instruction)} {oct(source_value)} '
+                  f'single-operand instruction register:{oct(out_register)}  addressmode:{oct(addressmode)}')
         else:
             source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-
-        if run:
             print(f'    {self.single_operand_instruction_names[opcode]} '
                   f'{self.single_operand_instruction_texts[opcode]} '
                   f'{oct(instruction)} {oct(source_value)} '

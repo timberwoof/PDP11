@@ -81,9 +81,11 @@ class pdp11CPU():
     def instructionCycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment PC
-        PC = self.reg.get_pc()
-        instruction = self.ram.read_word_from_PC()
-        print(f'PC:{oct(PC)}  opcode:{oct(instruction)}')
+        PC = self.reg.get_pc() # get PC without incrementing
+        instruction = self.ram.read_word_from_PC() # read at PC and increment PC
+        print('----')
+        print(f'PC:{oct(PC)} opcode:{oct(instruction)}')
+        #print(f'PC:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.reg.log_registers()
