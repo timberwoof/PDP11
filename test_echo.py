@@ -1,7 +1,5 @@
-# test_hardware_ram    .py
-# test the pdp11Hardware.py module using pytest
-# pip3 install --upgrade pip
-# pip install -U pytest
+# test_echo.py
+# load a small pdp11 program that echoes inputs back to outputs
 
 import pytest
 from pdp11 import pdp11CPU

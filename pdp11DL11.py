@@ -28,14 +28,25 @@ class dl11:
         self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
         self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
 
-        self.RCSR_ready_bit = 0o0200
-        self.RCSR = self.RCSR_ready_bit   # receive
+        # RCSR Receiver Status Register bits
+        # This is a DL11-B
+        # no paper tape bits as for A and C.
+        # no modem-control bits as for E
+        self.RCSR_RCVR_ACT = 0o004000 # 11 RO - active (we're not multithreaded yet)
+        self.RCSR_RCVR_DONE = 0o000200 # 7 RO - set when character has been received, cleared when RBUF is read
+        self.RCSR_INT_ENB = 0o000100 # 6 - when set, enables interrupt (not implemented)
+        self.RCSR = 0   # receive status register. Not active; no character yet
         self.RBUF = 0   # receive buffer
-        self.XCSR_ready_bit = 0o0200
-        self.XCSR = self.XCSR_ready_bit   # transmit status register ready on init
+
+        # XCSR Transmitter Status Register bits
+        # This is a DL11-B
+        # No Break bit
+        self.XCSR_XMIT_RDY = 0o000200 # 7 RO - set when transmitter can accept another character
+        self.XCSR_SMIT_INT_ENB = 0o000100 # 6 RW - when set, enables interrupt (not implemented)
+        self.XCSR_MAINT = 0o000004 # 2 RW - maintenance loopback XBUF to RBUF
+        self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
         print(f'initializing dl11 done')
-
 
     # DL11 Internal Interface to PDP-11 Emulator
 
@@ -64,18 +75,18 @@ class dl11:
         """write to receiver buffer register and set ready bit"""
         print(f'    dl11.write_RBUF({oct(byte)}):"{chr(byte)}"')
         self.RBUF = byte
-        self.write_RCSR(self.RCSR_ready_bit)
+        self.RCSR = self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """read from receiver buffer register. Read once only and reset ready bit"""
         print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:"{chr(self.RBUF)}"')
         result = self.RBUF
         self.RBUF = 0
-        self.RCSR = self.RCSR | self.RCSR_ready_bit
+        self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
     def RBUF_ready(self):
-        if self.read_RCSR() & self.RCSR_ready_bit == self.RCSR_ready_bit:
+        if self.read_RCSR() & self.RCSR_RCVR_DONE == self.RCSR_RCVR_DONE:
             return True
         else:
             return False
@@ -91,7 +102,9 @@ class dl11:
     def write_XCSR(self, byte):
         """write to transmitter status register"""
         print(f'    dl11.write_XCSR({oct(byte)})')
-        self.XCSR = byte
+        # make the RW and RO bits play nice
+        # only two are implemented so far
+        self.XCSR = (byte & self.XCSR_MAINT) | (self.XCSR & self.XCSR_XMIT_RDY)
 
     def read_XCSR(self):
         """read from transitter status register"""
@@ -99,7 +112,8 @@ class dl11:
         return self.XCSR
 
     def XBUF_ready(self):
-        if self.XCSR & self.XCSR_ready_bit == 0 and self.XBUF != 0:
+        """convenience method for the terminal emulator."""
+        if self.XCSR & self.XCSR_XMIT_RDY == 0 and self.XBUF != 0:
             return True
         else:
             return False
@@ -111,8 +125,12 @@ class dl11:
         Generally called by the CPU"""
         print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
         self.XBUF = byte
-        # self.XCSR_ready_bit is cleared when XBUF is loaded
-        self.XCSR = self.XCSR & ~self.XCSR_ready_bit
+        # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
+        self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
+
+        # check for Maintenance mode
+        if self.XCSR & self.XCSR_MAINT:
+            self.write_RBUF(byte)
 
     def read_XBUF(self):
         """read from transmitter buffer register.
@@ -120,8 +138,8 @@ class dl11:
         result = self.XBUF
         print(f'    dl11.read_XBUF() returns {oct(result)}')#:"{chr(self.XBUF)}"')
         #self.XBUF = 0 # there's no reason it can't be read twice
-        # self.XCSR_ready_bit is set when XBUF can accept another character
-        self.XCSR = self.XCSR | self.XCSR_ready_bit
+        # self.XCSR_XMIT_RDY is set when XBUF can accept another character
+        self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
 
     # *********************

@@ -52,6 +52,13 @@ class pdp11CPU():
         self.m9301 = m9301(self.reg, self.ram, self.boot)
         self.rk11 = rk11(self.ram)
 
+        # set up DL11
+        # set up the serial interface addresses
+        # this must eventually be definable in a file so it has to be here
+        DL11 = 0o177560  # reader status register 177560
+        self.dl11 = dl11(self.ram, DL11, terminal=False)
+        print('pdp11CPU initializing done')
+
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
         #print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
@@ -101,12 +108,6 @@ class pdp11Run():
     def run(self):
         """Run PDP11 emulator without terminal process"""
         print('begin PDP11 emulator')
-        # set up DL11
-        # set up the serial interface addresses
-        DL11 = 0o177560  # reader status register 177560
-        self.dl11 = dl11(self.ram, DL11, terminal=False)
-        self.dl11.register_with_ram()
-        # this must eventually be definable in a file so it has to be here
         self.reg.log_registers()
 
         # start the processor loop

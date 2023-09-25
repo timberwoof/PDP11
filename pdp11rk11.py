@@ -15,7 +15,7 @@ class rk11:
         self.RKMR_address = base_address + 0o14
         self.RKDB_address = base_address + 0o16
 
-        print(f'dl11 register_with_ram')
+        print(f'RK11 register_with_ram')
         self.ram.register_io_writer(self.RKCS_address, self.write_RKCS) # rw
         self.ram.register_io_writer(self.RKWC_address, self.write_RKWC) # rw
         self.ram.register_io_writer(self.RKBA_address, self.write_RKBA) # rw
@@ -38,6 +38,7 @@ class rk11:
         self.RKDA = 0
         self.RKMR = 0
         self.RKDB = 0
+        print('initializing RK11 done')
 
     def write_RKCS(self, data):
         print('RK11 write_RKCS')
@@ -82,12 +83,6 @@ class rk11:
     def read_RKDB(self):
         print('RK11 read_RKDB')
         return self.RKDB
-
-
-
-
-
-
 
     def controlReset(self):
         print('RK11 control reset')
