@@ -253,7 +253,7 @@ class doubleOperandOps:
     def CMP(self, BW, source, dest):
         """compare 4-24
         (src)-(dst)"""
-        # subtract dst from source
+        # subtract dest from source
         # set the condition code based on that result
         # but don't change the destination
         result = source - dest
@@ -349,13 +349,17 @@ class doubleOperandOps:
 
         source = (instruction & 0o007700) >> 6
         dest = (instruction & 0o000077)
+        #print(f'    source_value  = addressing_mode_get')
         source_value, source_register, source_address = self.am.addressing_mode_get(BW, source)
+        #print(f'    dest_value = addressing_mode_get')
         dest_value, dest_register, dest_address = self.am.addressing_mode_get(BW, dest)
-        print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
+        #print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
+        #print(f'    result = double_operand_SSDD_instructions')
         result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
-        #print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
+        print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
+        #print(f'    addressing_mode_set')
         self.am.addressing_mode_set(BW, result, dest_register, dest_address)
 
         return run

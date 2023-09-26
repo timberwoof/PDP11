@@ -6,6 +6,7 @@ from pdp11Hardware import ram
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
 CIRCLE = '⚫'
 CIRCLE_OUTLINE = '⚪'
+PC_DISPLAY = ''
 
 class dl11:
     def __init__(self, ram, base_address, terminal=False):
@@ -79,8 +80,8 @@ class dl11:
 
     def read_RBUF(self):
         """read from receiver buffer register. Read once only and reset ready bit"""
-        print(f'    dl11.read_RBUF() returns {oct(self.RBUF)}:"{chr(self.RBUF)}"')
         result = self.RBUF
+        print(f'    dl11.read_RBUF() returns {oct(result)}:"{chr(result)}"')
         self.RBUF = 0
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
@@ -123,21 +124,26 @@ class dl11:
     def write_XBUF(self, byte):
         """write to transitter buffer register.
         Generally called by the CPU"""
-        print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
-        self.XBUF = byte
-        # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
-        self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
 
-        # check for Maintenance mode
-        if self.XCSR & self.XCSR_MAINT:
-            self.write_RBUF(byte)
+        # if it's ready, then it can store the byte
+        if True: #self.XCSR & self.XCSR_XMIT_RDY == self.XCSR_XMIT_RDY:
+            print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
+            self.XBUF = byte
+            # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
+            self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
+
+            # check for Maintenance mode
+            if self.XCSR & self.XCSR_MAINT:
+                self.write_RBUF(byte)
+        else:
+            print(f'    dl11.write_XBUF() was not ready; byte got ate')
 
     def read_XBUF(self):
-        """read from transmitter buffer register.
-        Generally called by some outside process"""
+        """Read from transmitter buffer register."""
+        # Generally called by some outside process.
+        # We can always read this as foten as we want.
         result = self.XBUF
         print(f'    dl11.read_XBUF() returns {oct(result)}')#:"{chr(self.XBUF)}"')
-        #self.XBUF = 0 # there's no reason it can't be read twice
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
@@ -147,18 +153,38 @@ class dl11:
     def makeWindow(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         print(f'dl11 makeWindow begins\n')
-        layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
+        layout = [[sg.Text(PC_DISPLAY, key='programCounter')],
+                  [sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
                   [sg.InputText('', size=(80, 1), focus=True, key='keyboard')],
-                  [sg.Text(CIRCLE, text_color='green', key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]]
+                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]                  ]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
         self.window['keyboard'].bind("<Return>", "_Enter")
         print('dl11 makeWindow done')
 
         # autoscroll=True,
 
-    def terminalWindowCycle(self, cpuRun):
+    def get_pc_text(self, pdp11):
+        """create a display of the program counter"""
+        PCtext = ''
+        PC = pdp11.reg.get_pc()
+        bits = pdp11.ram.top_of_memory # like 0o17777777
+        mask = 1
+        print (f'This PDP11 has {oct(bits)} bytes of addressible ram')
+        while bits > 0:
+            if PC & mask == mask:
+                PCtext = CIRCLE_OUTLINE + PCtext
+            else:
+                PCtext = CIRCLE + PCtext
+            bits = bits >> 1
+            mask = mask << 1
+        return PCtext
+
+    def terminalWindowCycle(self, cpuRun, pdp11):
         """Run one iteration of the PySimpleGUI terminal window loop"""
         windowRun = True
+
+        #programCounter = self.window['programCounter']
+        #programCounter.update(self.get_pc_text(pdp11))
 
         # maybe get character from dl11 transmit buffer
         if self.XBUF_ready():

@@ -144,7 +144,7 @@ class pdp11Run():
             # run window bits
             if cpuRun:
                 cpuRun = self.pdp11.instructionCycle()
-            windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun)
+            windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun, self.pdp11)
 
         print('runInTerminal ends')
         self.pdp11.am.address_mode_report()
