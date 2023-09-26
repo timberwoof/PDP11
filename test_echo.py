@@ -30,7 +30,7 @@ class TestClass():
         print('test_echo load_machine_code()')
         boot.load_machine_code(echo, echo_address)
         pdp11.reg.set_pc(echo_address, "load_machine_code")
-        pdp11.ram.dump(echo_address, echo_address+64)
+        pdp11.ram.dump(echo_address, echo_address+0o10)
         run = pdp11Run(pdp11)
         run.runInTerminal()
 

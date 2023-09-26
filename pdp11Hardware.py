@@ -220,7 +220,8 @@ class ram:
 
     def read_word(self, address):
         """Read a word of memory.
-        Returns a two-byte value"""
+        Returns a two-byte value.
+        Crashes silumlator if we go out of bounds."""
         # Low bytes are stored at even-numbered memory locations
         # and high bytes at are stored at odd-numbered memory locations.
         if address in self.iomap_readers.keys():

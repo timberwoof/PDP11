@@ -34,7 +34,9 @@ class dl11:
         # no paper tape bits as for A and C.
         # no modem-control bits as for E
         self.RCSR_RCVR_ACT = 0o004000 # 11 RO - active (we're not multithreaded yet)
-        self.RCSR_RCVR_DONE = 0o000200 # 7 RO - set when character has been received, cleared when RBUF is read
+        self.RCSR_RCVR_DONE = 0o000200 # 7 RO
+        #   set when character has been received,
+        #   cleared when RBUF is read (addressed for read or write by CPU)
         self.RCSR_INT_ENB = 0o000100 # 6 - when set, enables interrupt (not implemented)
         self.RCSR = 0   # receive status register. Not active; no character yet
         self.RBUF = 0   # receive buffer
@@ -42,7 +44,9 @@ class dl11:
         # XCSR Transmitter Status Register bits
         # This is a DL11-B
         # No Break bit
-        self.XCSR_XMIT_RDY = 0o000200 # 7 RO - set when transmitter can accept another character
+        self.XCSR_XMIT_RDY = 0o000200 # 7 RO -
+        #   set when transmitter can accept another character
+        #   cleared by loading XBUF (write by CPU)
         self.XCSR_SMIT_INT_ENB = 0o000100 # 6 RW - when set, enables interrupt (not implemented)
         self.XCSR_MAINT = 0o000004 # 2 RW - maintenance loopback XBUF to RBUF
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
@@ -73,24 +77,17 @@ class dl11:
     # 12: receive parity error
     # 7-0 received data
     def write_RBUF(self, byte):
-        """write to receiver buffer register and set ready bit"""
+        """DL11 calls this to write to receiver buffer and set ready bit"""
         print(f'    dl11.write_RBUF({oct(byte)}):"{chr(byte)}"')
         self.RBUF = byte
-        self.RCSR = self.RCSR_RCVR_DONE
+        self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
-        """read from receiver buffer register. Read once only and reset ready bit"""
+        """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
         print(f'    dl11.read_RBUF() returns {oct(result)}:"{chr(result)}"')
-        self.RBUF = 0
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
-
-    def RBUF_ready(self):
-        if self.read_RCSR() & self.RCSR_RCVR_DONE == self.RCSR_RCVR_DONE:
-            return True
-        else:
-            return False
 
     # Transmitter enables CPU to send characters to a terminal.
     # XCSR transmit status register (rw)
@@ -105,45 +102,30 @@ class dl11:
         print(f'    dl11.write_XCSR({oct(byte)})')
         # make the RW and RO bits play nice
         # only two are implemented so far
-        self.XCSR = (byte & self.XCSR_MAINT) | (self.XCSR & self.XCSR_XMIT_RDY)
+        self.XCSR = byte
 
     def read_XCSR(self):
         """read from transitter status register"""
         print(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
         return self.XCSR
 
-    def XBUF_ready(self):
-        """convenience method for the terminal emulator."""
-        if self.XCSR & self.XCSR_XMIT_RDY == 0 and self.XBUF != 0:
-            return True
-        else:
-            return False
-
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
-        """write to transitter buffer register.
-        Generally called by the CPU"""
+        """PDP11 calls this to write to transmitter buffer register."""
+        print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
+        self.XBUF = byte
+        # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
+        self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
 
-        # if it's ready, then it can store the byte
-        if True: #self.XCSR & self.XCSR_XMIT_RDY == self.XCSR_XMIT_RDY:
-            print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
-            self.XBUF = byte
-            # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
-            self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
-
-            # check for Maintenance mode
-            if self.XCSR & self.XCSR_MAINT:
-                self.write_RBUF(byte)
-        else:
-            print(f'    dl11.write_XBUF() was not ready; byte got ate')
+        # check for Maintenance mode
+        if self.XCSR & self.XCSR_MAINT:
+            self.write_RBUF(byte)
 
     def read_XBUF(self):
-        """Read from transmitter buffer register."""
-        # Generally called by some outside process.
-        # We can always read this as foten as we want.
+        """DL11 calls this to read from transmitter buffer register."""
         result = self.XBUF
-        print(f'    dl11.read_XBUF() returns {oct(result)}')#:"{chr(self.XBUF)}"')
+        print(f'    dl11.read_XBUF() returns {oct(result)}:"{chr(self.XBUF)}"')
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
@@ -167,9 +149,8 @@ class dl11:
         """create a display of the program counter"""
         PCtext = ''
         PC = pdp11.reg.get_pc()
-        bits = pdp11.ram.top_of_memory # like 0o17777777
         mask = 1
-        print (f'This PDP11 has {oct(bits)} bytes of addressible ram')
+        bits = self.ram.top_of_memory
         while bits > 0:
             if PC & mask == mask:
                 PCtext = CIRCLE_OUTLINE + PCtext
@@ -183,11 +164,11 @@ class dl11:
         """Run one iteration of the PySimpleGUI terminal window loop"""
         windowRun = True
 
-        #programCounter = self.window['programCounter']
-        #programCounter.update(self.get_pc_text(pdp11))
+        programCounter = self.window['programCounter']
+        programCounter.update(self.get_pc_text(pdp11))
 
         # maybe get character from dl11 transmit buffer
-        if self.XBUF_ready():
+        if self.XCSR & self.XCSR_XMIT_RDY == 0 and self.XBUF != 0:
             newchar = self.read_XBUF()
             sg.cprint(chr(newchar), end='')
 
@@ -208,12 +189,12 @@ class dl11:
             windowRun = False
         elif event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
-            if self.RBUF_ready():
+            if self.RCSR & self.RCSR_RCVR_DONE == 0:
                 self.write_RBUF(ord('\n'))
         kbd = values['keyboard']
         if kbd != '':
             self.window['keyboard'].Update('')
-            if self.RBUF_ready():
+            if self.RCSR & self.RCSR_RCVR_DONE == 0:
                 self.write_RBUF(ord(kbd[0:]))
 
         return windowRun, cpuRun

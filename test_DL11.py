@@ -74,7 +74,10 @@ class TestClass():
 
         # set the maintenance bit and verify it.
         # This means DL11 connects its X output to R input
-        pdp11.ram.write_word(pdp11.dl11.XCSR_address, pdp11.dl11.XCSR_MAINT)
+        # get the state of the XCSR
+        XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+        # set the maintenance bit true and leave the rest
+        pdp11.ram.write_word(pdp11.dl11.XCSR_address, XCSR | pdp11.dl11.XCSR_MAINT)
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
         assert XCSR & pdp11.dl11.XCSR_MAINT == pdp11.dl11.XCSR_MAINT
 
@@ -82,29 +85,33 @@ class TestClass():
         RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
         assert RCSR == 0o0
 
-        # verify that transmitter is ready
-        XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-        print(f'XCSR:{oct(XCSR)}') # maintenance mode should be set; ready should be set
-        assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
+        i = 0
+        while i < 100:
+            # verify that transmitter is ready
+            XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+            print(f'XCSR:{oct(XCSR)}') # maintenance mode should be set; ready should be set
+            assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
 
-        # transmit a byte
-        pdp11.ram.write_word(pdp11.dl11.XBUF_address, self.make_test_character())
+            # transmit a byte
+            pdp11.ram.write_word(pdp11.dl11.XBUF_address, self.make_test_character())
 
-        # verify that we've transmitted it
-        XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-        assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == 0
+            # verify that we've transmitted it
+            XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+            assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == 0
 
-        # verify that a byte is ready to read
-        RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
-        print(f'RCSR:{oct(RCSR)}') # maintenance mode should be set; ready should be set
-        assert RCSR & pdp11.dl11.RCSR_RCVR_DONE == pdp11.dl11.RCSR_RCVR_DONE
+            # verify that a byte is ready to read
+            RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
+            print(f'RCSR:{oct(RCSR)}') # maintenance mode should be set; ready should be set
+            assert RCSR & pdp11.dl11.RCSR_RCVR_DONE == pdp11.dl11.RCSR_RCVR_DONE
 
-        # receive the byte
-        XBUF = pdp11.ram.read_word(pdp11.dl11.XBUF_address)
-        assert XBUF == self.test_character
+            # receive the byte
+            XBUF = pdp11.ram.read_word(pdp11.dl11.XBUF_address)
+            assert XBUF == self.test_character
 
-        # verify that the transmitted is ready again
-        XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-        assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
+            # verify that the transmitted is ready again
+            XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+            assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
+
+            i = i + 1
 
         print('test_maintenance done')
