@@ -12,7 +12,7 @@ class dl11:
     def __init__(self, ram, base_address, terminal=False):
         """dlss(ram object, base address for this device)
         """
-        print(f'initializing dl11({oct(base_address)})')
+        print(f'initializing dl11({oct(base_address)})   {oct(ord("$"))}')
         self.ram = ram
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2
@@ -78,14 +78,14 @@ class dl11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        print(f'    dl11.write_RBUF({oct(byte)}):"{chr(byte)}"')
+        print(f'    dl11.write_RBUF({oct(byte)}):"{self.safeCharacter(byte)}"')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
-        print(f'    dl11.read_RBUF() returns {oct(result)}:"{chr(result)}"')
+        print(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safeCharacter(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
@@ -113,7 +113,7 @@ class dl11:
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        print(f'    dl11.write_XBUF({oct(byte)})')#:"{chr(byte)}"')
+        print(f'    dl11.write_XBUF({oct(byte)}):"{self.safeCharacter(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -125,7 +125,7 @@ class dl11:
     def read_XBUF(self):
         """DL11 calls this to read from transmitter buffer register."""
         result = self.XBUF
-        print(f'    dl11.read_XBUF() returns {oct(result)}:"{chr(self.XBUF)}"')
+        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safeCharacter(result)}"')
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
@@ -134,7 +134,7 @@ class dl11:
     # PySimpleGUI Interface
     def makeWindow(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
-        print(f'dl11 makeWindow begins\n')
+        print(f'dl11 makeWindow begins')
         layout = [[sg.Text(PC_DISPLAY, key='programCounter')],
                   [sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
                   [sg.InputText('', size=(80, 1), focus=True, key='keyboard')],
@@ -202,3 +202,9 @@ class dl11:
     def terminalCloseWindow(self):
         self.window.close()
 
+    def safeCharacter(self, byte):
+        if byte > 32:
+            result = chr(byte)
+        else:
+            result = ""
+        return result

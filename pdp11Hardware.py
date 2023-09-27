@@ -549,16 +549,18 @@ class addressModes:
             ram_read = self.ram.read_byte
             increment = 1
             b = 'B'
+            mask = mask_low_byte
         else:
             ram_read = self.ram.read_word
             increment = 2
             b = ''
+            mask = mask_word
         if register == 6 or register == 7:
             increment = 2
 
         if addressmode == 0:
             #print(f'    mode 0 Register: R{register}: register contains operand')
-            operand = self.reg.get(register)
+            operand = self.reg.get(register) & mask
             #print(f'    mode 0 R{register} = operand:{oct(operand)}')
         elif addressmode == 1:
             #print(f'    mode 1 Register Deferred: (R{register}): register contains address of operand')

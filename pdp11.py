@@ -131,20 +131,18 @@ class pdp11Run():
         """run PDP11 with a PySimpleGUI terminal window."""
         print('runInTerminal begin')
 
-        DL11 = 0o177560  # reader status register 177560
-        self.dl11 = dl11(self.pdp11.ram, DL11, terminal=True)
         self.pdp11.reg.log_registers()
 
         # Create and run the terminal window in PySimpleGUI
         print('runInTerminal dl11.makeWindow')
-        window = self.dl11.makeWindow()
+        window = self.pdp11.dl11.makeWindow()
         windowRun = True
         cpuRun = False
         while windowRun:
             # run window bits
             if cpuRun:
                 cpuRun = self.pdp11.instructionCycle()
-            windowRun, cpuRun = self.dl11.terminalWindowCycle(cpuRun, self.pdp11)
+            windowRun, cpuRun = self.pdp11.dl11.terminalWindowCycle(cpuRun, self.pdp11)
 
         print('runInTerminal ends')
         self.pdp11.am.address_mode_report()
