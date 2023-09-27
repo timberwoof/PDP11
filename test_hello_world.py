@@ -7,6 +7,7 @@ import pytest
 from pdp11 import pdp11CPU
 from pdp11 import pdp11Run
 from pdp11Boot import pdp11Boot
+from stopwatch import stopWatchList as sw
 
 mask_word = 0o177777
 mask_word_msb = 0o100000
@@ -45,7 +46,7 @@ class TestClass():
 
     def test_hello_world(self):
         print('test_hello_world pdp11CPU()')
-        pdp11 = pdp11CPU()
+        pdp11 = pdp11CPU(sw())
         print('test_hello_world pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         print('test_hello_world load_machine_code()')

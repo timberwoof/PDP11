@@ -2,6 +2,8 @@
 # load a small pdp11 program that echoes inputs back to outputs
 
 import pytest
+from stopwatch import stopWatchList
+
 from pdp11 import pdp11CPU
 from pdp11 import pdp11Run
 from pdp11Boot import pdp11Boot
@@ -23,8 +25,9 @@ echo_address = 0o001000
 class TestClass():
 
     def test_echo(self):
+        sw = stopWatchList()
         print('test_echo pdp11CPU()')
-        pdp11 = pdp11CPU()
+        pdp11 = pdp11CPU(sw)
         print('test_echo pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         print('test_echo load_machine_code()')

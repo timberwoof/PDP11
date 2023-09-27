@@ -16,6 +16,7 @@ from pdp11DL11 import dl11 as dl11
 from pdp11Boot import pdp11Boot as boot
 from pdp11m9301 import m9301 as m9301
 from pdp11rk11 import rk11 as rk11
+from stopwatch import stopWatchList as sw
 
 # boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 # reg.set_pc(0o2000, "load_machine_code")
@@ -34,9 +35,11 @@ from pdp11rk11 import rk11 as rk11
 # self.ram.dump(0o165000, 0o165000+32)
 
 class pdp11CPU():
-    def __init__(self):
+    def __init__(self, sw):
         """instantiate toe PDP11 emulator components"""
         print('pdp11CPU initializing')
+        self.sw = sw
+
         self.reg = reg()
         self.ram = ram(self.reg)
         self.psw = psw(self.ram)
@@ -88,6 +91,7 @@ class pdp11CPU():
     def instructionCycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment PC
+        self.sw.start("cycle")
         PC = self.reg.get_pc() # get PC without incrementing
         instruction = self.ram.read_word_from_PC() # read at PC and increment PC
         print('----')
@@ -96,12 +100,14 @@ class pdp11CPU():
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.reg.log_registers()
+        self.sw.stop("cycle")
         return run
 
 
 class pdp11Run():
     def __init__(self, pdp11CPU):
         """instantiate the PDP11 CPU"""
+        self.sw = sw()
         self.pdp11 = pdp11CPU
         self.run = False
 
@@ -114,7 +120,7 @@ class pdp11Run():
         instructions_executed = 0
         timeStart = time.time()
         while True:
-            self.pdp11.instructionCycle()
+            self.pdp11.instructionCycle(self.sw)
             instructions_executed = instructions_executed + 1
 
         print (f'run instructions_executed: {instructions_executed}')
@@ -146,3 +152,4 @@ class pdp11Run():
 
         print('runInTerminal ends')
         self.pdp11.am.address_mode_report()
+        self.sw.report()
