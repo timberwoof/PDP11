@@ -1,7 +1,7 @@
 """PDP11 DL11 communications console"""
 import tkinter as tk
 import PySimpleGUI as sg
-from pdp11Hardware import ram
+from pdp11_hardware import Ram
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
 CIRCLE = '⚫'
@@ -31,7 +31,7 @@ class dl11:
 
         # RCSR Receiver Status Register bits
         # This is a DL11-B
-        # no paper tape bits as for A and C.
+        # no paper tape bits as for A and get_c.
         # no modem-control bits as for E
         self.RCSR_RCVR_ACT = 0o004000 # 11 RO - active (we're not multithreaded yet)
         self.RCSR_RCVR_DONE = 0o000200 # 7 RO

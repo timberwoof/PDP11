@@ -4,7 +4,7 @@ import sys
 import time
 
 class stopWatch():
-    """One stopWatch object that tracks one method's duration. That's all."""
+    """One stopWatch object that tracks one method's duration."""
     def __init__(self, id):
         print(f'stopWatch({id}) init')
         self.id = id
@@ -13,7 +13,7 @@ class stopWatch():
         self.max = -1 # "uninitialized"
         self.sum = 0
         self.mean = -1 # "uninitialized"
-        self.start = time.clock_gettime_ns
+        self.starttime = time.clock_gettime_ns
         print(f'stopWatch({id}) init done')
 
     def getId(self):
@@ -34,18 +34,19 @@ class stopWatch():
     def getCount(self):
         return self.count
 
-    def restart(self):
+    def restartClock(self):
         """Restarts the clock. You better call stop first if you want to accumulate that time!"""
         self.start = time.clock_gettime_ns
 
-    def stop(self, timestop):
+    def stopClock(self, timestop):
         """Stops the clock and calculates min, max, and mean."""
+        print(f'stopWatch stopClock')
         duration = timestop - self.start
         self.min = min(duration, self.min)
         self.max = max(duration, self.max)
-        self.sum = self.sum + duration;
-        self.count = self.count + 1;
-        self.mean = self.sum / self.count;
+        self.sum = self.sum + duration
+        self.count = self.count + 1
+        self.mean = self.sum / self.count
 
     def toString(self):
         """pad the id out so reports look nice"""
@@ -79,13 +80,13 @@ class stopWatchList():
         After the section, call stop()."""
         print(f'stopWatchList start({id})')
         try:
-            thisstopWatch = self.stopWatchList[id]
+            thisStopWatch = self.stopWatchList[id]
             print(f'stopWatchList start found {id}')
         except:
-            thisstopWatch = stopWatch(id);
-            self.stopWatchList[id] = thisstopWatch
+            thisStopWatch = stopWatch(id)
+            self.stopWatchList[id] = thisStopWatch
             print(f'stopWatchList start created {id}')
-        thisstopWatch.restart()
+        thisStopWatch.restartClock()
 
     def restart(self, id):
         """Reset and start an existing stopWatch.
@@ -100,13 +101,14 @@ class stopWatchList():
         """Call this right after the part whose duration you want to measure.
         If the id cannot be found, returns error message.
         id lets you have multiple stopWatches in one method"""
-        print(f'stopWatchList stop({id})')
         stoptime = time.clock_gettime_ns
+        print(f'stopWatchList stop({id})')
         try:
-            stopWatchAccumulator = self.stopWatchList[id]
-            stopWatchAccumulator.stop(stoptime)
+            thisStopWatch = self.stopWatchList[id]
+            print(f'stopWatchList stop found {id}')
         except:
-            print(f'WARN: stopWatchList stopPrivate could not find id {id}')
+            print(f'WARN: stopWatchList stop could not find id {id}')
+        thisStopWatch.stopClock(stoptime)
 
     def report(self):
         print("stopWatch Report")

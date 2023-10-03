@@ -3,7 +3,7 @@
 
 import pytest
 import random
-from pdp11 import pdp11CPU
+from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11DL11 import dl11
 
@@ -18,7 +18,7 @@ class TestClass():
     def test_receive(self):
         """whitebox testing of receive status and buffer.
         check status bits, stick a byte in. recheck status bits."""
-        pdp11 = pdp11CPU()
+        pdp11 = PDP11()
         print('test_receive')
 
         # verify that the receive status register says nothing's ready
@@ -44,7 +44,7 @@ class TestClass():
     def test_transmit(self):
         """whitebox testing of transmit status and buffer
         check status bits, stick a byte in. rechech status bits."""
-        pdp11 = pdp11CPU()
+        pdp11 = PDP11()
         print('test_transmit')
 
         # verify that the transmitter is ready to transmit
@@ -69,7 +69,7 @@ class TestClass():
 
     def test_maintenance(self):
         """set maintenance bit and verify that bytes go in and bytes go out"""
-        pdp11 = pdp11CPU()
+        pdp11 = PDP11()
         print('test_maintenance')
 
         # set the maintenance bit and verify it.

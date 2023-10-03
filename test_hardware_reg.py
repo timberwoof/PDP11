@@ -1,14 +1,14 @@
 # test_hardware_ram    .py
-# test the pdp11Hardware.py module using pytest
+# test the pdp11_hardware.py module using pytest
 # pip3 install --upgrade pip
 # pip install -U pytest
 
 import pytest
-from pdp11Hardware import ram
-from pdp11Hardware import registers as reg
-from pdp11Hardware import psw
-from pdp11Hardware import stack
-from pdp11Hardware import addressModes as am
+from pdp11_hardware import Ram
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import PSW
+from pdp11_hardware import Stack
+from pdp11_hardware import AddressModes as am
 
 mask_word = 0o177777
 mask_word_msb = 0o100000
@@ -18,9 +18,9 @@ mask_high_byte = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = ram(reg)
-    psw = psw(ram)
-    stack = stack(reg, ram, psw)
+    ram = Ram(reg)
+    psw = PSW(ram)
+    stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
 
     def test_registers(self):

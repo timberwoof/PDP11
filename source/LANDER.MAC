@@ -19,7 +19,7 @@
 
 	.TITLE LUNAR LANDER, BY MEYER A BILLMERS
 
-	.MCALL QIO$C,QIOW$S,ALUN$C,EXIT$S,MRKT$C,ASTX$S
+	.MCALL QIO$get_c,QIOW$S,ALUN$get_c,EXIT$S,MRKT$get_c,ASTX$S
 
 ; SYMBOL DEFINITIONS
 
@@ -155,21 +155,21 @@
 
 ; MISCELLANEOUS MACROS
 
-; DEPOSIT N ROCKS AT ALTITUDE A
+; DEPOSIT get_n ROCKS AT ALTITUDE A
 
-	.MACRO ROCK N,A
+	.MACRO ROCK get_n,A
 
-	.REPT N
+	.REPT get_n
 	A,1,0
 	.ENDR
 
 	.ENDM
 
-; DEPOSIT N FLAT SPACES AT ALTITUDE A
+; DEPOSIT get_n FLAT SPACES AT ALTITUDE A
 
-	.MACRO FLAT N,A
+	.MACRO FLAT get_n,A
 
-	.REPT N
+	.REPT get_n
 	A,0,0
 	.ENDR
 
@@ -178,9 +178,9 @@
 
 
 
-START:	ALUN$C 1,TI
-	QIO$C IO.ATA,1,,,,,<TTYINT>
-	MRKT$C 2,1,1,CLKINT
+START:	ALUN$get_c 1,TI
+	QIO$get_c IO.ATA,1,,,,,<TTYINT>
+	MRKT$get_c 2,1,1,CLKINT
 	SNDSTR #INITMS
 	INC COLFLG
 	JMP MAINLP
@@ -707,7 +707,7 @@ MTNTOP:	SNDSTR #MTNMS
 
 CLKINT:	INC CLKCNT
 	TST (SP)+
-	MRKT$C 2,1,1,CLKINT
+	MRKT$get_c 2,1,1,CLKINT
 	ASTX$S
 
 
@@ -716,7 +716,7 @@ TTYINT:	PUSH R0
 	BIC #177400,R0
 	CMP R0,#3
 	BNE TTYI1
-	CLRSCR                      ; HERE FOR CNTRL-C TO RETURN TO MCR 
+	CLRSCR                      ; HERE FOR CNTRL-get_c TO RETURN TO MCR
 	SNDSTR #VT52
 	EXIT$S
 
@@ -1456,7 +1456,7 @@ INITMS:	.BYTE 33,74,33,133,61,73,61,110,33,133,60,112,33,133,77,67,154
 	.ASCII/RIGHT ARROW- rotates the direction of rocket firing clockwise/<15><12>
 	.ASCII/1 - 9      - sets the delay for display of vital stats (try 6 if remote)/<15><12>
 	.ASCII/SPACE      - starts a new game (only after old game finishes/<15><12>
-	.ASCII/CONTROL-C  - exits the program, returns to monior/<15><12><15><12>
+	.ASCII/CONTROL-get_c  - exits the program, returns to monior/<15><12><15><12>
 	.ASCII/You're on your own...  GOOD LUCK!/<15><12><15><12>
 	.ASCII/Press SPACE to begin./<15><12><0>
 

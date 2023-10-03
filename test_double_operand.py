@@ -1,9 +1,9 @@
 import pytest
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
-from pdp11Hardware import psw
-from pdp11Hardware import stack
-from pdp11Hardware import addressModes as am
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import Ram
+from pdp11_hardware import PSW
+from pdp11_hardware import Stack
+from pdp11_hardware import AddressModes as am
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
 
 mask_word = 0o177777
@@ -14,9 +14,9 @@ mask_high_byte = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = ram(reg)
-    psw = psw(ram)
-    stack = stack(reg, ram, psw)
+    ram = Ram(reg)
+    psw = PSW(ram)
+    stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     dopr = dopr(reg, ram, psw, am)
 
@@ -31,7 +31,7 @@ class TestClass():
 
     def test_BIC(self):
         print('test_BIC')
-        self.psw.set_PSW(PSW=0)
+        self.psw.set_psw(psw=0)
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
 
@@ -42,12 +42,12 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
 
-        condition_codes = self.psw.NZVC()
+        condition_codes = self.psw.get_nvzc_string()
         assert condition_codes == "0000"
 
     def test_BICB(self):
         print('test_BICB')
-        self.psw.set_PSW(PSW=0)
+        self.psw.set_psw(psw=0)
         # evil test puts word data into a byte test and expects byte result
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
@@ -59,6 +59,6 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0000000001010101
 
-        condition_codes = self.psw.NZVC()
+        condition_codes = self.psw.get_nvzc_string()
         assert condition_codes == "0000"
 

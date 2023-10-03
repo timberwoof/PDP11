@@ -1,9 +1,9 @@
 """pdp11DoubleOperandOps.py double operand instructions"""
 
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
-from pdp11Hardware import psw
-from pdp11Hardware import addressModes as am
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import Ram
+from pdp11_hardware import PSW
+from pdp11_hardware import AddressModes as am
 
 mask_word = 0o177777
 mask_word_msb = 0o100000
@@ -77,14 +77,14 @@ class doubleOperandOps:
         """07 0R SS MUL 4-31
 
         (R, R+1) < (R, R+1) * (src)"""
-        # C: set if the result < -2^15 or result >= 2^15-1
+        # get_c: set if the result < -2^15 or result >= 2^15-1
         #print(f'    MUL {register} * {source}')
         a = self.reg.registers[register]
         result = a * source
-        self.psw.setN('', result)
-        self.psw.setZ('', result)
-        self.psw.set_PSW(V=0)
-        self.psw.set_PSW(C=0) # **** this needs to be handled
+        self.psw.set_n('', result)
+        self.psw.set_z('', result)
+        self.psw.set_psw(v=0)
+        self.psw.set_psw(c=0) # **** this needs to be handled
         return result
 
     def DIV(self, register, source):
@@ -95,27 +95,27 @@ class doubleOperandOps:
         # The quotient is left in R; the remain- der in Rvl.
         # Division will be performed so that the remainder is of the same sign as the dividend.
         # R must be even.
-        # N: set if quotient <0; cleared otherwise
-        # Z: set if quotient =0; cleared otherwise
-        # V: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
-        # C: set if divide 0 attempted; cleared otherwise
+        # get_n: set if quotient <0; cleared otherwise
+        # get_z: set if quotient =0; cleared otherwise
+        # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
+        # get_c: set if divide 0 attempted; cleared otherwise
         if source == 0:
             V = 0
             C = 0
-            self.psw.set_PSW(V=V, C=C)
+            self.psw.set_psw(v=V, c=C)
             return 0
 
         R = self.reg.registers[register]
-        Rv1 = self.reg.registers[register+1]
+        Rv1 = self.reg.registers[register + 1]
 
         numerator = (R << 16) + Rv1
         quotient = numerator // source
         remainder = numerator % source
         self.reg.registers[register] = quotient
         self.reg.registers[register + 1] = remainder
-        self.psw.setN('', quotient)
-        self.psw.setZ('', quotient)
-        self.psw.set_PSW(V=0, C=0)
+        self.psw.set_n('', quotient)
+        self.psw.set_z('', quotient)
+        self.psw.set_psw(v=0, c=0)
         return quotient
 
     def ASH(self, register, source):
@@ -128,32 +128,32 @@ class doubleOperandOps:
         # This number ranges from -32 to + 31.
         # Negative is a a right shift and positive is a left shift.
         #
-        # N: set if result <0; cleared otherwise
-        # Z: set if result ..0; cleared otherwise
-        # V: set if sign of register changed during shift; cleared other- wise
-        # C: loaded from last bit shifted out of register
+        # get_n: set if result <0; cleared otherwise
+        # get_z: set if result ..0; cleared otherwise
+        # get_v: set if sign of register changed during shift; cleared other- wise
+        # get_c: loaded from last bit shifted out of register
         register_sign = register & 0o100000
         shifts = source & 0o037
         shift_sign = source & 0o040
         if shift_sign == 0:
             result = self.reg.registers[register] << shifts
         else:
-            result = self.reg.registers[register] >> (shifts+1)
-        self.psw.setN('', result)
-        self.psw.setZ('', result)
+            result = self.reg.registers[register] >> (shifts + 1)
+        self.psw.set_n('', result)
+        self.psw.set_z('', result)
         result_sign = result & 0o100000
         if result_sign != register_sign:
             V = 1
         else:
             V = 0
         # *** need to calculate Carry status
-        self.psw.set_PSW(V=V, C=0)
+        self.psw.set_psw(v=V, c=0)
         return result
 
     def ASHC(self, register, source):
         """07 3R SS ASHC arithmetic shift combined 4-34
 
-        (R, R+1) < (R, R+1) >> N"""
+        (R, R+1) < (R, R+1) >> get_n"""
         # The contents of the register and the register ORed with
         # one are treated as one 32 bit word, R + 1 (bits 0-15)
         # and R (bits 16-31) are shifted right or left the number
@@ -167,16 +167,16 @@ class doubleOperandOps:
         # word is rotated right the number of bits specified by
         # the shift count
 
-        # N: set if result <0; cleared otherwise
-        # Z: set if result =0; cleared otherwise
-        # V: set if sign bit changes during the shift; cleared otherwise
-        # C: loaded with high order bit when left Shift;
+        # get_n: set if result <0; cleared otherwise
+        # get_z: set if result =0; cleared otherwise
+        # get_v: set if sign bit changes during the shift; cleared otherwise
+        # get_c: loaded with high order bit when left Shift;
         #    loaded with low order bit when right shift
         #    (loaded with the last bit shifted out of the 32-bit operand)
 
         result = self.reg.registers[register] >> source
-        self.psw.setN('', result)
-        self.psw.setZ('', result)
+        self.psw.set_n('', result)
+        self.psw.set_z('', result)
         return result
 
     def XOR(self, register, source):
@@ -186,13 +186,13 @@ class doubleOperandOps:
         # The exclusive OR of the register and destination operand
         # is stored in the destination address. Contents of register
         # are unaffected. Assembler format is: XOR R.D
-        # N: set if the result <0: cleared otherwise
-        # Z set if result = 0: cleared otherwise
-        # V: cleared
-        # C: unaffected
+        # get_n: set if the result <0: cleared otherwise
+        # get_z set if result = 0: cleared otherwise
+        # get_v: cleared
+        # get_c: unaffected
         result = self.reg.registers[register] ^ source
-        self.psw.setN('', result)
-        self.psw.setZ('', result)
+        self.psw.set_n('', result)
+        self.psw.set_z('', result)
         return result
 
     def SOB(self, register, source):
@@ -245,9 +245,9 @@ class doubleOperandOps:
         (dst) < (src)"""
         result = source
         #print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
-        self.psw.setN(BW, source)
-        self.psw.setZ(BW, source)
-        self.psw.set_PSW(V=0)
+        self.psw.set_n(BW, source)
+        self.psw.set_z(BW, source)
+        self.psw.set_psw(v=0)
         return result #, "**0-"
 
     def CMP(self, BW, source, dest):
@@ -258,9 +258,9 @@ class doubleOperandOps:
         # but don't change the destination
         result = source - dest
         #print(f'    CMP source:{source} dest:{dest} result:{result}')
-        self.psw.setN(BW, result)
-        self.psw.setZ(BW, result)
-        self.psw.setV(BW, result)
+        self.psw.set_n(BW, result)
+        self.psw.set_z(BW, result)
+        self.psw.set_v(BW, result)
         return dest #, "***-"
 
     def BIT(self, BW, source, dest):
@@ -273,9 +273,9 @@ class doubleOperandOps:
         # Neither the source nor destination operands are affected.
         result = source & dest
         #print(f'    BIT source:{source} dest:{dest} result:{result}')
-        self.psw.setN(BW, result)
-        self.psw.setZ(BW, result)
-        self.psw.set_PSW(V=0)
+        self.psw.set_n(BW, result)
+        self.psw.set_z(BW, result)
+        self.psw.set_psw(v=0)
         return result #, "**0-"
 
     def BIC(self, BW, source, dest):
@@ -283,19 +283,19 @@ class doubleOperandOps:
 
         (dst) < ~(src)&(dst)"""
         result = ~source & dest
-        self.psw.setN(BW, result)
-        self.psw.setZ(BW, result)
-        self.psw.set_PSW(V=0)
+        self.psw.set_n(BW, result)
+        self.psw.set_z(BW, result)
+        self.psw.set_psw(v=0)
         return result #, "**0-"
 
     def BIS(self, BW, source, dest):
         """bit set 4-30
-        (dst) < (src) v (dst)"""
+        (dst) < (src) get_v (dst)"""
         result = source | dest
         #print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
-        self.psw.setN(BW, result)
-        self.psw.setZ(BW, result)
-        self.psw.set_PSW(V=0)
+        self.psw.set_n(BW, result)
+        self.psw.set_z(BW, result)
+        self.psw.set_psw(v=0)
         return result #, "**0-"
 
     def ADDSUB(self, BW, source, dest):
@@ -309,9 +309,9 @@ class doubleOperandOps:
             result = source + dest
         else:
             result = abs(source + ~dest + 1)
-        self.psw.setN(BW, result)
-        self.psw.setZ(BW, result)
-        self.psw.setV(BW, result)
+        self.psw.set_n(BW, result)
+        self.psw.set_z(BW, result)
+        self.psw.set_v(BW, result)
         # need to detect overflow, truncate result
         return result #, "****"
 
@@ -358,7 +358,7 @@ class doubleOperandOps:
         run = True
         #print(f'    result = double_operand_SSDD_instructions')
         result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
-        print(f'    result:{oct(result)}   NZVC:{self.psw.NZVC()}  PC:{oct(self.reg.get_pc())}')
+        print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
         #print(f'    addressing_mode_set')
         self.am.addressing_mode_set(BW, result, dest_register, dest_address)
 

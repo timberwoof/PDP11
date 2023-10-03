@@ -319,9 +319,9 @@ S1LOC = 173024
 					; first pass issue read sector command
 					; second pass load RXDB with sector number
 					; third pass load RXDB with track number
-					; fourth pass, R5 == C == 0, issue empty buffer command
+					; fourth pass, R5 == get_c == 0, issue empty buffer command
 
-165656 000261 	SEC			; set C for first pass flag
+165656 000261 	SEC			; set get_c for first pass flag
 
 165660 010411 	MOV 	R4, (R1)	; issue a command to the drive
 					; pass 1
@@ -348,15 +348,15 @@ S1LOC = 173024
 					;		ERROR, TR, DONE
 165666 001776 	BEQ 	.-1		; no error, not done and no transfer request, loop
 165670 100753 	BMI 	165620  	; ERROR bit is set, go
-165672 103405 	BLO 	165706		; C = 1, still working on sector read command, go
+165672 103405 	BLO 	165706		; get_c = 1, still working on sector read command, go
 165674 131104 	BITB 	(R1), R4	; AND CSR with TR, DONE mask
 165676 100342 	BPL 	165604  	; TR = 0, DONE = 1, done with buffer empty, go
 165700 116125 	MOVB 	2(R1), (R5)+	; transfer sector data to low memory
 165702 000002
 165704 000767 	BR 	165664
 
-165706 006205 	ASR 	R5		; lsb into C
-165710 103363 	BHIS 	165660		; C = 0, go and R5 is now zero
+165706 006205 	ASR 	R5		; lsb into get_c
+165710 103363 	BHIS 	165660		; get_c = 0, go and R5 is now zero
 165712 112761 	MOVB 	#000001,2(R1)	; write 1 to RXDB for sector and track
 165714 000001
 165716 000002
@@ -882,7 +882,7 @@ S1LOC = 173024
 173736 052104						; T, D  DT DECtape
 173740 052115						; T, M  MT magtape
 173742 050104						; P, D  DP RP02/03
-173744 052103						; T, C  CT cassette tape
+173744 052103						; T, get_c  CT cassette tape
 173746 051120						; R, P  PR paper tape
 173750 054104						; X, D  DX diskette
 173752 006523						; CR, S  start

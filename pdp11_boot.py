@@ -1,9 +1,10 @@
 """PDP11 bootstrap utilities"""
 
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
+#from pdp11_hardware import Registers as reg
+#from pdp11_hardware import Ram
 
 class pdp11Boot:
+    """load machine code file or assembly file with machine ccode into pdp11 ram"""
     def __init__(self, reg, ram):
         print('initializing pdp11Boot')
         self.reg = reg
@@ -55,55 +56,56 @@ class pdp11Boot:
         self.reg.set_pc(base, "load_machine_code")
 
     def octal_to_decimal(self, octal_value):
+        """convert an octal masquerading as an integer to decimal"""
         decimal_value = 0
         base = 1
-        while (octal_value):
+        while octal_value:
             last_digit = octal_value % 10
             octal_value = int(octal_value / 10)
             decimal_value += last_digit * base
             base = base * 8
         return decimal_value
 
-    def read_PDP11_assembly_file(self, file):
+    def read_pdp11_assembly_file(self, file):
         """read a DEC-formatted assembly file with machine code
         :param file: path to file
         :return: address specified in the file
         """
-        #print (f'read_PDP11_assembly_file "{file}"')
+        #print (f'read_pdp11_assembly_file "{file}"')
         base = 0
-        text = open(file, 'r')
-        for line in text:
-            #if line.strip() != "":
-            #    print (line.strip())
-            parts = line.split()
+        with open(file, 'r', encoding="utf-8") as text:
+            for line in text:
+                #if line.strip() != "":
+                #    print (line.strip())
+                parts = line.split()
 
-            # if the line is empty, slip it
-            if len(parts) == 0:
-                continue
-            part0 = parts[0]
+                # if the line is empty, slip it
+                if len(parts) == 0:
+                    continue
+                part0 = parts[0]
 
-            # if the line starts with ;, skip it
-            if part0 == ';':
-                continue
+                # if the line starts with ;, skip it
+                if part0 == ';':
+                    continue
 
-            # first item is the address
-            if part0.isnumeric():
-                address = self.octal_to_decimal(int(part0))
-                # the first address is the base address
-                if base == 0:
-                    base = address
+                # first item is the address
+                if part0.isnumeric():
+                    address = self.octal_to_decimal(int(part0))
+                    # the first address is the base address
+                    if base == 0:
+                        base = address
 
-            # if it doesn't make sense, skip it
-            else:
-                continue
+                # if it doesn't make sense, skip it
+                else:
+                    continue
 
-            # get the next value
-            part1 = parts[1]
-            if part1.isnumeric():
-                value1 = self.octal_to_decimal(int(part1))
-                # log what we got. octal, octal, decimal, decimal
-                #print(part0, part1, address, value1)
-                self.ram.write_word(address, value1)
+                # get the next value
+                part1 = parts[1]
+                if part1.isnumeric():
+                    value1 = self.octal_to_decimal(int(part1))
+                    # log what we got. octal, octal, decimal, decimal
+                    #print(part0, part1, address, value1)
+                    self.ram.write_word(address, value1)
 
-        print(f'    read_PDP11_assembly_file "{file}" returns base address:{oct(base)}')
+        print(f'    read_pdp11_assembly_file "{file}" returns base address:{oct(base)}')
         return base

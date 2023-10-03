@@ -1,6 +1,6 @@
 	.TITLE	SPACE INVADERS
 
-; 24-MAR-80	J. C. VENN
+; 24-MAR-80	J. get_c. VENN
 ; 04-JUL-80	VT52 BY MIKE BROOK
 ; 18-JAN-81	VT100 BY KEN BELL
 ; 09-MAR-82	Steve Brecher--
@@ -11,13 +11,13 @@
 ;     |		always randomize bombs if no kills yet;
 ;     |		keep count of invaders per column, reject empty column
 ;     |		   immediately in DBOMB routine;
-;     V		add fast spaceship for 200 extra points.
+;     get_v		add fast spaceship for 200 extra points.
 ; 10-MAR-82	correct "Ctrl-Q" to ""Q"" in intructions;
 ;     |		don't allow fire until previous missile moves up from base;
 ;     |		change macro and formal parameter names for compatibility with
 ;     |		   HT-11; expand "CALL" and "RETURN" in case those not
 ;     |		   compatible;
-;     V		some optimization of UP and its subroutines.
+;     get_v		some optimization of UP and its subroutines.
 
 ; If not using VT-52-type terminal, uncomment one of following 3 definitions:
 ;
@@ -379,7 +379,7 @@ CBOMB:	MOV	NBOM1,R2	; CHECK FOR COLLISION WITH BOMB
 	.SHOW	CSUP
 	.PUTCH	#40		; blank the bomb
 20$:	CLRB	BOMBX(R2)	; DESTROY BOMB
-	BR	40$		; DESTROY MISSILE (RETURN Z=1)
+	BR	40$		; DESTROY MISSILE (RETURN get_z=1)
 
 30$:	DEC	R2
 	BGE	10$

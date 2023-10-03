@@ -1,5 +1,5 @@
 """PDP11 M9301 Boot Rom"""
-from pdp11Hardware import ram
+from pdp11_hardware import Ram
 
 class m9301:
     def __init__(self, reg, ram, boot):
@@ -41,7 +41,7 @@ class m9301:
             # Load boot rom image into RAM (165000 - 173776 length 0o6776
             # Manual says  773000 through 773776 length 0o776
             # That's an offset of about 0o600000
-            boot.read_PDP11_assembly_file('source/M9301-YA.txt')
+            boot.read_pdp11_assembly_file('source/M9301-YA.txt')
             PC = m9301StartAddress + switch81_3 + switch81_6
             reg.set_pc(PC, "M9301")  # 0o165000
         else:

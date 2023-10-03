@@ -1,5 +1,5 @@
 """PDP11 RK11 Interface"""
-from pdp11Hardware import ram
+from pdp11_hardware import Ram
 
 class rk11:
     def __init__(self, ram):

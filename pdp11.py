@@ -1,22 +1,21 @@
 """PDP-11 Emulator"""
 import time
 
-import pdp11Hardware
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
-from pdp11Hardware import psw
-from pdp11Hardware import stack
-from pdp11Hardware import addressModes as am
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import Ram
+from pdp11_hardware import PSW
+from pdp11_hardware import Stack
+from pdp11_hardware import AddressModes as am
 from pdp11NoOperandOps import noOperandOps as nopr
 from pdp11SingleOperandOps import singleOperandOps as sopr
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
 from pdp11BranchOps import branchOps as br
 from pdp11OtherOps import otherOps as other
-from pdp11DL11 import dl11 as dl11
-from pdp11Boot import pdp11Boot as boot
-from pdp11m9301 import m9301 as m9301
-from pdp11rk11 import rk11 as rk11
-from stopwatch import stopWatchList as sw
+from pdp11DL11 import dl11
+from pdp11_boot import pdp11Boot as boot
+from pdp11m9301 import m9301
+from pdp11rk11 import rk11
+#from stopwatch import stopWatchList as sw
 
 # boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 # reg.set_pc(0o2000, "load_machine_code")
@@ -34,16 +33,17 @@ from stopwatch import stopWatchList as sw
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 # self.ram.dump(0o165000, 0o165000+32)
 
-class pdp11CPU():
-    def __init__(self, sw):
+class PDP11():
+    """Timber's PDP11 emulator"""
+    def __init__(self):
         """instantiate toe PDP11 emulator components"""
         print('pdp11CPU initializing')
-        self.sw = sw
+        #self.sw = sw()
 
         self.reg = reg()
-        self.ram = ram(self.reg)
-        self.psw = psw(self.ram)
-        self.stack = stack(self.reg, self.ram, self.psw)
+        self.ram = Ram(self.reg)
+        self.psw = PSW(self.ram)
+        self.stack = Stack(self.reg, self.ram, self.psw)
         self.am = am(self.reg, self.ram, self.psw)
 
         self.br = br(self.reg, self.ram, self.psw)
@@ -58,8 +58,8 @@ class pdp11CPU():
         # set up DL11
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
-        DL11 = 0o177560  # reader status register 177560
-        self.dl11 = dl11(self.ram, DL11, terminal=False)
+        # reader status register 177560
+        self.dl11 = dl11(self.ram, 0o177560, terminal=False)
         print('pdp11CPU initializing done')
 
     def dispatch_opcode(self, instruction):
@@ -88,68 +88,69 @@ class pdp11CPU():
 
         return run
 
-    def instructionCycle(self):
+    def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
-        # fetch opcode and increment PC
-        self.sw.start("cycle")
-        PC = self.reg.get_pc() # get PC without incrementing
-        instruction = self.ram.read_word_from_PC() # read at PC and increment PC
+        # fetch opcode and increment program counter
+        #self.sw.start("cycle")
+        pc = self.reg.get_pc() # get pc without incrementing
+        instruction = self.ram.read_word_from_pc() # read at pc and increment pc
         print('----')
-        print(f'PC:{oct(PC)} opcode:{oct(instruction)}')
-        #print(f'PC:{oct(self.reg.get_pc())}')
+        print(f'pc:{oct(pc)} opcode:{oct(instruction)}')
+        #print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.reg.log_registers()
-        self.sw.stop("cycle")
+        #self.sw.stop("cycle")
         return run
 
 
 class pdp11Run():
-    def __init__(self, pdp11CPU):
+    """sets up and runs PDP11 emulator"""
+    def __init__(self, pdp11):
         """instantiate the PDP11 CPU"""
-        self.sw = sw()
-        self.pdp11 = pdp11CPU
-        self.run = False
+        #self.sw = sw()
+        self.pdp11 = pdp11
+        self.running = False
 
     def run(self):
         """Run PDP11 emulator without terminal process"""
         print('begin PDP11 emulator')
-        self.reg.log_registers()
+        self.pdp11.reg.log_registers()
 
         # start the processor loop
         instructions_executed = 0
-        timeStart = time.time()
+        time_start = time.time()
         while True:
-            self.pdp11.instructionCycle(self.sw)
+            #self.pdp11.instruction_cycle(self.sw)
             instructions_executed = instructions_executed + 1
 
         print (f'run instructions_executed: {instructions_executed}')
-        timeEnd = time.time()
-        timeElapsed = (timeEnd - timeStart)
-        print (f'timeElapsed: {timeElapsed}:.2f seconds')
-        ops_per_sec = instructions_executed / timeElapsed
+        time_end = time.time()
+        time_elapsed = time_end - time_start
+        print (f'time_elapsed: {time_elapsed}:.2f seconds')
+        ops_per_sec = instructions_executed / time_elapsed
         print (f'executed {ops_per_sec:.2f} instructions per second')
-        if self.reg.get_pc() > 0o200:
-            self.ram.dump(self.reg.get_pc()-0o20, self.reg.get_pc()+0o20)
+        if self.pdp11.reg.get_pc() > 0o200:
+            self.pdp11.Ram.dump(self.pdp11.reg.get_pc() - 0o20, self.pdp11.reg.get_pc() + 0o20)
         self.pdp11.am.address_mode_report()
 
-    def runInTerminal(self):
+    def run_in_terminal(self):
         """run PDP11 with a PySimpleGUI terminal window."""
-        print('runInTerminal begin')
+        print('run_in_terminal begin')
 
         self.pdp11.reg.log_registers()
 
         # Create and run the terminal window in PySimpleGUI
-        print('runInTerminal dl11.makeWindow')
+        print('run_in_terminal dl11.makeWindow')
         window = self.pdp11.dl11.makeWindow()
-        windowRun = True
-        cpuRun = False
-        while windowRun:
+        window_run = True # *** this is somehow broken. PyLint does not like this.
+        cpu_run = False
+        while window_run:
             # run window bits
-            if cpuRun:
-                cpuRun = self.pdp11.instructionCycle()
-            windowRun, cpuRun = self.pdp11.dl11.terminalWindowCycle(cpuRun, self.pdp11)
+            if cpu_run:
+                cpu_run = self.pdp11.instruction_cycle()
+            window_run, cpu_run = self.pdp11.dl11.terminalWindowCycle(cpu_run, self.pdp11)
 
-        print('runInTerminal ends')
+        print('run_in_terminal ends')
         self.pdp11.am.address_mode_report()
-        self.sw.report()
+        #self.sw.report()

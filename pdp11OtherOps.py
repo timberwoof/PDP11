@@ -1,10 +1,10 @@
 """pdp11other - other instructions"""
 
-from pdp11Hardware import ram
-from pdp11Hardware import registers as reg
-from pdp11Hardware import psw
-from pdp11Hardware import addressModes as am
-from pdp11Hardware import stack
+from pdp11_hardware import Ram
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import PSW
+from pdp11_hardware import AddressModes as am
+from pdp11_hardware import Stack
 
 # masks for accessing words and bytes
 mask_byte = 0o000377

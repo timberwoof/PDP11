@@ -1,9 +1,9 @@
 import pytest
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
-from pdp11Hardware import psw
-from pdp11Hardware import stack
-from pdp11Hardware import addressModes as am
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import Ram
+from pdp11_hardware import PSW
+from pdp11_hardware import Stack
+from pdp11_hardware import AddressModes as am
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
 
 mask_word = 0o177777
@@ -14,9 +14,9 @@ mask_high_byte = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = ram(reg)
-    psw = psw(ram)
-    stack = stack(reg, ram, psw)
+    ram = Ram(reg)
+    psw = PSW(ram)
+    stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     dopr = dopr(reg, ram, psw, am)
 
@@ -27,7 +27,7 @@ class TestClass():
         a = 0o001212
         b = 0o24
 
-        self.psw.set_PSW(PSW=0)
+        self.psw.set_psw(psw=0)
         self.reg.set(R, a)
         instruction = 0o070000 | R << 6 | b
         print(oct(instruction)) # 0o0171312
@@ -38,7 +38,7 @@ class TestClass():
         print(f'product:{product}')
         assert product == a * b
 
-        condition_codes = self.psw.NZVC()
+        condition_codes = self.psw.get_nvzc_string()
         assert condition_codes == "0000"
 
     def test_DIV(self):
@@ -49,7 +49,7 @@ class TestClass():
 
         print(f'test_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
 
-        self.psw.set_PSW(PSW=0)
+        self.psw.set_psw(psw=0)
 
         # set up R and Rv1
         self.reg.set(R, a >> 16)
@@ -67,6 +67,6 @@ class TestClass():
         assert quotient == a // b
         assert remainder == a % b
 
-        condition_codes = self.psw.NZVC()
+        condition_codes = self.psw.get_nvzc_string()
         assert condition_codes == "0000"
 

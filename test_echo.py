@@ -4,9 +4,9 @@
 import pytest
 from stopwatch import stopWatchList
 
-from pdp11 import pdp11CPU
+from pdp11 import PDP11
 from pdp11 import pdp11Run
-from pdp11Boot import pdp11Boot
+from pdp11_boot import pdp11Boot
 
 mask_word = 0o177777
 mask_word_msb = 0o100000
@@ -25,9 +25,8 @@ echo_address = 0o001000
 class TestClass():
 
     def test_echo(self):
-        sw = stopWatchList()
         print('test_echo pdp11CPU()')
-        pdp11 = pdp11CPU(sw)
+        pdp11 = PDP11()
         print('test_echo pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         print('test_echo load_machine_code()')
@@ -35,5 +34,5 @@ class TestClass():
         pdp11.reg.set_pc(echo_address, "load_machine_code")
         pdp11.ram.dump(echo_address, echo_address+0o10)
         run = pdp11Run(pdp11)
-        run.runInTerminal()
+        run.run_in_terminal()
 

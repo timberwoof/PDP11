@@ -3,18 +3,18 @@
 import sys
 
 # masks for accessing words and bytes
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 
 def fix_sign(word):
     """fix a negative word so it will work with python math"""
-    if word & mask_word_msb:
-        more_bits = sys.maxsize & ~mask_word
-        field = sys.maxsize - (word & mask_word | more_bits) + 1
+    if word & MASK_WORD_MSB:
+        more_bits = sys.maxsize & ~MASK_WORD
+        field = sys.maxsize - (word & MASK_WORD | more_bits) + 1
         result = -field
     else:
         result = word
@@ -31,13 +31,13 @@ def address_offset(address, offset):
     result = address + fix_sign(offset)
     return result
 
-class registers:
+class Registers:
     """PDP11 registers including PC and SP"""
     def __init__(self):
-        print('initializing pdp11Hardware registers')
+        print('initializing pdp11_hardware registers')
         self.registermask = 0o07
-        self.SP = 0o06  # R6 is the stack pointer
-        self.PC = 0o07  # R7 is the program counter
+        self.sp = 0o06  # R6 is the stack pointer
+        self.pc = 0o07  # R7 is the program counter
         self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
     def get(self, register):
@@ -55,12 +55,12 @@ class registers:
         :param value: integer
         """
         #print(f'    set R{register}<-{oct(value)}')
-        self.registers[register & self.registermask] = value & mask_word
+        self.registers[register & self.registermask] = value & MASK_WORD
 
     def get_pc(self):
         """get program counter without incrementing.
         :return: program counter"""
-        result = self.registers[self.PC]
+        result = self.registers[self.pc]
         #print(f'    get_pc returns {oct(result)}')
         return result
 
@@ -69,15 +69,15 @@ class registers:
         The Program Counter points to the word after the instruction being interpreted.
 
         :return: new program counter"""
-        self.registers[self.PC] = self.registers[self.PC] + 2
+        self.registers[self.pc] = self.registers[self.pc] + 2
         #print(f'    inc_pc R7<-{oct(self.registers[self.PC])} called by {whocalled}')
-        return self.registers[self.PC]
+        return self.registers[self.pc]
 
     def set_pc(self, newpc=0o24, whocalled=''):
         """set program counter to arbitrary value"""
         #print(f"set_pc({oct(newpc)}, {whocalled})")
-        newpc = newpc & mask_word
-        self.registers[self.PC] = newpc
+        newpc = newpc & MASK_WORD
+        self.registers[self.pc] = newpc
         #print(f'    set_pc R7<-{oct(newpc)} called by {whocalled}')
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
@@ -88,28 +88,27 @@ class registers:
         0o377 < offset < 0o177 """
         #
         # If it is set then the offset is negative.
-        waspc = self.registers[self.PC]
         offset = 2 * offset
-        if offset > mask_low_byte: # if we overflowed with the sign bit
-            offset = offset | mask_high_byte # this is now signed word
+        if offset > MASK_LOW_BYTE: # if we overflowed with the sign bit
+            offset = offset | MASK_HIGH_BYTE # this is now signed word
             offset = fix_sign(offset)
-        newpc = self.registers[self.PC] + offset
-        self.registers[self.PC] = newpc
+        newpc = self.registers[self.pc] + offset
+        self.registers[self.pc] = newpc
         #print(f'    set_pc_2x_offset pc:{oct(waspc)} by {oct(offset)} to {oct(newpc)} called by {whocalled} ')
 
     def get_sp(self):
         """get stack pointer
 
         :return: stack pointer"""
-        return self.registers[self.SP]
+        return self.registers[self.sp]
 
     def set_sp(self, value, whocalled=''):
         """set stack pointer
 
         :return: new stack pointer"""
         #wassp =  self.registers[self.SP]
-        newsp = value & mask_word
-        self.registers[self.SP] = newsp
+        newsp = value & MASK_WORD
+        self.registers[self.sp] = newsp
         #print(f'{oct(wassp)} setsp {oct(newsp)}')
         return newsp
 
@@ -123,7 +122,7 @@ class registers:
             index = index + 1
         print(report)
 
-class ram:
+class Ram:
     """PDP11 Random Access Memory 64kB including io page"""
     # Sixteen-bit words are stored little-endian
     # (with least significant bytes first).
@@ -143,7 +142,7 @@ class ram:
     io_space = top_of_memory - 0o020000 # 0o160000
 
     def __init__(self, reg):
-        print('initializing pdp11Hardware ram')
+        print('initializing pdp11_hardware ram')
         self.reg = reg
 
         # set up basic memory boundaries
@@ -171,18 +170,20 @@ class ram:
         self.iomap_writers = {}
 
     def register_io_writer(self, device_address, method):
+        """map i/o write handler into memory"""
         print(f'    register_io_writer({oct(device_address)}, {method.__name__})')
         self.iomap_writers[device_address] = method
 
     def register_io_reader(self, device_address, method):
+        """map i/o read handler into memory"""
         print(f'    register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
 
     def write_byte(self, address, data):
         """write a byte to memory.
         address can be even or odd"""
-        data = data & mask_low_byte
-        if address in self.iomap_writers.keys():
+        data = data & MASK_LOW_BYTE
+        if address in self.iomap_writers:
             #print(f'    write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
@@ -191,7 +192,7 @@ class ram:
 
     def read_byte(self, address):
         """Read one byte of memory."""
-        if address in self.iomap_readers.keys():
+        if address in self.iomap_readers:
             result = self.iomap_readers[address]()
             #print(f'    read_byte io({oct(address)}) returns {oct(result)}')
         else:
@@ -207,12 +208,12 @@ class ram:
         :param data:
         """
         #print(f'    write_word({oct(address)}, {oct(data)})')
-        if address in self.iomap_writers.keys():
+        if address in self.iomap_writers:
             #print(f'write_word io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            hi = (data & mask_high_byte) >> 8  # 1 111 111 100 000 000
-            lo = data & mask_low_byte  # 0 000 000 011 111 111
+            hi = (data & MASK_HIGH_BYTE) >> 8  # 1 111 111 100 000 000
+            lo = data & MASK_LOW_BYTE  # 0 000 000 011 111 111
             # print(f'hi:{oct(hi)} lo:{oct(lo)}')
             self.memory[address + 1] = hi
             self.memory[address] = lo
@@ -224,22 +225,22 @@ class ram:
         Crashes silumlator if we go out of bounds."""
         # Low bytes are stored at even-numbered memory locations
         # and high bytes at are stored at odd-numbered memory locations.
-        if address in self.iomap_readers.keys():
-            #print(f'read_word io({oct(address)})')
-            return self.iomap_readers[address]()
+        result = ""
+        if address in self.iomap_readers:
+            result =  self.iomap_readers[address]()
         else:
             hi = self.memory[address + 1]
             low = self.memory[address]
             result = (hi << 8) + low
-            #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
-            return result
+        #print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
+        return result
 
-    def read_word_from_PC(self):
+    def read_word_from_pc(self):
         """Read word from PC and increment PC"""
         pc = self.reg.get_pc()
         result = self.read_word(pc) # this is buggy?
-        #print (f'    read_word_from_PC {oct(pc)} returns {oct(result)}')
-        self.reg.inc_pc("read_word_from_PC")
+        #print (f'    read_word_from_pc {oct(pc)} returns {oct(result)}')
+        self.reg.inc_pc("read_word_from_pc")
         return result
 
     #    mask_low_byte = 0o000277
@@ -269,10 +270,12 @@ class ram:
         for row_address in range(start, stop, display_bytes):
             print_line =  ("{0:o}".format(row_address)).rjust(6, "O")+" "  #row_address
             for word_address in range(row_address, row_address+display_bytes, 2):
-                print_line = print_line + ("{0:o}".format(self.read_word(word_address))).rjust(6, "O")+" " #self.read_word(word_address)
+                print_line = print_line + ("{0:o}".format(self.read_word(word_address))).rjust(6, "O")
+                #+" " self.read_word(word_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):
-                print_line = print_line + ("{0:o}".format(self.read_byte(byte_address))).rjust(3, "O")+" " #self.read_byte(byte_address)
+                print_line = print_line + ("{0:o}".format(self.read_byte(byte_address))).rjust(3, "O")
+                #+" " self.read_byte(byte_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):
                 byte = self.read_byte(byte_address)
@@ -283,14 +286,14 @@ class ram:
                 print_line = print_line + char
             print(print_line)
 
-class psw:
+class PSW:
     """PDP11 Processor Status Word"""
 
-    #  f'NZVC: {self.psw.N()}{self.psw.Z()}{self.psw.V()}{self.psw.C()}'
+    #  f'get_nvzc_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
-        print('initializing pdp11Hardware psw')
+        print('initializing pdp11_hardware psw')
         # 104000-104377 EMT (trap & interrupt)
         # 104400-104777 TRAP (trap & interrupt)
 
@@ -303,17 +306,17 @@ class psw:
         # 13 12 previous mode       0o030000
         # 7 6 5 priority            0o000340
         # 4 T trap                  0o000020
-        # 3 N result was negative   0o000010
-        # 2 Z result was zero       0o000004
-        # 1 V overflow              0o000002
-        # 0 C result had carry      0o000001
+        # 3 get_n result was negative   0o000010
+        # 2 get_z result was zero       0o000004
+        # 1 get_v overflow              0o000002
+        # 0 get_c result had carry      0o000001
 
         self.ram = ram
-        self.PSW_address = ram.top_of_memory - 1  # 0o177776
+        self.psw_address = ram.top_of_memory - 1  # 0o177776
 
         # This class keeps the deinitive version of the PSW.
         # When it changes, this class sets it into RAM.
-        self.PSW = 0o0
+        self.psw = 0o0
 
         self.c_mode_mask = 0o140000
         self.p_mode_mask = 0o030000
@@ -322,166 +325,167 @@ class psw:
         self.trap_mask = 0o000020
 
         # condition codes
-        self.N_mask = 0o000010  # Negative
-        self.Z_mask = 0o000004  # Zero
-        self.V_mask = 0o000002  # Overflow
-        self.C_mask = 0o000001  # Carry
+        self.n_mask = 0o000010  # Negative
+        self.z_mask = 0o000004  # Zero
+        self.v_mask = 0o000002  # Overflow
+        self.c_mask = 0o000001  # Carry
 
-        print(f'    psw initilialized @{oct(self.PSW_address)}')
+        print(f'    psw initilialized @{oct(self.psw_address)}')
 
-    def set_PSW(self, mode=-1, priority=-1, trap=-1, N=-1, Z=-1, V=-1, C=-1, PSW=-1):
+    def set_psw(self, mode=-1, priority=-1, trap=-1, n=-1, z=-1, v=-1, c=-1, psw=-1):
         """set processor status word by optional parameter
 
         :param mode:
         :param priority:
         :param trap:
-        :param N:
-        :param Z:
-        :param V:
-        :param C:
-        :param PSW:
+        :param n: negative
+        :param z: zero
+        :param v: overflow
+        :param c: carry
+        :param psw: processor status word
         :return:
         """
-        #print(f'set_PSW(mode={mode}, priority={priority}, trap={trap}, N={N}, Z={Z}, V={V}, C={C}, PSW={PSW})')
-        #print(f'set_PSW self.PSW:{self.PSW}')
-        if PSW > -1:
-            self.PSW = PSW
-            #print (f'set_PSW PSW self.PSW:{self.PSW}')
+        #print(f'set_psw(mode={mode}, priority={priority}, trap={trap}, get_n={get_n}, get_z={get_z}, get_v={get_v}, get_c={get_c}, PSW={PSW})')
+        #print(f'set_psw self.PSW:{self.PSW}')
+        if psw > -1:
+            self.psw = psw
+            #print (f'set_psw PSW self.PSW:{self.PSW}')
         if mode > -1:
-            oldmode = (self.PSW & self.mode_mask)
-            self.PSW = (self.PSW & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
-            #print(f'set_PSW mode self.PSW:{self.PSW}')
+            oldmode = self.psw & self.mode_mask
+            self.psw = (self.psw & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
+            #print(f'set_psw mode self.PSW:{self.PSW}')
         if priority > -1:
-            self.PSW = (self.PSW & ~self.priority_mask) | (priority << 5)
-            #print(f'set_PSW priority self.PSW:{self.PSW}')
+            self.psw = (self.psw & ~self.priority_mask) | (priority << 5)
+            #print(f'set_psw priority self.PSW:{self.PSW}')
         if trap > -1:
-            self.PSW = (self.PSW & ~self.trap_mask) | (trap << 4)
-            #print(f'set_PSW trap self.PSW:{self.PSW}')
-        if N > -1:
-            self.PSW = (self.PSW & ~self.N_mask) | (N << 3)
-            #print(f'set_PSW N self.PSW:{self.PSW}')
-        if Z > -1:
-            self.PSW = (self.PSW & ~self.Z_mask) | (Z << 2)
-            #print(f'set_PSW Z self.PSW:{self.PSW}')
-        if V > -1:
-            self.PSW = (self.PSW & ~self.V_mask) | (V << 1)
-            #print(f'set_PSW V self.PSW:{self.PSW}')
-        if C > -1:
-            self.PSW = (self.PSW & ~self.C_mask) | C
-            #print(f'set_PSW C self.PSW:{self.PSW}')
-        #print(f'set_PSW will write {oct(self.PSW)} to {oct(self.PSW_address)}')
-        self.ram.write_word(self.PSW_address, self.PSW)
+            self.psw = (self.psw & ~self.trap_mask) | (trap << 4)
+            #print(f'set_psw trap self.PSW:{self.PSW}')
+        if n > -1:
+            self.psw = (self.psw & ~self.n_mask) | (n << 3)
+            #print(f'set_psw get_n self.PSW:{self.PSW}')
+        if z > -1:
+            self.psw = (self.psw & ~self.z_mask) | (z << 2)
+            #print(f'set_psw get_z self.PSW:{self.PSW}')
+        if v > -1:
+            self.psw = (self.psw & ~self.v_mask) | (v << 1)
+            #print(f'set_psw get_v self.PSW:{self.PSW}')
+        if c > -1:
+            self.psw = (self.psw & ~self.c_mask) | c
+            #print(f'set_psw get_c self.PSW:{self.PSW}')
+        #print(f'set_psw will write {oct(self.PSW)} to {oct(self.PSW_address)}')
+        self.ram.write_word(self.psw_address, self.psw)
 
-    def setN(self, B, value):
-        """set condition code N based on the msb negative bit
+    def set_n(self, b, value):
+        """set condition code get_n based on the msb negative bit
 
-        :param B: "B" or "" for Byte or Word
+        :param b: "B" or "" for Byte or Word
         :param value: value to test
         """
-        if B == 'B':
-            n_mask = mask_byte_msb
+        if b == 'B':
+            n_mask = MASK_BYTE_MSB
         else:
-            n_mask = mask_word_msb
+            n_mask = MASK_WORD_MSB
         if value & n_mask == n_mask:
-            N = 1
+            n = 1
         else:
-            N = 0
-        self.set_PSW(N=N)
-        return N
+            n = 0
+        self.set_psw(n=n)
+        return n
 
-    def setZ(self, B, value):
-        """set condition code Z based on the value
+    def set_z(self, b, value):
+        """set condition code get_z based on the value
 
-        :param B: "B" or "" for Byte or Word
+        :param b: "B" or "" for Byte or Word
         :param value: value to test
         """
-        if B == 'B':
-            z_mask = mask_low_byte
+        if b == 'B':
+            z_mask = MASK_LOW_BYTE
         else:
-            z_mask = mask_word
+            z_mask = MASK_WORD
         if value & z_mask == 0:
-            Z = 1
+            z = 1
         else:
-            Z = 0
-        self.set_PSW(Z=Z)
-        return Z
+            z = 0
+        self.set_psw(z=z)
+        return z
 
-    def setV(self, B, value):
-        """set condition code V based on the value
-        :param B: "B" or "" for Byte or Word
+    def set_v(self, b, value):
+        """set condition code get_v based on the value
+        :param b: "B" or "" for Byte or Word
         :param value: value to test
         """
-        if B == 'B':
-            v_mask = mask_word_msb << 1
+        if b == 'B':
+            v_mask = MASK_WORD_MSB << 1
         else:
-            v_mask = mask_byte_msb << 1
+            v_mask = MASK_BYTE_MSB << 1
         if value & v_mask == v_mask:
-            V = 1
+            v = 1
         else:
-            V = 0
-        self.set_PSW(V=V)
-        return V
+            v = 0
+        self.set_psw(v=v)
+        return v
 
 
-    def N(self):
+    def get_n(self):
         """negative status bit of PSW"""
-        return (self.PSW & self.N_mask) >> 3
+        return (self.psw & self.n_mask) >> 3
 
-    def Z(self):
+    def get_z(self):
         """zero status bit of PSW"""
-        return (self.PSW & self.Z_mask) >> 2
+        return (self.psw & self.z_mask) >> 2
 
-    def V(self):
+    def get_v(self):
         """overflow status bit of PSW"""
-        return (self.PSW & self.V_mask) >> 1
+        return (self.psw & self.v_mask) >> 1
 
-    def C(self):
+    def get_c(self):
         """carry status bit of PSW"""
-        return (self.PSW & self.C_mask)
+        return self.psw & self.c_mask
 
-    def NZVC(self):
-        return (f'{self.N()}{self.Z()}{self.V()}{self.C()}')
+    def get_nvzc_string(self):
+        """stringify these psw bits"""
+        return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
 
-    def addb(self, b1, b2):
+    def add_byte(self, b1, b2):
         """add byte, limit to 8 bits, set PSW"""
         result = b1 + b2
-        if result > (result & mask_low_byte):
-            self.set_PSW(V=1)
+        if result > (result & MASK_LOW_BYTE):
+            self.set_psw(v=1)
         if result == 0:
-            self.set_PSW(Z=1)
-        result = result & mask_low_byte
+            self.set_psw(z=1)
+        result = result & MASK_LOW_BYTE
         return result
 
-    def subb(self, b1, b2):
+    def subtract_byte(self, b1, b2):
         """subtract bytes b1 - b2, limit to 8 bits, set PSW"""
         result = b1 - b2
         if result < 0:
-            self.set_PSW(N=1)
-        result = result & mask_low_byte
+            self.set_psw(n=1)
+        result = result & MASK_LOW_BYTE
         return result
 
-    def addw(self, b1, b2):
+    def add_word(self, b1, b2):
         """add words, limit to 16 bits, set PSW"""
         result = b1 + b2
-        if result > (result & mask_word):
-            self.set_PSW(V=1)
+        if result > (result & MASK_WORD):
+            self.set_psw(v=1)
         if result == 0:
-            self.set_PSW(Z=1)
-        result = result & mask_word
+            self.set_psw(z=1)
+        result = result & MASK_WORD
         return result
 
-    def subw(self, b1, b2):
+    def subtract_word(self, b1, b2):
         """subtract words b1 - b2, limit to 16 bits, set PSW"""
         result = b1 - b2
         if result < 0:
-            self.set_PSW(N=1)
-        result = result & mask_word
+            self.set_psw(n=1)
+        result = result & MASK_WORD
         return result
 
-class stack:
+class Stack:
     """PDP11 Stack"""
     def __init__(self, reg, ram, psw):
-        print('initializing pdp11Hardware stack')
+        print('initializing pdp11_hardware stack')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -507,7 +511,7 @@ class stack:
         self.reg.set_sp(stack + 2)
         return result
 
-class addressModes:
+class AddressModes:
     '''Implements the 8 standrad address modes of the PDP11 instruction set.
     Every instruction that needs to set these up calls addressing_mode_get to get the praneter,
     addressing_mode_R7 to implement program counter jumps, and
@@ -517,17 +521,17 @@ class addressModes:
     and by 2 whenever a deferred mode is used,
     since the quantity the register addresses is a (word) pointer.'''
     def __init__(self, reg, ram, psw):
-        print('initializing pdp11Hardware addressModes')
+        print('initializing pdp11_hardware addressModes')
         self.reg = reg
         self.ram = ram
         self.psw = psw
 
         self.address_modes_used = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
 
-    def addressing_mode_get(self, B, mode_register):
+    def addressing_mode_get(self, b, mode_register):
         """copy the value from the location indicated by byte_register
 
-        :param B: "W" for word, "B" for byte
+        :param b: "W" for word, "B" for byte
         :param mode_register: bits of opcode that contain address mode and register number
         :return: the parameter
         """
@@ -545,17 +549,17 @@ class addressModes:
 
         #print(f'    addressing_mode_get("{B}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
 
-        if B == 'B':
+        if b == 'B':
             ram_read = self.ram.read_byte
             increment = 1
             b = 'B'
-            mask = mask_low_byte
+            mask = MASK_LOW_BYTE
         else:
             ram_read = self.ram.read_word
             increment = 2
             b = ''
-            mask = mask_word
-        if register == 6 or register == 7:
+            mask = MASK_WORD
+        if register in (6, 7):
             increment = 2
 
         if addressmode == 0:
@@ -598,16 +602,16 @@ class addressModes:
             # is added to the resgiter.
             # The sum contains the address of the operand.
             # Neither X nor the register are modified.
-            X = self.ram.read_word_from_PC()
+            x = self.ram.read_word_from_pc()
             #print(f'    mode 6 Index: X(R{register}): immediate value {oct(X)} is added to R{register} to produce address of operand')
-            address = address_offset(self.reg.get(register), X)
+            address = address_offset(self.reg.get(register), x)
             #print(f'    mode 6 X:{oct(X)} address:{oct(address)}')
             operand = ram_read(address)
             #print(f'    mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
-            X = self.ram.read_word_from_PC()
+            x = self.ram.read_word_from_pc()
             #print(f'    mode 7 Index Deferred: @X(R{register}): immediate value {oct(X)} is added to R{register} then used as address of address of operand')
-            pointer = address_offset(self.reg.get(register), X)
+            pointer = address_offset(self.reg.get(register), x)
             address = self.ram.read_word(pointer)
             #print(f'    mode 7 X:{oct(X)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
@@ -695,17 +699,17 @@ class addressModes:
         elif addressmode == 6:
             # The expression E, plus the contents of the PC,
             # yield the effective jump address.
-            X = self.ram.read_word_from_PC()
+            x = self.ram.read_word_from_pc()
             #print(f'    mode 67: JMP relative. Immediate value {oct(X)} plus PC={oct(self.reg.get_pc())} gets jump address.')
             address = self.reg.get(register)
-            operand = address_offset(address, X)
+            operand = address_offset(address, x)
             #print(f'    operand:{oct(operand)}')
         elif addressmode == 7:
             # The expression E, plus the contents of the PC
             # yield a pointer to the effective address of the operand.
-            X = self.ram.read_word_from_PC()
+            x = self.ram.read_word_from_pc()
             #print(f'    mode 77: JMP relative deferred. immediate value {oct(X)} plus PC={oct(self.reg.get_pc())} gets pointer to address.')
-            pointer = address_offset(self.reg.get(register), X)
+            pointer = address_offset(self.reg.get(register), x)
             address = self.ram.read_word(pointer)
             word = self.ram.read_word(address)
             operand = self.reg.get_pc() + word
@@ -716,18 +720,18 @@ class addressModes:
         self.reg.set(register, operand)
         return run, operand, register, operand
 
-    def addressing_mode_set(self, B, result, register, address):
+    def addressing_mode_set(self, b, result, register, address):
         """copy the result into the register or address specified
 
         Parameters:
-            B: 'B' or ''
+            b: 'B' or ''
             result: word or byte
             register: if address is zero, put it in this register
             address: otherwise put it here
         """
         #print(f'    addressing_mode_set "{B}" result:{oct(result)} register:{register} address:{address}')
         if address != 0:
-            if B == 'B':
+            if b == 'B':
                 self.ram.write_byte(address, result)
             else:
                 self.ram.write_word(address, result)
@@ -741,3 +745,4 @@ class addressModes:
         print ('address modes used:')
         for addressmode in range(0,8):
             print (f'{addressmode}:{self.address_modes_used[addressmode]}')
+            

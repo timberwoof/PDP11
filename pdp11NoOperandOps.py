@@ -1,9 +1,9 @@
 """pdp11NoOperandOps.py - no-operand instructions 00 00 00 through 00 00 06"""
 
-from pdp11Hardware import registers as reg
-from pdp11Hardware import ram
-from pdp11Hardware import psw
-from pdp11Hardware import stack
+from pdp11_hardware import Registers as reg
+from pdp11_hardware import Ram
+from pdp11_hardware import PSW
+from pdp11_hardware import Stack
 
 class noOperandOps:
     def __init__(self, reg, ram, psw, stack):
@@ -48,7 +48,7 @@ class noOperandOps:
         PC < (SP)^; PS< (SP)^
         """
         self.reg.set_pc(self.stack.pop(), "RTI")
-        self.psw.set_PSW(PSW=self.stack.pop())
+        self.psw.set_psw(psw=self.stack.pop())
         return True
 
     def BPT(self, instruction):
