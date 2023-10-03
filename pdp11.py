@@ -9,9 +9,9 @@ from pdp11_hardware import AddressModes as am
 from pdp11NoOperandOps import noOperandOps as nopr
 from pdp11SingleOperandOps import singleOperandOps as sopr
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
-from pdp11BranchOps import branchOps as br
+from pdp11_branch_ops import BranchOps as br
 from pdp11OtherOps import otherOps as other
-from pdp11DL11 import dl11
+from pdp11_dl11 import Dl11
 from pdp11_boot import pdp11Boot as boot
 from pdp11m9301 import m9301
 from pdp11rk11 import rk11
@@ -59,7 +59,7 @@ class PDP11():
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
-        self.dl11 = dl11(self.ram, 0o177560, terminal=False)
+        self.dl11 = Dl11(self.ram, 0o177560)
         print('pdp11CPU initializing done')
 
     def dispatch_opcode(self, instruction):
@@ -141,15 +141,15 @@ class pdp11Run():
         self.pdp11.reg.log_registers()
 
         # Create and run the terminal window in PySimpleGUI
-        print('run_in_terminal dl11.makeWindow')
-        window = self.pdp11.dl11.makeWindow()
+        print('run_in_terminal dl11.make_window')
+        window = self.pdp11.dl11.make_window()
         window_run = True # *** this is somehow broken. PyLint does not like this.
         cpu_run = False
         while window_run:
             # run window bits
             if cpu_run:
                 cpu_run = self.pdp11.instruction_cycle()
-            window_run, cpu_run = self.pdp11.dl11.terminalWindowCycle(cpu_run, self.pdp11)
+            window_run, cpu_run = self.pdp11.dl11.terminal_window_cycle(cpu_run, self.pdp11)
 
         print('run_in_terminal ends')
         self.pdp11.am.address_mode_report()

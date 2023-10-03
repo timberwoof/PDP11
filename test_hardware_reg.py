@@ -10,11 +10,11 @@ from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
 
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 class TestClass():
     reg = reg()
@@ -31,7 +31,7 @@ class TestClass():
 
     def test_pc(self):
         test_value = 0o1232225
-        expected_value = test_value & mask_word
+        expected_value = test_value & MASK_WORD
         self.reg.set_pc(test_value, "test_pc")
         assert self.reg.get_pc() == expected_value
         self.reg.inc_pc("test_pc")
@@ -42,7 +42,7 @@ class TestClass():
 
         test_offset = 0o123
         self.reg.set_pc_2x_offset(test_offset, "test_pc")
-        expected_value = expected_value + 2 + (test_offset & mask_low_byte) * 2
+        expected_value = expected_value + 2 + (test_offset & MASK_LOW_BYTE) * 2
         assert self.reg.get_pc() == expected_value
 
         test_offset = 0o277

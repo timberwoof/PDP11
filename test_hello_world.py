@@ -8,11 +8,11 @@ from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
 
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 # http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
 hello_world = [0o012702,  # 2000 start:  MOV 0o27 0o2

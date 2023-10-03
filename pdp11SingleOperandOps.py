@@ -11,11 +11,11 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import AddressModes as am
 
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 class singleOperandOps:
     def __init__(self, reg, ram, psw, am):
@@ -136,7 +136,7 @@ class singleOperandOps:
         if B == "B":
             return value & mask_byte
         else:
-            return value & mask_word
+            return value & MASK_WORD
 
     def JMP(self, instruction, operand, B):
         """00 01 DD JMP jump 4-56"""
@@ -251,10 +251,10 @@ class singleOperandOps:
         # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit (as set by the completion of the rotate operation)
         # get_c: loaded with the high-order bit of the destination
         if B == "B":
-            msb = mask_word_msb & operand
+            msb = MASK_WORD_MSB & operand
             bits = 8
         else:
-            msb = mask_byte_msb & operand
+            msb = MASK_BYTE_MSB & operand
             bits = 16
         rotatebit = operand & msb
         result = operand << 1 + rotatebit >> bits
@@ -273,9 +273,9 @@ class singleOperandOps:
         # get_v: loaded from the Exclusive OR of theN-bit and get_c-bit (as set by the completion of the shift operation)
         # get_c: loaded from low-order bit of the destination
         if B == "B":
-            msb = mask_word_msb & operand
+            msb = MASK_WORD_MSB & operand
         else:
-            msb = mask_byte_msb & operand
+            msb = MASK_BYTE_MSB & operand
         result = (operand >> 1) | msb
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)
@@ -293,10 +293,10 @@ class singleOperandOps:
         # get_c: loaded with the high-order bit of the destination
         result = operand << 1
         if B == "B":
-            msb = mask_word_msb & result
+            msb = MASK_WORD_MSB & result
             bits = 8
         else:
-            msb = mask_byte_msb & result
+            msb = MASK_BYTE_MSB & result
             bits = 16
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)

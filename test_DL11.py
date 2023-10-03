@@ -1,11 +1,11 @@
 # test_DL11.py
-# test the pdp11DL11.py module using pytest
+# test the pdp11_dl11.py module using pytest
 
 import pytest
 import random
 from pdp11 import PDP11
 from pdp11 import pdp11Run
-from pdp11DL11 import dl11
+from pdp11_dl11 import Dl11
 
 class TestClass():
     test_character = 0

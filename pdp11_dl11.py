@@ -1,15 +1,14 @@
 """PDP11 DL11 communications console"""
-import tkinter as tk
 import PySimpleGUI as sg
-from pdp11_hardware import Ram
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
 CIRCLE = '⚫'
 CIRCLE_OUTLINE = '⚪'
 PC_DISPLAY = ''
 
-class dl11:
-    def __init__(self, ram, base_address, terminal=False):
+class Dl11:
+    """DEC DL11 serial interface and terminal emulator"""
+    def __init__(self, ram, base_address):
         """dlss(ram object, base address for this device)
         """
         print(f'initializing dl11({oct(base_address)})   {oct(ord("$"))}')
@@ -51,7 +50,7 @@ class dl11:
         self.XCSR_MAINT = 0o000004 # 2 RW - maintenance loopback XBUF to RBUF
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
-        print(f'initializing dl11 done')
+        print('initializing dl11 done')
 
     # DL11 Internal Interface to PDP-11 Emulator
 
@@ -78,14 +77,14 @@ class dl11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        print(f'    dl11.write_RBUF({oct(byte)}):"{self.safeCharacter(byte)}"')
+        print(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
-        print(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safeCharacter(result)}"')
+        print(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
@@ -113,7 +112,7 @@ class dl11:
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        print(f'    dl11.write_XBUF({oct(byte)}):"{self.safeCharacter(byte)}"')
+        print(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -125,47 +124,51 @@ class dl11:
     def read_XBUF(self):
         """DL11 calls this to read from transmitter buffer register."""
         result = self.XBUF
-        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safeCharacter(result)}"')
+        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
 
     # *********************
     # PySimpleGUI Interface
-    def makeWindow(self):
+    # *** This should be a different class from teh DL11.
+    # *** It ought to be possible to run the emulator as a command-line program.
+    # *** In that case, the DL11 would just talk to the command line's emulator.
+    # *** That means the PySimpleGUI and Terminal ways should be different classes that talk to dl11.
+    def make_window(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
-        print(f'dl11 makeWindow begins')
-        layout = [[sg.Text(PC_DISPLAY, key='programCounter')],
+        print('dl11 make_window begins')
+        layout = [[sg.Text(PC_DISPLAY, key='pc')],
                   [sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
                   [sg.InputText('', size=(80, 1), focus=True, key='keyboard')],
                   [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]                  ]
         self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
         self.window['keyboard'].bind("<Return>", "_Enter")
-        print('dl11 makeWindow done')
+        print('dl11 make_window done')
 
         # autoscroll=True,
 
     def get_pc_text(self, pdp11):
         """create a display of the program counter"""
-        PCtext = ''
-        PC = pdp11.reg.get_pc()
+        pc_text = ''
+        pc = pdp11.reg.get_pc()
         mask = 1
         bits = self.ram.top_of_memory
         while bits > 0:
-            if PC & mask == mask:
-                PCtext = CIRCLE_OUTLINE + PCtext
+            if pc & mask == mask:
+                pc_text = CIRCLE_OUTLINE + pc_text
             else:
-                PCtext = CIRCLE + PCtext
+                pc_text = CIRCLE + pc_text
             bits = bits >> 1
             mask = mask << 1
-        return PCtext
+        return pc_text
 
-    def terminalWindowCycle(self, cpuRun, pdp11):
+    def terminal_window_cycle(self, cpu_run, pdp11):
         """Run one iteration of the PySimpleGUI terminal window loop"""
-        windowRun = True
+        window_run = True
 
-        programCounter = self.window['programCounter']
-        programCounter.update(self.get_pc_text(pdp11))
+        pc = self.window['pc']
+        pc.update(self.get_pc_text(pdp11))
 
         # maybe get character from dl11 transmit buffer
         if self.XCSR & self.XCSR_XMIT_RDY == 0 and self.XBUF != 0:
@@ -174,19 +177,19 @@ class dl11:
 
         # handle the window
         event, values = self.window.read(timeout=0)
-        if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
-            windowRun = False
+        if event in (sg.WIN_CLOSED, 'Quit'): # if user closes window or clicks cancel
+            window_run = False
         elif event == "Run":
-            cpuRun = True
+            cpu_run = True
             text = self.window['runLED']
             text.update(CIRCLE_OUTLINE)
         elif event == "Halt":
-            cpuRun = False
+            cpu_run = False
             text = self.window['runLED']
             text.update(CIRCLE)
         elif event == "Exit":
-            cpuRun = False
-            windowRun = False
+            cpu_run = False
+            window_run = False
         elif event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
             if self.RCSR & self.RCSR_RCVR_DONE == 0:
@@ -197,12 +200,14 @@ class dl11:
             if self.RCSR & self.RCSR_RCVR_DONE == 0:
                 self.write_RBUF(ord(kbd[0:]))
 
-        return windowRun, cpuRun
+        return window_run, cpu_run
 
-    def terminalCloseWindow(self):
+    def close_terminal_window(self):
+        """close the terminal window"""
         self.window.close()
 
-    def safeCharacter(self, byte):
+    def safe_character(self, byte):
+        """return character if it is printable"""
         if byte > 32:
             result = chr(byte)
         else:

@@ -8,9 +8,9 @@ from pdp11_hardware import Stack
 
 # masks for accessing words and bytes
 mask_byte = 0o000377
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
 
 class otherOps:
     def __init__(self, reg, ram, psw, am ):

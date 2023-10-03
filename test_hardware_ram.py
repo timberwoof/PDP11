@@ -10,11 +10,11 @@ from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
 
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 class TestClass():
     reg = reg()
@@ -60,8 +60,8 @@ class TestClass():
         self.ram.write_word(test_address,test_value)
 
         actual_value = self.ram.read_word(test_address)
-        assert Ram.memory[test_address] == test_value & mask_low_byte
-        assert Ram.memory[test_address + 1] == (test_value & mask_high_byte) >> 8
+        assert Ram.memory[test_address] == test_value & MASK_LOW_BYTE
+        assert Ram.memory[test_address + 1] == (test_value & MASK_HIGH_BYTE) >> 8
         assert  actual_value == test_value
 
     def test_ram_word_2(self):
@@ -71,8 +71,8 @@ class TestClass():
         self.ram.write_word(test_address,test_value)
 
         actual_value = self.ram.read_word(test_address)
-        assert Ram.memory[test_address] == test_value & mask_low_byte
-        assert Ram.memory[test_address + 1] == (test_value & mask_high_byte) >> 8
+        assert Ram.memory[test_address] == test_value & MASK_LOW_BYTE
+        assert Ram.memory[test_address + 1] == (test_value & MASK_HIGH_BYTE) >> 8
         assert  actual_value == test_value
 
     def test_ram_word_top(self):
@@ -81,8 +81,8 @@ class TestClass():
 
         self.ram.write_word(test_address,test_value)
 
-        assert Ram.memory[test_address] == test_value & mask_low_byte
-        assert Ram.memory[test_address + 1] == (test_value & mask_high_byte) >> 8
+        assert Ram.memory[test_address] == test_value & MASK_LOW_BYTE
+        assert Ram.memory[test_address + 1] == (test_value & MASK_HIGH_BYTE) >> 8
         assert self.ram.read_word(test_address) == test_value
 
     def test_ram_words(self):
@@ -111,8 +111,8 @@ class TestClass():
             high_byte = self.ram.read_byte(test_address_high)
             sum = low_byte + (high_byte << 8)
 
-            expected_low_byte = value & mask_low_byte
-            expected_high_byte = (value & mask_high_byte) >> 8
+            expected_low_byte = value & MASK_LOW_BYTE
+            expected_high_byte = (value & MASK_HIGH_BYTE) >> 8
 
             assert low_byte == expected_low_byte
             assert high_byte == expected_high_byte

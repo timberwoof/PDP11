@@ -6,11 +6,11 @@ from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
 from pdp11DoubleOperandOps import doubleOperandOps as dopr
 
-mask_word = 0o177777
-mask_word_msb = 0o100000
-mask_byte_msb = 0o000200
-mask_low_byte = 0o000377
-mask_high_byte = 0o177400
+MASK_WORD = 0o177777
+MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
+MASK_LOW_BYTE = 0o000377
+MASK_HIGH_BYTE = 0o177400
 
 class TestClass():
     reg = reg()
@@ -53,7 +53,7 @@ class TestClass():
 
         # set up R and Rv1
         self.reg.set(R, a >> 16)
-        self.reg.set(Rv1, a & mask_word)
+        self.reg.set(Rv1, a & MASK_WORD)
 
         instruction = 0o071000 | R << 6 | b
         print(f'test_DIV instruction:{oct(instruction)}') # 0o0171312

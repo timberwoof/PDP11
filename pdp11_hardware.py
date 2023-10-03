@@ -22,7 +22,7 @@ def fix_sign(word):
 
 def add_word(a, b):
     """add two-byte words with sign handling"""
-    #print(f'add_word({oct(a)}, {oct(b)})  mask_word_msb:{oct(mask_word_msb)}')
+    #print(f'add_word({oct(a)}, {oct(b)})  MASK_WORD_MSB:{oct(MASK_WORD_MSB)}')
     result = fix_sign(a) + fix_sign(b)
     return result
 
@@ -243,10 +243,10 @@ class Ram:
         self.reg.inc_pc("read_word_from_pc")
         return result
 
-    #    mask_low_byte = 0o000277
-    #    mask_word = 0o177777
-    #    mask_byte_msb = 0o000200
-    #    mask_word_msb = 0o100000
+    #    MASK_LOW_BYTE = 0o000277
+    #    MASK_WORD = 0o177777
+    #    MASK_BYTE_MSB = 0o000200
+    #    MASK_WORD_MSB = 0o100000
     # 16 bits   0o177777 = 0x0000FFFF
     # 18 bits   0o777777 = 0x0003FFFF
     # 22 bits 0o17777777 = 0x003FFFFF
