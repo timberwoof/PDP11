@@ -2,7 +2,7 @@
 # load a small pdp11 program that echoes inputs back to outputs
 
 import pytest
-from stopwatch import stopWatchList
+from stopwatches import StopWatches
 
 from pdp11 import PDP11
 from pdp11 import pdp11Run

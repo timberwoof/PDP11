@@ -4,8 +4,8 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11SingleOperandOps import singleOperandOps as sopr
-from pdp11DoubleOperandOps import doubleOperandOps as dopr
+from pdp11_single_operand_ops import SingleOperandOps as sopr
+from pdp11_double_operand_ops import DoubleOperandOps as dopr
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000

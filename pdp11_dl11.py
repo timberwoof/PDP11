@@ -6,7 +6,7 @@ CIRCLE = '⚫'
 CIRCLE_OUTLINE = '⚪'
 PC_DISPLAY = ''
 
-class Dl11:
+class DL11:
     """DEC DL11 serial interface and terminal emulator"""
     def __init__(self, ram, base_address):
         """dlss(ram object, base address for this device)

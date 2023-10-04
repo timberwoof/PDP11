@@ -126,6 +126,8 @@ class Ram:
     """PDP11 Random Access Memory 64kB including io page"""
     # Sixteen-bit words are stored little-endian
     # (with least significant bytes first).
+    # *** Improvement: Let this take a paramater bit_size
+    # *** that sets address bus width and top_of_memory.
 
     # overall size of memory: 64kB
     top_of_memory = 0o177777

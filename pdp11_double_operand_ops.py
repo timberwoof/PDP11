@@ -1,9 +1,4 @@
-"""pdp11DoubleOperandOps.py double operand instructions"""
-
-from pdp11_hardware import Registers as reg
-from pdp11_hardware import Ram
-from pdp11_hardware import PSW
-from pdp11_hardware import AddressModes as am
+"""pdp11_double_operand_ops.py double operand instructions"""
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
@@ -11,7 +6,8 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
-class doubleOperandOps:
+class DoubleOperandOps:
+    """Implements PDP11 double-operand instructions"""
     def __init__(self, reg, ram, psw, am):
         #print('initializing doubleOperandOps')
         self.reg = reg
@@ -100,9 +96,9 @@ class doubleOperandOps:
         # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
         # get_c: set if divide 0 attempted; cleared otherwise
         if source == 0:
-            V = 0
-            C = 0
-            self.psw.set_psw(v=V, c=C)
+            v = 0
+            c = 0
+            self.psw.set_psw(v=v, c=c)
             return 0
 
         R = self.reg.registers[register]
@@ -143,11 +139,11 @@ class doubleOperandOps:
         self.psw.set_z('', result)
         result_sign = result & 0o100000
         if result_sign != register_sign:
-            V = 1
+            v = 1
         else:
-            V = 0
+            v = 0
         # *** need to calculate Carry status
-        self.psw.set_psw(v=V, c=0)
+        self.psw.set_psw(v=v, c=0)
         return result
 
     def ASHC(self, register, source):
@@ -199,7 +195,7 @@ class doubleOperandOps:
         """07 7R NN SOB sutract one and branch 4-63
 
         R < R -1, then maybe branch"""
-        print(f'SOB unimplemented')
+        print('SOB unimplemented')
         result = self.reg.registers[register] * source
         return result
 
@@ -221,7 +217,7 @@ class doubleOperandOps:
         # 15-9 opcode
         # 8-6 reg
         # 5-0 src or dst
-        opcode = (instruction & 0o077000)
+        opcode = instruction & 0o077000
         register = (instruction & 0o000700) >> 6
         source = instruction & 0o000077
 
@@ -340,26 +336,26 @@ class doubleOperandOps:
 
         self.reg.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
-            BW = 'B'
+            bw = 'B'
         else:
-            BW = 'W'
-        opcode = (instruction & 0o070000)
-        name_opcode = (instruction & 0o170000)
+            bw = 'W'
+        opcode = instruction & 0o070000
+        name_opcode = instruction & 0o170000
         print(f'    {self.double_operand_SSDD_instruction_names[name_opcode]} {oct(instruction)} double_operand_SSDD ')
 
         source = (instruction & 0o007700) >> 6
-        dest = (instruction & 0o000077)
+        dest = instruction & 0o000077
         #print(f'    source_value  = addressing_mode_get')
-        source_value, source_register, source_address = self.am.addressing_mode_get(BW, source)
+        source_value, source_register, source_address = self.am.addressing_mode_get(bw, source)
         #print(f'    dest_value = addressing_mode_get')
-        dest_value, dest_register, dest_address = self.am.addressing_mode_get(BW, dest)
+        dest_value, dest_register, dest_address = self.am.addressing_mode_get(bw, dest)
         #print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
         #print(f'    result = double_operand_SSDD_instructions')
-        result = self.double_operand_SSDD_instructions[opcode](BW, source_value, dest_value)
+        result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
         print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
         #print(f'    addressing_mode_set')
-        self.am.addressing_mode_set(BW, result, dest_register, dest_address)
+        self.am.addressing_mode_set(bw, result, dest_register, dest_address)
 
         return run

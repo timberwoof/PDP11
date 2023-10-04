@@ -1,7 +1,7 @@
 """PDP11 RK11 Interface"""
-from pdp11_hardware import Ram
-
-class rk11:
+class RK11:
+    """DEC RK11 disk drive interface"""
+    # *** stubbed out. Inoperative.
     def __init__(self, ram):
         print('initializing RK11')
         self.ram = ram
@@ -15,7 +15,7 @@ class rk11:
         self.RKMR_address = base_address + 0o14
         self.RKDB_address = base_address + 0o16
 
-        print(f'RK11 register_with_ram')
+        print('RK11 register_with_ram')
         self.ram.register_io_writer(self.RKCS_address, self.write_RKCS) # rw
         self.ram.register_io_writer(self.RKWC_address, self.write_RKWC) # rw
         self.ram.register_io_writer(self.RKBA_address, self.write_RKBA) # rw
@@ -84,25 +84,25 @@ class rk11:
         print('RK11 read_RKDB')
         return self.RKDB
 
-    def controlReset(self):
+    def control_reset(self):
         print('RK11 control reset')
 
-    def driveReset(self):
+    def drive_reset(self):
         print('RK11 drive reset')
 
-    def writeLock(self):
+    def write_lock(self):
         print('RK11 write lock')
 
     def seek(self):
         print('RK11 seek')
 
-    def writeCheck(self):
+    def write_check(self):
         print('RK11 write check')
 
     def write(self):
         print('RK11 write')
 
-    def readCheck(self):
+    def read_check(self):
         print('RK11 read check')
 
     def read(self):

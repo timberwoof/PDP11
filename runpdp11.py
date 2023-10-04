@@ -1,3 +1,4 @@
+"""run PDP11 in terminal emulator"""
 from pdp11 import PDP11
 from pdp11 import pdp11Run
 

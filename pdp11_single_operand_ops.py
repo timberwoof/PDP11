@@ -1,15 +1,4 @@
-"""pdp11SingleOperandOps.py single oprand instructions"""
-
-"""self.single_operand_instructions
-    :param instruction: opcode
-    :param operand: operand
-    :param B: 'B' for byte instruction, '' for word
-"""
-
-from pdp11_hardware import Registers as reg
-from pdp11_hardware import Ram
-from pdp11_hardware import PSW
-from pdp11_hardware import AddressModes as am
+"""pdp11_single_operand_ops.py single oprand instructions"""
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
@@ -17,9 +6,10 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
-class singleOperandOps:
+class SingleOperandOps:
+    """Implements PDP11 single-operand instructions"""
     def __init__(self, reg, ram, psw, am):
-        print('initializing singleOperandOps')
+        print('initializing SingleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -133,18 +123,21 @@ class singleOperandOps:
         self.single_operand_instruction_texts[0o106600] = "move to previous data space"
 
     def mask(self, value, B):
+        """Apply the correct byte or word mask to the value"""
+        result = 0o0
         if B == "B":
-            return value & mask_byte
+            result = value & MASK_LOW_BYTE
         else:
-            return value & MASK_WORD
+            result = value & MASK_WORD
+        return result
 
-    def JMP(self, instruction, operand, B):
+    def JMP(self, operand, B):
         """00 01 DD JMP jump 4-56"""
         #print(f'JMP calling set_pc({oct(operand)})')
         self.reg.set_pc(operand, 'JMP')
         return operand
 
-    def SWAB(self, instruction, operand, B):
+    def SWAB(self, operand, B):
         """00 03 DD Swap Bytes 4-17"""
         # Exchanges high-order byte and low-order byte of the destina- tion word
         # get_n: set if high-order bit of low-order byte (bit 7) of result is set; cleared otherwise
@@ -157,13 +150,13 @@ class singleOperandOps:
         self.psw.set_psw(v=0, c=0)
         return result
 
-    def CLR(self, instruction, operand, B):
+    def CLR(self, operand, B):
         """00 50 DD Clear Destination"""
         result = 0o0
         self.psw.set_psw(n=0, z=1, v=0, c=0)
         return result
 
-    def COM(self, instruction, operand, B):
+    def COM(self, operand, B):
         """00 51 DD Complement Destination"""
         # Replaces the contents of the destination address by their logical complement
         # (each bit equal to 0 is set and each bit equal to 1 is cleared)
@@ -173,7 +166,7 @@ class singleOperandOps:
         self.psw.set_psw(v=0, c=1)
         return result
 
-    def INC(self, instruction, operand, B):
+    def INC(self, operand, B):
         """00 52 DD Increment Destination"""
         result = operand + 1
         self.psw.set_v(B, result)
@@ -181,7 +174,7 @@ class singleOperandOps:
         self.psw.set_z(B, result)
         return result
 
-    def DEC(self, instruction, operand, B):
+    def DEC(self, operand, B):
         """00 53 DD Decrement Destination"""
         result = operand - 1
         self.psw.set_v(B, result)
@@ -189,7 +182,7 @@ class singleOperandOps:
         self.psw.set_z(B, result)
         return result
 
-    def NEG(self, instruction, operand, B):
+    def NEG(self, operand, B):
         """00 54 DD negate Destination"""
         result = -operand
         self.psw.set_v(B, result)
@@ -201,31 +194,32 @@ class singleOperandOps:
             C = 0
         return self.mask(result, B)
 
-    def ADC(self, instruction, operand, B):
+    def ADC(self, operand, B):
         """00 55 DD Add Carry"""
         result = operand + self.psw.get_c()
         return self.mask(result, B)
 
-    def SBC(self, instruction, operand, B):
+    def SBC(self, operand, B):
         """00 56 DD Subtract Carry"""
         result = operand - self.psw.get_c()
         return self.mask(result, B)
 
-    def TST(self, instruction, operand, B):
+    def TST(self, operand, B):
         """00 57 DD Test Destination"""
         self.psw.set_n(B, operand)
         self.psw.set_z(B, operand)
         self.psw.set_psw(v=0, c=0)
         return operand
 
-    def ROR(self, instruction, operand, B):
+    def ROR(self, operand, B):
         """00 60 DD ROR rotate right"""
         # Rotates all bits of the destination right one place.
         # Bit 0 is loaded into the get_c-bit and
         # the previous contents of the get_c-bit are loaded into bit 15 of the destination.
         # get_n: set if the high-order bit of the result is set (result < 0); cleared otherwise
         # get_z: set if all bits of result = 0; cleared otherwise
-        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit (as set by the completion of the rotate operation)
+        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit
+        # (as set by the completion of the rotate operation)
         # get_c: loaded with the low-order bit of the destination
         rotatebit = operand & 0o01
         if B == "B":
@@ -240,7 +234,7 @@ class singleOperandOps:
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
         return self.mask(result, B)
 
-    def ROL(self, instruction, operand, B):
+    def ROL(self, operand, B):
         """00 61 DD ROL rotate left"""
         # Rotate all bits of the destination left one place.
         # Bit 15 is loaded into the get_c·bit of the status word and
@@ -248,7 +242,8 @@ class singleOperandOps:
         # get_n: set if the high-order bit of the result word is set
         # (result < 0): cleared otherwise
         # get_z: set if all bits of the result word =0; cleared otherwise
-        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit (as set by the completion of the rotate operation)
+        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit
+        # (as set by the completion of the rotate operation)
         # get_c: loaded with the high-order bit of the destination
         if B == "B":
             msb = MASK_WORD_MSB & operand
@@ -265,12 +260,13 @@ class singleOperandOps:
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
         return self.mask(result, B)
 
-    def ASR(self, instruction, operand, B):
+    def ASR(self, operand, B):
         """00 62 DD ASR arithmetic shift right"""
         # Shifts all bits of the destination right one place. Bit 15 is replicated.
         # get_n: set if the high-order bit of the result is set (result < 0); cleared otherwise
         # get_z: set if the result = 0; cleared otherwise
-        # get_v: loaded from the Exclusive OR of theN-bit and get_c-bit (as set by the completion of the shift operation)
+        # get_v: loaded from the Exclusive OR of theN-bit and get_c-bit
+        # (as set by the completion of the shift operation)
         # get_c: loaded from low-order bit of the destination
         if B == "B":
             msb = MASK_WORD_MSB & operand
@@ -284,12 +280,13 @@ class singleOperandOps:
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
         return result
 
-    def ASL(self, instruction, operand, B):
+    def ASL(self, operand, B):
         """00 63 DD ASL arithmetic shift left"""
         # Shifts all bits of the destination left one place. Bit 0 is loaded with an 0.
         # get_n: set if high-order bit of the result is set (result < 0); cleared otherwise
         # get_z: set if the result =0; cleared otherwise
-        # get_v: loaded with the exclusive OR of the get_n-bit and get_c-bit (as set by the completion of the shift operation)
+        # get_v: loaded with the exclusive OR of the get_n-bit and get_c-bit
+        # (as set by the completion of the shift operation)
         # get_c: loaded with the high-order bit of the destination
         result = operand << 1
         if B == "B":
@@ -305,7 +302,7 @@ class singleOperandOps:
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
         return result
 
-    def SXT(self, instruction, operand, B):
+    def SXT(self, operand, B):
         """00 67 DD Sign Extend"""
         # (dst)<- 0 if get_n bit is clear
         # (dst)<- -1 get_n bit is set
@@ -319,14 +316,16 @@ class singleOperandOps:
         self.psw.set_psw(z=Z)
         return result
 
-    def MFPD(self, instruction, operand, B):
+    def MFPD(self, operand, B):
         """10 65 SS Move from previous data space"""
-        print(f'MFPD NOT IMPLEMENTED')
+        # *** unimplemented
+        print('MFPD NOT IMPLEMENTED')
         return operand
 
-    def MTPD(self, instruction, operand, B):
+    def MTPD(self, operand, B):
         """10 66 SS Move to previous data space"""
-        print(f'MTPD NOT IMPLEMENTED')
+        # *** unimplemented
+        print('MTPD NOT IMPLEMENTED')
         return operand
 
     def is_single_operand(self, instruction):
@@ -344,10 +343,10 @@ class singleOperandOps:
         #print(f'    is_single_operand({oct(instruction)})')
         bits_14_13_12 = instruction & 0o070000 == 0o000000
         bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
-        isJMP = instruction & 0o177700 == 0o000100
-        isSWAB = instruction & 0o177700 == 0o000300
-        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {isSWAB}  {isJMP}')
-        return (bits_14_13_12 and bits_11_10_9) or isSWAB or isJMP
+        is_jmp = instruction & 0o177700 == 0o000100
+        is_swab = instruction & 0o177700 == 0o000300
+        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {is_swab}  {is_jmp}')
+        return (bits_14_13_12 and bits_11_10_9) or is_swab or is_jmp
 
     def do_single_operand(self, instruction):
         """dispatch a single-operand opcode"""
@@ -365,10 +364,9 @@ class singleOperandOps:
         source = instruction & 0o000077
         opcode = instruction & 0o107700
         addressmode = (opcode & 0o0070) >> 3
-        register = (opcode & 0o0007)
-        # special handling for JMP with R7
         run = True
         if instruction & 0o177700 == 0o000100: # JMP R7
+            # special handling for JMP with R7
             run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
             print(f'    {self.single_operand_instruction_names[opcode]} '
                   f'{self.single_operand_instruction_texts[opcode]} '
@@ -380,7 +378,7 @@ class singleOperandOps:
                   f'{self.single_operand_instruction_texts[opcode]} '
                   f'{oct(instruction)} {oct(source_value)} '
                   f'single-operand instruction register:{oct(out_register)}  addressmode:{oct(addressmode)}')
-            result = self.single_operand_instructions[opcode](instruction, source_value, BW)
+            result = self.single_operand_instructions[opcode](source_value, BW)
             print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
             self.am.addressing_mode_set(BW, result, out_register, out_address)
         return run

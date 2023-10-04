@@ -5,7 +5,7 @@ import pytest
 import random
 from pdp11 import PDP11
 from pdp11 import pdp11Run
-from pdp11_dl11 import Dl11
+from pdp11_dl11 import DL11
 
 class TestClass():
     test_character = 0

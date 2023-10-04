@@ -6,16 +6,16 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11NoOperandOps import noOperandOps as nopr
-from pdp11SingleOperandOps import singleOperandOps as sopr
-from pdp11DoubleOperandOps import doubleOperandOps as dopr
+from pdp11_no_operand_ops import NoOperandOps as nopr
+from pdp11_single_operand_ops import SingleOperandOps as sopr
+from pdp11_double_operand_ops import DoubleOperandOps as dopr
 from pdp11_branch_ops import BranchOps as br
-from pdp11OtherOps import otherOps as other
-from pdp11_dl11 import Dl11
+from pdp11_other_ops import OtherOps as other
+from pdp11_dl11 import DL11
 from pdp11_boot import pdp11Boot as boot
-from pdp11m9301 import m9301
-from pdp11rk11 import rk11
-#from stopwatch import stopWatchList as sw
+from pdp11_m9301 import M9301
+from pdp11_rk11 import RK11
+from stopwatches import StopWatches as sw
 
 # boot.load_machine_code(boot.bootstrap_loader, bootaddress)
 # reg.set_pc(0o2000, "load_machine_code")
@@ -38,7 +38,7 @@ class PDP11():
     def __init__(self):
         """instantiate toe PDP11 emulator components"""
         print('pdp11CPU initializing')
-        #self.sw = sw()
+        self.sw = sw()
 
         self.reg = reg()
         self.ram = Ram(self.reg)
@@ -52,14 +52,14 @@ class PDP11():
         self.dopr = dopr(self.reg, self.ram, self.psw, self.am)
         self.other = other(self.reg, self.ram, self.psw, self.am)
         self.boot = boot(self.reg, self.ram)
-        self.m9301 = m9301(self.reg, self.ram, self.boot)
-        self.rk11 = rk11(self.ram)
+        self.m9301 = M9301(self.reg, self.ram, self.boot)
+        self.rk11 = RK11(self.ram)
 
         # set up DL11
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
-        self.dl11 = Dl11(self.ram, 0o177560)
+        self.dl11 = DL11(self.ram, 0o177560)
         print('pdp11CPU initializing done')
 
     def dispatch_opcode(self, instruction):
@@ -88,10 +88,10 @@ class PDP11():
 
         return run
 
-    def instruction_cycle(self):
+    def instruction_cycle(self, sw):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
-        #self.sw.start("cycle")
+        sw.start("cycle")
         pc = self.reg.get_pc() # get pc without incrementing
         instruction = self.ram.read_word_from_pc() # read at pc and increment pc
         print('----')
@@ -100,7 +100,7 @@ class PDP11():
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.reg.log_registers()
-        #self.sw.stop("cycle")
+        sw.stop("cycle")
         return run
 
 
@@ -108,7 +108,7 @@ class pdp11Run():
     """sets up and runs PDP11 emulator"""
     def __init__(self, pdp11):
         """instantiate the PDP11 CPU"""
-        #self.sw = sw()
+        self.sw = sw()
         self.pdp11 = pdp11
         self.running = False
 
@@ -121,7 +121,7 @@ class pdp11Run():
         instructions_executed = 0
         time_start = time.time()
         while True:
-            #self.pdp11.instruction_cycle(self.sw)
+            self.pdp11.instruction_cycle(self.sw)
             instructions_executed = instructions_executed + 1
 
         print (f'run instructions_executed: {instructions_executed}')
@@ -148,9 +148,9 @@ class pdp11Run():
         while window_run:
             # run window bits
             if cpu_run:
-                cpu_run = self.pdp11.instruction_cycle()
+                cpu_run = self.pdp11.instruction_cycle(self.sw)
             window_run, cpu_run = self.pdp11.dl11.terminal_window_cycle(cpu_run, self.pdp11)
 
         print('run_in_terminal ends')
         self.pdp11.am.address_mode_report()
-        #self.sw.report()
+        self.sw.report()

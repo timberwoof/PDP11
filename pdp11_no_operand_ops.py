@@ -1,13 +1,9 @@
-"""pdp11NoOperandOps.py - no-operand instructions 00 00 00 through 00 00 06"""
+"""pdp11_no_operand_ops.py - no-operand instructions 00 00 00 through 00 00 06"""
 
-from pdp11_hardware import Registers as reg
-from pdp11_hardware import Ram
-from pdp11_hardware import PSW
-from pdp11_hardware import Stack
-
-class noOperandOps:
+class NoOperandOps:
+    """Implements PDP11 no-operand instructions"""
     def __init__(self, reg, ram, psw, stack):
-        print('initializing noOperandOps')
+        print('initializing NoOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -33,17 +29,18 @@ class noOperandOps:
         self.no_operand_instruction_namess[0o000006]= "RTT"
         self.no_operand_instruction_namess[0o000240]= "NOP"
 
-    def HALT(self, instruction):
+    def HALT(self):
         """00 00 00 Halt"""
         return False
 
-    def WAIT(self, instruction):
+    def WAIT(self):
         """00 00 01 Wait 4-75"""
-        print(f'WAIT unimplemented')
+        # *** unimplemented
+        print('WAIT unimplemented')
         self.reg.inc_pc('WAIT')
         return False
 
-    def RTI(self, instruction):
+    def RTI(self):
         """00 00 02 RTI return from interrupt 4-69
         PC < (SP)^; PS< (SP)^
         """
@@ -51,13 +48,14 @@ class noOperandOps:
         self.psw.set_psw(psw=self.stack.pop())
         return True
 
-    def BPT(self, instruction):
+    def BPT(self):
         """00 00 03 BPT breakpoint trap 4-67"""
-        print(f'BPT unimplemented')
+        # *** unimplemented
+        print('BPT unimplemented')
         self.reg.inc_pc('BPT')
         return False
 
-    def IOT(self, instruction):
+    def IOT(self):
         """00 00 04 IOT input/output trap 4-68
 
         | push PS
@@ -74,30 +72,31 @@ class noOperandOps:
         self.reg.set_sp(0o22, "IOT")
         return True
 
-    def RESET(self, instruction):
+    def RESET(self):
         """00 00 05 RESET reset external bus 4-76"""
-        print(f'BPT unimplemented')
+        # *** unimplemented
+        print('BPT unimplemented')
         return True
 
-    def RTT(self, instruction):
+    def RTT(self):
         """00 00 06 RTT return from interrupt 4-70"""
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop(), "RTT")
         self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
         return True
 
-    def NOP(self, instruction):
+    def NOP(self):
         """00 02 40 NOP no operation"""
         return True
 
     def is_no_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-        return instruction in self.no_operand_instructions.keys()
+        return instruction in self.no_operand_instructions
 
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
         print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
         result = True
-        result = self.no_operand_instructions[instruction](instruction)
+        result = self.no_operand_instructions[instruction]()
         return result

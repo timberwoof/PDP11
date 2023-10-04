@@ -1,24 +1,22 @@
 """pdp11other - other instructions"""
 
-from pdp11_hardware import Ram
-from pdp11_hardware import Registers as reg
-from pdp11_hardware import PSW
-from pdp11_hardware import AddressModes as am
 from pdp11_hardware import Stack
 
 # masks for accessing words and bytes
-mask_byte = 0o000377
+MASK_BYTE = 0o000377
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
 
-class otherOps:
+class OtherOps:
+    """Implements the remainder of PDP11 instructions"""
     def __init__(self, reg, ram, psw, am ):
         print('initializing otherOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
         self.am = am
+        self.stack = Stack(reg, ram, psw)
 
 
     # ****************************************************
@@ -32,7 +30,7 @@ class otherOps:
         |  PC <- (dst)
         """
         R = instruction & 0o000700 >> 6
-        DD = instructuion & 0o000077
+        DD = instruction & 0o000077
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
         tmp = DD
         self.stack.push(self.reg.get(R))
@@ -48,20 +46,22 @@ class otherOps:
         R = instruction & 0o000007
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
         self.reg.set_pc(self.reg.get(R), "RTS")
-        reg.set(R, self.stack.pop())
+        self.reg.set(R, self.stack.pop())
 
-    def MARK(instruction):
+    def MARK(self, instruction):
         """00 64 NN mark 46-1"""
+        # *** unimplemented
         print(f'    MARK {oct(instruction)} unimplemented')
 
-    def MFPI(instruction):
+    def MFPI(self, instruction):
         """00 65 SS move from previous instruction space 4-77"""
+        # *** unimplemented
         print(f'    MFPI {oct(instruction)} unimplemented')
 
-    def MTPI(instruction, dest, operand):
+    def MTPI(self, instruction):
         """00 66 DD move to previous instruction space 4-78"""
+        # *** unimplemented
         print(f'    MTPI {oct(instruction)} unimplemented')
-
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
