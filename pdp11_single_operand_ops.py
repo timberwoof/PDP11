@@ -40,11 +40,11 @@ class SingleOperandOps:
         #self.single_operand_instructions[0o006500] = self.MFPI
         #self.single_operand_instructions[0o006600] = self.MTPI
         self.single_operand_instructions[0o006700] = self.SXT
-        self.single_operand_instructions[0o105000] = self.CLR # CLRB
-        self.single_operand_instructions[0o105100] = self.COM # COMB
-        self.single_operand_instructions[0o105200] = self.INC # INCB
-        self.single_operand_instructions[0o105300] = self.DEC # DECB
-        self.single_operand_instructions[0o105400] = self.NEG # NEGB
+        self.single_operand_instructions[0o105000] = self.CLR  # CLRB
+        self.single_operand_instructions[0o105100] = self.COM  # COMB
+        self.single_operand_instructions[0o105200] = self.INC  # INCB
+        self.single_operand_instructions[0o105300] = self.DEC  # DECB
+        self.single_operand_instructions[0o105400] = self.NEG  # NEGB
         self.single_operand_instructions[0o105500] = self.ADC  # ADCB
         self.single_operand_instructions[0o105600] = self.SBC  # SBCB
         self.single_operand_instructions[0o105700] = self.TST  # TSTB
@@ -134,7 +134,7 @@ class SingleOperandOps:
 
     def JMP(self, operand, B):
         """00 01 DD JMP jump 4-56"""
-        #print(f'JMP calling set_pc({oct(operand)})')
+        # print(f'JMP calling set_pc({oct(operand)})')
         self.reg.set_pc(operand, 'JMP')
         return operand
 
@@ -341,12 +341,12 @@ class SingleOperandOps:
         # bits 5-0 can be anything
         # 0o000301 is one of these
         # 0 000 000 101 *** ***
-        #print(f'    is_single_operand({oct(instruction)})')
+        # print(f'    is_single_operand({oct(instruction)})')
         bits_14_13_12 = instruction & 0o070000 == 0o000000
         bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
         is_jmp = instruction & 0o177700 == 0o000100
         is_swab = instruction & 0o177700 == 0o000300
-        #print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {is_swab}  {is_jmp}')
+        # print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {is_swab}  {is_jmp}')
         return (bits_14_13_12 and bits_11_10_9) or is_swab or is_jmp
 
     def do_single_operand(self, instruction):
@@ -371,18 +371,18 @@ class SingleOperandOps:
         if instruction & 0o177700 == 0o000100: # JMP R7
             # special handling for JMP with R7
             run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
-            #print(f'    {self.single_operand_instruction_names[opcode]} '
+            # print(f'    {self.single_operand_instruction_names[opcode]} '
             #      f'{self.single_operand_instruction_texts[opcode]} '
             #      f'{oct(instruction)} {oct(source_value)} '
             #      f'single-operand instruction register:{oct(out_register)}')
         else:
             source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-            #print(f'    {self.single_operand_instruction_names[opcode]} '
+            # print(f'    {self.single_operand_instruction_names[opcode]} '
             #      f'{self.single_operand_instruction_texts[opcode]} '
             #      f'{oct(instruction)} {oct(source_value)} '
             #      f'single-operand instruction register:{oct(out_register)}')
             result = self.single_operand_instructions[opcode](source_value, BW)
-            #print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
+            # print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
             self.am.addressing_mode_set(BW, result, out_register, out_address)
             self.sw.stop("single operand")
         return run

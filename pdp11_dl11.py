@@ -33,22 +33,22 @@ class DL11:
         # This is a DL11-B
         # no paper tape bits as for A and get_c.
         # no modem-control bits as for E
-        self.RCSR_RCVR_ACT = 0o004000 # 11 RO - active (we're not multithreaded yet)
-        self.RCSR_RCVR_DONE = 0o000200 # 7 RO
+        self.RCSR_RCVR_ACT = 0o004000  # 11 RO - active (we're not multithreaded yet)
+        self.RCSR_RCVR_DONE = 0o000200  # 7 RO
         #   set when character has been received,
         #   cleared when RBUF is read (addressed for read or write by CPU)
-        self.RCSR_INT_ENB = 0o000100 # 6 - when set, enables interrupt (not implemented)
+        self.RCSR_INT_ENB = 0o000100  # 6 - when set, enables interrupt (not implemented)
         self.RCSR = 0   # receive status register. Not active; no character yet
         self.RBUF = 0   # receive buffer
 
         # XCSR Transmitter Status Register bits
         # This is a DL11-B
         # No Break bit
-        self.XCSR_XMIT_RDY = 0o000200 # 7 RO -
+        self.XCSR_XMIT_RDY = 0o000200  # 7 RO -
         #   set when transmitter can accept another character
         #   cleared by loading XBUF (write by CPU)
-        self.XCSR_SMIT_INT_ENB = 0o000100 # 6 RW - when set, enables interrupt (not implemented)
-        self.XCSR_MAINT = 0o000004 # 2 RW - maintenance loopback XBUF to RBUF
+        self.XCSR_SMIT_INT_ENB = 0o000100  # 6 RW - when set, enables interrupt (not implemented)
+        self.XCSR_MAINT = 0o000004  # 2 RW - maintenance loopback XBUF to RBUF
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
 
@@ -200,7 +200,7 @@ class DL11:
             self.sw.stop('DL11 window read')
 
             # handle the window events
-            if event in (sg.WIN_CLOSED, 'Quit'): # if user closes window or clicks cancel
+            if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
                 window_run = False
             elif event == "Run":
                 cpu_run = True

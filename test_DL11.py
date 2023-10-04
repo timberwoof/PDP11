@@ -1,7 +1,6 @@
 # test_DL11.py
 # test the pdp11_dl11.py module using pytest
 
-import pytest
 import random
 from pdp11 import PDP11
 from pdp11 import pdp11Run
@@ -89,7 +88,7 @@ class TestClass():
         while i < 100:
             # verify that transmitter is ready
             XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-            print(f'XCSR:{oct(XCSR)}') # maintenance mode should be set; ready should be set
+            print(f'XCSR:{oct(XCSR)}')  # maintenance mode should be set; ready should be set
             assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
 
             # transmit a byte
@@ -101,7 +100,7 @@ class TestClass():
 
             # verify that a byte is ready to read
             RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
-            print(f'RCSR:{oct(RCSR)}') # maintenance mode should be set; ready should be set
+            print(f'RCSR:{oct(RCSR)}')  # maintenance mode should be set; ready should be set
             assert RCSR & pdp11.dl11.RCSR_RCVR_DONE == pdp11.dl11.RCSR_RCVR_DONE
 
             # receive the byte

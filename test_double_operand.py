@@ -1,4 +1,3 @@
-import pytest
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW

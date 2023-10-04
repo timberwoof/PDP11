@@ -40,21 +40,21 @@ class BranchOps:
         self.branch_instructions[0o103400] = self.BCS  # BLO
 
         self.branch_instruction_names = {}
-        self.branch_instruction_names[0o000400] = "BR" #
-        self.branch_instruction_names[0o001000] = "BNE" #
-        self.branch_instruction_names[0o001400] = "BEQ" #
-        self.branch_instruction_names[0o002000] = "BGE" #
-        self.branch_instruction_names[0o002400] = "BLT" #
-        self.branch_instruction_names[0o003000] = "BGT" #
-        self.branch_instruction_names[0o003400] = "BLE" #
-        self.branch_instruction_names[0o100000] = "BPL" #
-        self.branch_instruction_names[0o100400] = "BMI" #
-        self.branch_instruction_names[0o101000] = "BHI" #
-        self.branch_instruction_names[0o101400] = "BLOS" #
-        self.branch_instruction_names[0o102000] = "BVC" #
-        self.branch_instruction_names[0o102400] = "BVS" #
-        self.branch_instruction_names[0o103000] = "BCC" # BCC = BHIS
-        self.branch_instruction_names[0o103400] = "BCS" # BCS = BLO
+        self.branch_instruction_names[0o000400] = "BR"
+        self.branch_instruction_names[0o001000] = "BNE"
+        self.branch_instruction_names[0o001400] = "BEQ"
+        self.branch_instruction_names[0o002000] = "BGE"
+        self.branch_instruction_names[0o002400] = "BLT"
+        self.branch_instruction_names[0o003000] = "BGT"
+        self.branch_instruction_names[0o003400] = "BLE"
+        self.branch_instruction_names[0o100000] = "BPL"
+        self.branch_instruction_names[0o100400] = "BMI"
+        self.branch_instruction_names[0o101000] = "BHI"
+        self.branch_instruction_names[0o101400] = "BLOS"
+        self.branch_instruction_names[0o102000] = "BVC"
+        self.branch_instruction_names[0o102400] = "BVS"
+        self.branch_instruction_names[0o103000] = "BCC"  # BCC = BHIS
+        self.branch_instruction_names[0o103400] = "BCS"  # BCS = BLO
 
 
     # ****************************************************
@@ -70,7 +70,7 @@ class BranchOps:
     # ****************************************************
 
     def BR(self, offset):
-        #print(f'    BR instruction:{oct(instruction)} offset:{oct(offset)}')
+        # print(f'    BR instruction:{oct(instruction)} offset:{oct(offset)}')
         """00 04 XXX Branch"""
         self.reg.set_pc_2x_offset(offset, "BR")
         return True
@@ -79,7 +79,7 @@ class BranchOps:
     def BNE(self, offset):
         """00 10 XXX branch if not equal get_z=0"""
         # Tests the state of the get_z-bit and causes a branch if the get_z-bit is clear.
-        print (f"    BNE get_z:{self.psw.get_z()}")
+        print(f"    BNE get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 0:
             self.reg.set_pc_2x_offset(offset, "BNE")
         return True
@@ -87,7 +87,7 @@ class BranchOps:
     def BEQ(self, offset):
         """00 14 XXX branch if equal get_z=1"""
         # Tests the state of the get_z-bit and causes a branch if get_z is set
-        print (f"    BEQ get_z:{self.psw.get_z()}")
+        print(f"    BEQ get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
@@ -174,7 +174,7 @@ class BranchOps:
         blankbits = instruction & 0o070000 == 0o000000
         lowbits0 = instruction & 0o107400 in [          0o000400, 0o001000, 0o001400, 0o002000, 0o002400, 0o003000, 0o003400]
         lowbits1 = instruction & 0o107400 in [0o100000, 0o100400, 0o101000, 0o101400, 0o102000, 0o102400, 0o103000, 0o103400]
-        #print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
+        # print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
         return blankbits and (lowbits0 or lowbits1)
 
     def do_branch(self, instruction):

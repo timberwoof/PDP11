@@ -7,10 +7,10 @@ class StopWatch():
     def __init__(self, instance_id):
         self.instance_id = instance_id
         self.count = 0
-        self.min = 1000000000000
-        self.max = -1 # "uninitialized"
+        self.min = 1000000000000  # "uninitialized"
+        self.max = -1  # "uninitialized"
         self.sum = 0
-        self.mean = -1 # "uninitialized"
+        self.mean = -1  # "uninitialized"
         self.start_time = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
 
     def get_id(self):

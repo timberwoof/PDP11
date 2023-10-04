@@ -16,15 +16,15 @@ class RK11:
         self.RKDB_address = base_address + 0o16
 
         print('RK11 register_with_ram')
-        self.ram.register_io_writer(self.RKCS_address, self.write_RKCS) # rw
-        self.ram.register_io_writer(self.RKWC_address, self.write_RKWC) # rw
-        self.ram.register_io_writer(self.RKBA_address, self.write_RKBA) # rw
-        self.ram.register_io_writer(self.RKDA_address, self.write_RKDA) # rw
-        self.ram.register_io_writer(self.RKMR_address, self.write_RKMR) # rw
-        self.ram.register_io_writer(self.RKDB_address, self.write_RKDB) # rw
+        self.ram.register_io_writer(self.RKCS_address, self.write_RKCS)  # rw
+        self.ram.register_io_writer(self.RKWC_address, self.write_RKWC)  # rw
+        self.ram.register_io_writer(self.RKBA_address, self.write_RKBA)  # rw
+        self.ram.register_io_writer(self.RKDA_address, self.write_RKDA)  # rw
+        self.ram.register_io_writer(self.RKMR_address, self.write_RKMR)  # rw
+        self.ram.register_io_writer(self.RKDB_address, self.write_RKDB)  # rw
 
-        self.ram.register_io_reader(self.RKDS_address, self.read_RKDS) # ro
-        self.ram.register_io_reader(self.RKER_address, self.read_RKER) # ro
+        self.ram.register_io_reader(self.RKDS_address, self.read_RKDS)  # ro
+        self.ram.register_io_reader(self.RKER_address, self.read_RKER)  # ro
         self.ram.register_io_reader(self.RKCS_address, self.read_RKCS)
         self.ram.register_io_reader(self.RKWC_address, self.read_RKWC)
         self.ram.register_io_reader(self.RKBA_address, self.read_RKBA)

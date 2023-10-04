@@ -1,4 +1,3 @@
-import pytest
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -30,7 +29,7 @@ class TestClass():
         self.psw.set_psw(psw=0)
         self.reg.set(R, a)
         instruction = 0o070000 | R << 6 | b
-        print(oct(instruction)) # 0o0171312
+        print(oct(instruction))  # 0o0171312
         assert self.dopr.is_double_operand_RSS(instruction)
         self.dopr.do_double_operand_RSS(instruction)
 
@@ -42,9 +41,9 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_DIV(self):
-        R = 2 # must be even
+        R = 2  # must be even
         a = 0o1536230
-        b = 0o75 # max 0o77
+        b = 0o75  # max 0o77
         Rv1 = R + 1
 
         print(f'test_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
@@ -56,7 +55,7 @@ class TestClass():
         self.reg.set(Rv1, a & MASK_WORD)
 
         instruction = 0o071000 | R << 6 | b
-        print(f'test_DIV instruction:{oct(instruction)}') # 0o0171312
+        print(f'test_DIV instruction:{oct(instruction)}')  # 0o0171312
         assert self.dopr.is_double_operand_RSS(instruction)
         self.dopr.do_double_operand_RSS(instruction)
 

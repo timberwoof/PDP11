@@ -9,7 +9,7 @@ MASK_HIGH_BYTE = 0o177400
 class DoubleOperandOps:
     """Implements PDP11 double-operand instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        #print('initializing doubleOperandOps')
+        # print('initializing doubleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -75,13 +75,13 @@ class DoubleOperandOps:
 
         (R, R+1) < (R, R+1) * (src)"""
         # get_c: set if the result < -2^15 or result >= 2^15-1
-        #print(f'    MUL {register} * {source}')
+        # print(f'    MUL {register} * {source}')
         a = self.reg.registers[register]
         result = a * source
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         self.psw.set_psw(v=0)
-        self.psw.set_psw(c=0) # **** this needs to be handled
+        self.psw.set_psw(c=0)  # **** this needs to be handled
         return result
 
     def DIV(self, register, source):
@@ -226,7 +226,7 @@ class DoubleOperandOps:
         print(f'    {self.double_operand_RSS_instruction_names[opcode]} {oct(instruction)} double_operand_RSS '
               f'r{register}={oct(self.reg.registers[register])} {oct(source)}')
         result = self.double_operand_RSS_instructions[opcode](register, source)
-        #print(f'    result:{oct(result)}')
+        # print(f'    result:{oct(result)}')
         self.reg.registers[register] = result
         return run
 
@@ -241,11 +241,11 @@ class DoubleOperandOps:
 
         (dst) < (src)"""
         result = source
-        #print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
+        # print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         self.psw.set_n(BW, source)
         self.psw.set_z(BW, source)
         self.psw.set_psw(v=0)
-        return result #, "**0-"
+        return result  # "**0-"
 
     def CMP(self, BW, source, dest):
         """compare 4-24
@@ -254,11 +254,11 @@ class DoubleOperandOps:
         # set the condition code based on that result
         # but don't change the destination
         result = source - dest
-        #print(f'    CMP source:{source} dest:{dest} result:{result}')
+        # print(f'    CMP source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
-        return dest #, "***-"
+        return dest  # "***-"
 
     def BIT(self, BW, source, dest):
         """bit test 4-28
@@ -269,11 +269,11 @@ class DoubleOperandOps:
         # and modifies condition codes accordingly.
         # Neither the source nor destination operands are affected.
         result = source & dest
-        #print(f'    BIT source:{source} dest:{dest} result:{result}')
+        # print(f'    BIT source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result #, "**0-"
+        return result  # "**0-"
 
     def BIC(self, BW, source, dest):
         """bit clear 4-29
@@ -283,17 +283,17 @@ class DoubleOperandOps:
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result #, "**0-"
+        return result  # "**0-"
 
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) get_v (dst)"""
         result = source | dest
-        #print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
+        # print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result #, "**0-"
+        return result  # "**0-"
 
     def ADDSUB(self, BW, source, dest):
         """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
@@ -310,12 +310,12 @@ class DoubleOperandOps:
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
         # need to detect overflow, truncate result
-        return result #, "****"
+        return result  # "****"
 
     def is_double_operand_SSDD(self, instruction):
         """Using instruction bit pattern, determine whether it's a souble operand instruction"""
         # bits 14 - 12 in [1, 2, 3, 4, 5, 6]
-        #print (f'is_double_operand_SSDD {oct(instruction)}&0o070000={instruction & 0o070000}')
+        # print(f'is_double_operand_SSDD {oct(instruction)}&0o070000={instruction & 0o070000}')
         bits14_12 = instruction & 0o070000 in [0o010000, 0o020000, 0o030000, 0o040000, 0o050000, 0o060000]
         return bits14_12
 
@@ -347,17 +347,17 @@ class DoubleOperandOps:
 
         source = (instruction & 0o007700) >> 6
         dest = instruction & 0o000077
-        #print(f'    source_value  = addressing_mode_get')
+        # print(f'    source_value  = addressing_mode_get')
         source_value, source_register, source_address = self.am.addressing_mode_get(bw, source)
-        #print(f'    dest_value = addressing_mode_get')
+        # print(f'    dest_value = addressing_mode_get')
         dest_value, dest_register, dest_address = self.am.addressing_mode_get(bw, dest)
-        #print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
+        # print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
-        #print(f'    result = double_operand_SSDD_instructions')
+        # print(f'    result = double_operand_SSDD_instructions')
         result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
-        #print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
-        #print(f'    addressing_mode_set')
+        # print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
+        # print(f'    addressing_mode_set')
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
         self.sw.stop("double operand")
 

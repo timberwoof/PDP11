@@ -68,7 +68,7 @@ class PDP11():
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        #print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
+        # print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -96,11 +96,11 @@ class PDP11():
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
         self.sw.start("instruction cycle")
-        pc = self.reg.get_pc() # get pc without incrementing
-        instruction = self.ram.read_word_from_pc() # read at pc and increment pc
-        #print('----')
+        pc = self.reg.get_pc()  # get pc without incrementing
+        instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
+        # print('----')
         print(f'pc:{oct(pc)} opcode:{oct(instruction)}')
-        #print(f'pc:{oct(self.reg.get_pc())}')
+        # print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         #self.reg.log_registers()
@@ -127,12 +127,12 @@ class pdp11Run():
             self.pdp11.instruction_cycle(self.sw)
             instructions_executed = instructions_executed + 1
 
-        print (f'run instructions_executed: {instructions_executed}')
+        print(f'run instructions_executed: {instructions_executed}')
         time_end = time.time()
         time_elapsed = time_end - time_start
-        print (f'time_elapsed: {time_elapsed}:.2f seconds')
+        print(f'time_elapsed: {time_elapsed}:.2f seconds')
         ops_per_sec = instructions_executed / time_elapsed
-        print (f'executed {ops_per_sec:.2f} instructions per second')
+        print(f'executed {ops_per_sec:.2f} instructions per second')
         if self.pdp11.reg.get_pc() > 0o200:
             self.pdp11.Ram.dump(self.pdp11.reg.get_pc() - 0o20, self.pdp11.reg.get_pc() + 0o20)
         self.pdp11.am.address_mode_report()
@@ -146,7 +146,7 @@ class pdp11Run():
         # Create and run the terminal window in PySimpleGUI
         print('run_in_terminal dl11.make_window')
         window = self.pdp11.dl11.make_window()
-        window_run = True # *** this is somehow broken. PyLint does not like this.
+        window_run = True  # *** this is somehow broken. PyLint does not like this.
         cpu_run = False
 
         self.pdp11.sw.start("run")
@@ -162,9 +162,9 @@ class pdp11Run():
         self.pdp11.sw.report()
 
         run_stopwatch = self.pdp11.sw.get_watch("run")
-        run_time = run_stopwatch.get_sum() # (microseconds)
+        run_time = run_stopwatch.get_sum()  # (microseconds)
         cycle_stopwatch = self.pdp11.sw.get_watch("instruction cycle")
-        cycles = cycle_stopwatch.get_sum() # cycles
-        processor_speed = cycles / run_time * 1000000 # (ccyles per second)
+        cycles = cycle_stopwatch.get_sum()  # cycles
+        processor_speed = cycles / run_time * 1000000  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
         print(f"processor speed: {format_processor_speed} instructions per second")

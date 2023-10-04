@@ -1,4 +1,3 @@
-import pytest
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -136,7 +135,7 @@ class TestClass():
         self.ram.write_word(addressB, B)
         self.reg.set(2, addressB)
         instruction = self.ADD(modeS=1, regS=1, modeD=1, regD=2)
-        print(oct(instruction)) # 0o60102
+        print(oct(instruction))  # 0o60102
         assert self.dopr.is_double_operand_SSDD(instruction)
         self.dopr.do_double_operand_SSDD(instruction)
 
@@ -187,7 +186,7 @@ class TestClass():
         expected_sum = a + b
 
         instruction = self.ADD(modeS=0, regS=1, modeD=2, regD=2)
-        print(oct(instruction)) # 0o60102
+        print(oct(instruction))  # 0o60102
         assert self.dopr.is_double_operand_SSDD(instruction)
         self.dopr.do_double_operand_SSDD(instruction)
 
@@ -355,7 +354,7 @@ class TestClass():
         X = 0o2050
         self.ram.write_word(instruction_address+2, X)
 
-        operanda = 0o101 # 65
+        operanda = 0o101  # 65
         self.reg.set(1, operanda)
 
         # is added to the resgiter.
@@ -363,10 +362,10 @@ class TestClass():
         operand_address = X + operanda
         self.ram.write_word(operand_address, operanda)
 
-        operandb = 0o2136 # 1118
+        operandb = 0o2136  # 1118
         self.reg.set(2, operandb)
 
-        expected_sum = operanda + operandb # 1183
+        expected_sum = operanda + operandb  # 1183
 
         self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
         self.dopr.do_double_operand_SSDD(instruction)
@@ -405,7 +404,7 @@ class TestClass():
         X = 0o2050
         self.ram.write_word(instruction_address+2, X)
 
-        operanda = 0o101 # 65
+        operanda = 0o101  # 65
         self.reg.set(1, operanda)
 
         # is added to the register.
@@ -415,10 +414,10 @@ class TestClass():
         self.ram.write_word(operand_address, operanda)
         self.ram.write_word(operand_pointer, operand_address)
 
-        operandb = 0o2136 # 1118
+        operandb = 0o2136  # 1118
         self.reg.set(2, operandb)
 
-        expected_sum = operanda + operandb # 1183
+        expected_sum = operanda + operandb  # 1183
 
         self.reg.set_pc(instruction_address+2, 'test_mode_7')  # +2 because we just read the PC in the instruciton cycle
         self.dopr.do_double_operand_SSDD(instruction)
@@ -428,7 +427,6 @@ class TestClass():
 
         condition_codes = self.psw.get_nvzc_string()
         assert condition_codes == "0000"
-
 
     #def test_mode_7(self):
     #    print('test_mode_7 index deferred destination')

@@ -1,7 +1,5 @@
 # test_echo.py
 # load a small pdp11 program that echoes inputs back to outputs
-
-import pytest
 from stopwatches import StopWatches
 
 from pdp11 import PDP11

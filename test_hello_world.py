@@ -3,7 +3,6 @@
 # pip3 install --upgrade pip
 # pip install -U pytest
 
-import pytest
 from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
