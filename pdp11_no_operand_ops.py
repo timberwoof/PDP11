@@ -99,7 +99,6 @@ class NoOperandOps:
         # parameter: opcode of form * 000 0** *** *** ***
         self.sw.start("no operand")
         print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
-        result = True
         result = self.no_operand_instructions[instruction]()
         self.sw.stop("no operand")
         return result

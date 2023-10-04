@@ -19,6 +19,13 @@ class OtherOps:
         self.stack = Stack(reg, ram, psw)
         self.sw = sw
 
+        self.other_instructions = {}
+        self.other_instructions[0o002000] = self.RTS
+        self.other_instructions[0o004000] = self.JSR
+        self.other_instructions[0o006400] = self.MARK
+        self.other_instructions[0o006500] = self.MFPI
+        self.other_instructions[0o006600] = self.MTPI
+
     # ****************************************************
     # Other instructions
     # ****************************************************
@@ -63,24 +70,15 @@ class OtherOps:
         # *** unimplemented
         print(f'    MTPI {oct(instruction)} unimplemented')
 
+    def is_other_op(self, instruction):
+        """Using instruction bit pattern, determine whether it's a no-operand instruction"""
+        return instruction in self.other_instructions
+
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
         self.sw.start("other_opcode")
         print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
-        if instruction & 0o177000 == 0o002000:
-            self.RTS(instruction)
-        elif instruction & 0o177000 == 0o004000:
-            self.JSR(instruction)
-        elif instruction & 0o177700 == 0o006400:
-            self.MARK(instruction)
-        elif instruction & 0o177700 == 0o006500:
-            self.MFPI(instruction)
-        elif instruction & 0o177700 == 0o006600:
-            self.MTPI(instruction)
-        else:
-            print(f'{oct(instruction)} is an unknown instruction')
-            self.reg.set_pc(0o0, "other_opcode")
-            return False
+        self.other_instructions(instruction)
         self.sw.stop("other_opcode")
         return True

@@ -54,7 +54,7 @@ class StopWatch():
         """pretty-print instance_id"""
         pad = ""
         i = 0
-        while i < 14-len(self.instance_id):
+        while i < 20-len(self.instance_id):
             pad = pad + " "
             i = i + 1
         reportmin = self.min
@@ -138,9 +138,11 @@ class StopWatches():
     def report(self):
         """Print text for every StopWatch in the dictionary"""
         print("StopWatches Report (times in microseconds)")
-        print('id                     min        mean         max         sum       count')
+        print('id                      min        mean         max         sum       count')
         for instance_id in self.stop_watch_dict:
             this_stop_watch = self.stop_watch_dict[instance_id]
             print(this_stop_watch.to_string())
         print("StopWatches Report end")
 
+    def get_watch(self, instance_id):
+        return self.stop_watch_dict[instance_id]

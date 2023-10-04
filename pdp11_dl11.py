@@ -51,6 +51,9 @@ class DL11:
         self.XCSR_MAINT = 0o000004 # 2 RW - maintenance loopback XBUF to RBUF
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
+
+        # throttle window updates because they are very slow
+        self.cycles_since_window = 0
         print('initializing dl11 done')
 
     # DL11 Internal Interface to PDP-11 Emulator
@@ -174,6 +177,8 @@ class DL11:
 
     def terminal_window_cycle(self, cpu_run, pdp11):
         """Run one iteration of the PySimpleGUI terminal window loop"""
+        self.sw.start('DL11 cycle')
+        self.cycles_since_window = self.cycles_since_window + 1
         window_run = True
 
         pc = self.window['pc']
@@ -184,36 +189,41 @@ class DL11:
             newchar = self.read_XBUF()
             sg.cprint(chr(newchar), end='')
 
-        # read the widnow
-        self.sw.start('DL11 wread')
-        event, values = self.window.read(timeout=0)
-        self.sw.stop('DL11 wread')
-        # min:5       mean:13       max:40 milliseconds. This is slow!
+        # Maybe read the window
+        if self.cycles_since_window > 100:
+            self.cycles_since_window = 0
 
-        # handle the window events
-        if event in (sg.WIN_CLOSED, 'Quit'): # if user closes window or clicks cancel
-            window_run = False
-        elif event == "Run":
-            cpu_run = True
-            text = self.window['runLED']
-            text.update(CIRCLE_OUTLINE)
-        elif event == "Halt":
-            cpu_run = False
-            text = self.window['runLED']
-            text.update(CIRCLE)
-        elif event == "Exit":
-            cpu_run = False
-            window_run = False
-        elif event == 'keyboard_Enter':
-            self.window['keyboard'].Update('')
-            if self.RCSR & self.RCSR_RCVR_DONE == 0:
-                self.write_RBUF(ord('\n'))
-        kbd = values['keyboard']
-        if kbd != '':
-            self.window['keyboard'].Update('')
-            if self.RCSR & self.RCSR_RCVR_DONE == 0:
-                self.write_RBUF(ord(kbd[0:]))
+            # We should only do this when there's a keyboard event
+            # This takes on average 13 milliseocnds
+            self.sw.start('DL11 window read')
+            event, values = self.window.read(timeout=0)
+            self.sw.stop('DL11 window read')
 
+            # handle the window events
+            if event in (sg.WIN_CLOSED, 'Quit'): # if user closes window or clicks cancel
+                window_run = False
+            elif event == "Run":
+                cpu_run = True
+                text = self.window['runLED']
+                text.update(CIRCLE_OUTLINE)
+            elif event == "Halt":
+                cpu_run = False
+                text = self.window['runLED']
+                text.update(CIRCLE)
+            elif event == "Exit":
+                cpu_run = False
+                window_run = False
+            elif event == 'keyboard_Enter':
+                self.window['keyboard'].Update('')
+                if self.RCSR & self.RCSR_RCVR_DONE == 0:
+                    self.write_RBUF(ord('\n'))
+            kbd = values['keyboard']
+            if kbd != '':
+                self.window['keyboard'].Update('')
+                if self.RCSR & self.RCSR_RCVR_DONE == 0:
+                    self.write_RBUF(ord(kbd[0:]))
+
+        self.sw.stop('DL11 cycle')
         return window_run, cpu_run
 
     def close_terminal_window(self):

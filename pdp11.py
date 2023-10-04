@@ -95,16 +95,16 @@ class PDP11():
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
-        self.sw.start("cycle")
+        self.sw.start("instruction cycle")
         pc = self.reg.get_pc() # get pc without incrementing
         instruction = self.ram.read_word_from_pc() # read at pc and increment pc
-        print('----')
+        #print('----')
         print(f'pc:{oct(pc)} opcode:{oct(instruction)}')
         #print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
-        self.reg.log_registers()
-        self.sw.stop("cycle")
+        #self.reg.log_registers()
+        self.sw.stop("instruction cycle")
         return run
 
 
@@ -148,14 +148,23 @@ class pdp11Run():
         window = self.pdp11.dl11.make_window()
         window_run = True # *** this is somehow broken. PyLint does not like this.
         cpu_run = False
+
         self.pdp11.sw.start("run")
         while window_run:
             # run window bits
             if cpu_run:
                 cpu_run = self.pdp11.instruction_cycle()
             window_run, cpu_run = self.pdp11.dl11.terminal_window_cycle(cpu_run, self.pdp11)
-
         self.pdp11.sw.stop("run")
+
         print('run_in_terminal ends')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
+
+        run_stopwatch = self.pdp11.sw.get_watch("run")
+        run_time = run_stopwatch.get_sum() # (microseconds)
+        cycle_stopwatch = self.pdp11.sw.get_watch("instruction cycle")
+        cycles = cycle_stopwatch.get_sum() # cycles
+        processor_speed = cycles / run_time * 1000000 # (ccyles per second)
+        format_processor_speed = '{:5.0f}'.format(processor_speed)
+        print(f"processor speed: {format_processor_speed} instructions per second")

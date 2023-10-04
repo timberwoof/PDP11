@@ -356,7 +356,7 @@ class DoubleOperandOps:
         run = True
         #print(f'    result = double_operand_SSDD_instructions')
         result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
-        print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
+        #print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
         #print(f'    addressing_mode_set')
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
         self.sw.stop("double operand")
