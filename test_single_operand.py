@@ -5,6 +5,7 @@ from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
 from pdp11_single_operand_ops import SingleOperandOps as sopr
+from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
@@ -18,7 +19,8 @@ class TestClass():
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
-    sopr = sopr(reg, ram, psw, am)
+    sw = sw()
+    sopr = sopr(reg, ram, psw, am, sw)
 
     def test_CLR(self):
         print('test_CLR')

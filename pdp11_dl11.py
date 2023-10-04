@@ -8,11 +8,12 @@ PC_DISPLAY = ''
 
 class DL11:
     """DEC DL11 serial interface and terminal emulator"""
-    def __init__(self, ram, base_address):
+    def __init__(self, ram, base_address, sw):
         """dlss(ram object, base address for this device)
         """
         print(f'initializing dl11({oct(base_address)})   {oct(ord("$"))}')
         self.ram = ram
+        self.sw = sw
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2
         self.XCSR_address = base_address + 4
@@ -129,6 +130,14 @@ class DL11:
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
         return result
 
+    def safe_character(self, byte):
+        """return character if it is printable"""
+        if byte > 32:
+            result = chr(byte)
+        else:
+            result = ""
+        return result
+
     # *********************
     # PySimpleGUI Interface
     # *** This should be a different class from teh DL11.
@@ -175,8 +184,13 @@ class DL11:
             newchar = self.read_XBUF()
             sg.cprint(chr(newchar), end='')
 
-        # handle the window
+        # read the widnow
+        self.sw.start('DL11 wread')
         event, values = self.window.read(timeout=0)
+        self.sw.stop('DL11 wread')
+        # min:5       mean:13       max:40 milliseconds. This is slow!
+
+        # handle the window events
         if event in (sg.WIN_CLOSED, 'Quit'): # if user closes window or clicks cancel
             window_run = False
         elif event == "Run":
@@ -205,11 +219,3 @@ class DL11:
     def close_terminal_window(self):
         """close the terminal window"""
         self.window.close()
-
-    def safe_character(self, byte):
-        """return character if it is printable"""
-        if byte > 32:
-            result = chr(byte)
-        else:
-            result = ""
-        return result

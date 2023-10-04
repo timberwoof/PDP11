@@ -8,12 +8,13 @@ MASK_HIGH_BYTE = 0o177400
 
 class SingleOperandOps:
     """Implements PDP11 single-operand instructions"""
-    def __init__(self, reg, ram, psw, am):
+    def __init__(self, reg, ram, psw, am, sw):
         print('initializing SingleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
         self.am = am
+        self.sw = sw
 
         # ****************************************************
         # Single-Operand instructions -
@@ -357,6 +358,7 @@ class SingleOperandOps:
         # 15 is 0 to indicate a word instruction
         # 5-0 dst
 
+        self.sw.start("single_operand")
         if (instruction & 0o100000) == 0o100000:
             BW = 'B'
         else:
@@ -381,4 +383,5 @@ class SingleOperandOps:
             result = self.single_operand_instructions[opcode](source_value, BW)
             print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
             self.am.addressing_mode_set(BW, result, out_register, out_address)
+            self.sw.stop("single_operand")
         return run

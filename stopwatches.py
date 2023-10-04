@@ -7,7 +7,7 @@ class StopWatch():
     def __init__(self, instance_id):
         self.instance_id = instance_id
         self.count = 0
-        self.min = 100000000
+        self.min = 1000000000000
         self.max = -1 # "uninitialized"
         self.sum = 0
         self.mean = -1 # "uninitialized"
@@ -54,21 +54,21 @@ class StopWatch():
         """pretty-print instance_id"""
         pad = ""
         i = 0
-        while i < len(self.instance_id):
+        while i < 14-len(self.instance_id):
             pad = pad + " "
             i = i + 1
         reportmin = self.min
         if reportmin == sys.maxsize:
             reportmin = -1
 
-        format_min = '{:8.0f}'.format(reportmin)
-        format_mean = '{:8.0f}'.format(self.mean)
-        format_max = '{:8.0f}'.format(self.max)
-        format_sum = '{:8.0f}'.format(self.sum)
-        format_count = '{:8.0f}'.format(self.count)
+        format_min = '{:12.0f}'.format(reportmin/1000)
+        format_mean = '{:12.0f}'.format(self.mean/1000)
+        format_max = '{:12.0f}'.format(self.max/1000)
+        format_sum = '{:12.0f}'.format(self.sum/1000)
+        format_count = '{:12.0f}'.format(self.count)
 
-        return f'{self.instance_id}{pad}\t{format_min}\t{format_mean}' \
-               f'\t{format_max}\t{format_sum}\t{format_count}'
+        return f'{self.instance_id}{pad}{format_min}{format_mean}' \
+               f'{format_max}{format_sum}{format_count}'
 
 class StopWatches():
     """Manages a dictionary of StopWatch objects.
@@ -137,8 +137,8 @@ class StopWatches():
 
     def report(self):
         """Print text for every StopWatch in the dictionary"""
-        print("StopWatches Report")
-        print('id               min        mean         max         sum       count')
+        print("StopWatches Report (times in microseconds)")
+        print('id                     min        mean         max         sum       count')
         for instance_id in self.stop_watch_dict:
             this_stop_watch = self.stop_watch_dict[instance_id]
             print(this_stop_watch.to_string())

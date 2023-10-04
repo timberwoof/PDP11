@@ -40,17 +40,21 @@ class PDP11():
         print('pdp11CPU initializing')
         self.sw = sw()
 
+        # hardware
         self.reg = reg()
         self.ram = Ram(self.reg)
         self.psw = PSW(self.ram)
         self.stack = Stack(self.reg, self.ram, self.psw)
         self.am = am(self.reg, self.ram, self.psw)
 
-        self.br = br(self.reg, self.ram, self.psw)
-        self.nopr = nopr(self.reg, self.ram, self.psw, self.stack)
-        self.sopr = sopr(self.reg, self.ram, self.psw, self.am)
-        self.dopr = dopr(self.reg, self.ram, self.psw, self.am)
-        self.other = other(self.reg, self.ram, self.psw, self.am)
+        # operations
+        self.br = br(self.reg, self.ram, self.psw, self.sw)
+        self.nopr = nopr(self.reg, self.ram, self.psw, self.stack, self.sw)
+        self.sopr = sopr(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.dopr = dopr(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.other = other(self.reg, self.ram, self.psw, self.am, self.sw)
+
+        # i/o devices
         self.boot = boot(self.reg, self.ram)
         self.m9301 = M9301(self.reg, self.ram, self.boot)
         self.rk11 = RK11(self.ram)
@@ -59,7 +63,7 @@ class PDP11():
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
-        self.dl11 = DL11(self.ram, 0o177560)
+        self.dl11 = DL11(self.ram, 0o177560, self.sw)
         print('pdp11CPU initializing done')
 
     def dispatch_opcode(self, instruction):
@@ -88,10 +92,10 @@ class PDP11():
 
         return run
 
-    def instruction_cycle(self, sw):
+    def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
-        sw.start("cycle")
+        self.sw.start("cycle")
         pc = self.reg.get_pc() # get pc without incrementing
         instruction = self.ram.read_word_from_pc() # read at pc and increment pc
         print('----')
@@ -100,7 +104,7 @@ class PDP11():
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
         self.reg.log_registers()
-        sw.stop("cycle")
+        self.sw.stop("cycle")
         return run
 
 
@@ -108,7 +112,6 @@ class pdp11Run():
     """sets up and runs PDP11 emulator"""
     def __init__(self, pdp11):
         """instantiate the PDP11 CPU"""
-        self.sw = sw()
         self.pdp11 = pdp11
         self.running = False
 
@@ -145,12 +148,14 @@ class pdp11Run():
         window = self.pdp11.dl11.make_window()
         window_run = True # *** this is somehow broken. PyLint does not like this.
         cpu_run = False
+        self.pdp11.sw.start("run")
         while window_run:
             # run window bits
             if cpu_run:
-                cpu_run = self.pdp11.instruction_cycle(self.sw)
+                cpu_run = self.pdp11.instruction_cycle()
             window_run, cpu_run = self.pdp11.dl11.terminal_window_cycle(cpu_run, self.pdp11)
 
+        self.pdp11.sw.stop("run")
         print('run_in_terminal ends')
         self.pdp11.am.address_mode_report()
-        self.sw.report()
+        self.pdp11.sw.report()

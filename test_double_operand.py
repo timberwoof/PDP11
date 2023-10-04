@@ -5,6 +5,7 @@ from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
 from pdp11_double_operand_ops import DoubleOperandOps as dopr
+from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
@@ -18,7 +19,8 @@ class TestClass():
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
-    dopr = dopr(reg, ram, psw, am)
+    sw = sw()
+    dopr = dopr(reg, ram, psw, am, sw)
 
     def SS(self, mode, register):
         return (mode << 3 | register) << 6

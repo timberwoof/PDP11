@@ -8,12 +8,13 @@ MASK_HIGH_BYTE = 0o177400
 
 class DoubleOperandOps:
     """Implements PDP11 double-operand instructions"""
-    def __init__(self, reg, ram, psw, am):
+    def __init__(self, reg, ram, psw, am, sw):
         #print('initializing doubleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
         self.am = am
+        self.sw = sw
 
         self.double_operand_RSS_instructions = {}
         self.double_operand_RSS_instructions[0o070000] = self.MUL
@@ -334,6 +335,7 @@ class DoubleOperandOps:
         # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
+        self.sw.start("double operand")
         self.reg.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
             bw = 'B'
@@ -357,5 +359,6 @@ class DoubleOperandOps:
         print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
         #print(f'    addressing_mode_set')
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
+        self.sw.stop("double operand")
 
         return run

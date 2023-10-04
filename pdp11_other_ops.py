@@ -10,14 +10,14 @@ MASK_BYTE_MSB = 0o000200
 
 class OtherOps:
     """Implements the remainder of PDP11 instructions"""
-    def __init__(self, reg, ram, psw, am ):
+    def __init__(self, reg, ram, psw, am, sw):
         print('initializing otherOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
         self.am = am
         self.stack = Stack(reg, ram, psw)
-
+        self.sw = sw
 
     # ****************************************************
     # Other instructions
@@ -66,6 +66,7 @@ class OtherOps:
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
+        self.sw.start("other_opcode")
         print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
         if instruction & 0o177000 == 0o002000:
             self.RTS(instruction)
@@ -81,4 +82,5 @@ class OtherOps:
             print(f'{oct(instruction)} is an unknown instruction')
             self.reg.set_pc(0o0, "other_opcode")
             return False
+        self.sw.stop("other_opcode")
         return True

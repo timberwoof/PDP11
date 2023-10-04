@@ -15,11 +15,12 @@ MASK_BYTE_MSB = 0o000200
 
 class BranchOps:
     """Implements PDP11 branch operations"""
-    def __init__(self, reg, ram, psw):
+    def __init__(self, reg, ram, psw, sw):
         print('initializing branchOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
+        self.sw = sw
 
         self.branch_instructions = {}
         self.branch_instructions[0o000400] = self.BR
@@ -179,8 +180,10 @@ class BranchOps:
     def do_branch(self, instruction):
         """dispatch a branch opcode"""
         #parameter: opcode of form X 000 0XX X** *** ***
+        self.sw.start("branch")
         opcode = instruction & MASK_HIGH_BYTE
         offset = instruction & MASK_LOW_BYTE
         print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} offset:{oct(offset)}')
         result = self.branch_instructions[opcode](offset)
+        self.sw.stop("branch")
         return result

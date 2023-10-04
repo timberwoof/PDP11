@@ -2,12 +2,13 @@
 
 class NoOperandOps:
     """Implements PDP11 no-operand instructions"""
-    def __init__(self, reg, ram, psw, stack):
+    def __init__(self, reg, ram, psw, stack, sw):
         print('initializing NoOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
         self.stack = stack
+        self.sw = sw
 
         self.no_operand_instructions = {}
         self.no_operand_instructions[0o000000] = self.HALT
@@ -96,7 +97,9 @@ class NoOperandOps:
     def do_no_operand(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
+        self.sw.start("no operand")
         print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
         result = True
         result = self.no_operand_instructions[instruction]()
+        self.sw.stop("no operand")
         return result
