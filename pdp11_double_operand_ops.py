@@ -343,7 +343,12 @@ class DoubleOperandOps:
             bw = 'W'
         opcode = instruction & 0o070000
         name_opcode = instruction & 0o170000
-        print(f'    {self.double_operand_SSDD_instruction_names[name_opcode]} {oct(instruction)} double_operand_SSDD ')
+        try:
+            print(f'    {self.double_operand_SSDD_instruction_names[name_opcode]} {oct(instruction)} double_operand_SSDD ')
+        except KeyError:
+            print('Error: opcode not found')
+            self.sw.stop("double operand")
+            return False
 
         source = (instruction & 0o007700) >> 6
         dest = instruction & 0o000077
@@ -355,9 +360,14 @@ class DoubleOperandOps:
 
         run = True
         # print(f'    result = double_operand_SSDD_instructions')
-        result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
-        # print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
-        # print(f'    addressing_mode_set')
+        try:
+            result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
+            # print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
+            # print(f'    addressing_mode_set')
+        except KeyError:
+            print('Error: double operand opcode not found')
+            result = False
+
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
         self.sw.stop("double operand")
 

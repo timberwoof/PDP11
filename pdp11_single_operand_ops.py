@@ -369,20 +369,25 @@ class SingleOperandOps:
         opcode = instruction & 0o107700
         run = True
         if instruction & 0o177700 == 0o000100: # JMP R7
-            # special handling for JMP with R7
+            # special handling for JMP with R7.
             run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
-            # print(f'    {self.single_operand_instruction_names[opcode]} '
-            #      f'{self.single_operand_instruction_texts[opcode]} '
-            #      f'{oct(instruction)} {oct(source_value)} '
-            #      f'single-operand instruction register:{oct(out_register)}')
+            print(f'    {self.single_operand_instruction_names[opcode]} '
+                 f'{self.single_operand_instruction_texts[opcode]} '
+                 f'{oct(instruction)} {oct(source_value)} '
+                 f'single-operand instruction register:{oct(out_register)}')
         else:
             source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-            # print(f'    {self.single_operand_instruction_names[opcode]} '
-            #      f'{self.single_operand_instruction_texts[opcode]} '
-            #      f'{oct(instruction)} {oct(source_value)} '
-            #      f'single-operand instruction register:{oct(out_register)}')
-            result = self.single_operand_instructions[opcode](source_value, BW)
-            # print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
-            self.am.addressing_mode_set(BW, result, out_register, out_address)
-            self.sw.stop("single operand")
+            print(f'    {self.single_operand_instruction_names[opcode]} '
+                 f'{self.single_operand_instruction_texts[opcode]} '
+                 f'{oct(instruction)} {oct(source_value)} '
+                 f'single-operand instruction register:{oct(out_register)}')
+            try:
+                result = self.single_operand_instructions[opcode](source_value, BW)
+                print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
+                self.am.addressing_mode_set(BW, result, out_register, out_address)
+            except KeyError:
+                print('Error: single-operand opcode not found')
+                result = False
+
+        self.sw.stop("single operand")
         return run

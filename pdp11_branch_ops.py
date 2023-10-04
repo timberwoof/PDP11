@@ -183,7 +183,12 @@ class BranchOps:
         self.sw.start("branch")
         opcode = instruction & MASK_HIGH_BYTE
         offset = instruction & MASK_LOW_BYTE
-        print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} offset:{oct(offset)}')
-        result = self.branch_instructions[opcode](offset)
+        try:
+            print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} offset:{oct(offset)}')
+            result = self.branch_instructions[opcode](offset)
+        except KeyError:
+            print('Error: branch opcode not found')
+            result = False
+
         self.sw.stop("branch")
         return result

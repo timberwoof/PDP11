@@ -72,13 +72,19 @@ class OtherOps:
 
     def is_other_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-        return instruction in self.other_instructions
+        return instruction & 0o777700 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600]
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
         self.sw.start("other_opcode")
-        print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
-        self.other_instructions(instruction)
+        result = False
+        try:
+            print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
+            self.other_instructions[instruction]
+            result = True
+        except KeyError:
+            print('Error: other opcode not found')
+            result =  False
         self.sw.stop("other_opcode")
-        return True
+        return result

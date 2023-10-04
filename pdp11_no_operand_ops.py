@@ -98,7 +98,11 @@ class NoOperandOps:
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
         self.sw.start("no operand")
-        print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
-        result = self.no_operand_instructions[instruction]()
+        try:
+            print(f'    {self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction')
+            result = self.no_operand_instructions[instruction]()
+        except KeyError:
+            print('Error: no-operand opcode not found')
+            result = False
         self.sw.stop("no operand")
         return result
