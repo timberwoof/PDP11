@@ -221,7 +221,7 @@ class DL11:
             if kbd != '':
                 self.window['keyboard'].Update('')
                 if self.RCSR & self.RCSR_RCVR_DONE == 0:
-                    self.write_RBUF(ord(kbd[0:]))
+                    self.write_RBUF(ord(kbd[0:1]))
 
         self.sw.stop('DL11 cycle')
         return window_run, cpu_run
