@@ -11,7 +11,9 @@ from pdp11_single_operand_ops import SingleOperandOps as sopr
 from pdp11_double_operand_ops import DoubleOperandOps as dopr
 from pdp11_branch_ops import BranchOps as br
 from pdp11_other_ops import OtherOps as other
+from pdp11_console import Console
 from pdp11_dl11 import DL11
+from pdp11_vt52 import VT52
 from pdp11_boot import pdp11Boot as boot
 from pdp11_m9301 import M9301
 from pdp11_rk11 import RK11
@@ -55,6 +57,7 @@ class PDP11():
         self.other = other(self.reg, self.ram, self.psw, self.am, self.sw)
 
         # i/o devices
+        self.console = Console(self)
         self.boot = boot(self.reg, self.ram)
         self.m9301 = M9301(self.reg, self.ram, self.boot)
         self.rk11 = RK11(self.ram)
@@ -63,7 +66,8 @@ class PDP11():
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
-        self.dl11 = DL11(self.ram, 0o177560, self.sw)
+        self.dl11 = DL11(self.ram, 0o177560)
+        self.vt52 = VT52(self.dl11)
         print('pdp11CPU initializing done')
 
     def dispatch_opcode(self, instruction):
@@ -144,17 +148,19 @@ class pdp11Run():
         self.pdp11.reg.log_registers()
 
         # Create and run the terminal window in PySimpleGUI
-        print('run_in_terminal dl11.make_window')
-        window = self.pdp11.dl11.make_window()
-        window_run = True  # *** this is somehow broken. PyLint does not like this.
+        print('run_in_terminal make windows')
+        console_window = self.pdp11.console.make_window()
+        vt52_window = self.pdp11.vt52.make_window()
         cpu_run = False
+        console_run = True
 
         self.pdp11.sw.start("run")
-        while window_run:
+        while console_run:
             # run window bits
             if cpu_run:
                 cpu_run = self.pdp11.instruction_cycle()
-            window_run, cpu_run = self.pdp11.dl11.terminal_window_cycle(cpu_run, self.pdp11)
+            console_run, cpu_run = self.pdp11.console.cycle(cpu_run)
+            self.pdp11.vt52.cycle()
         self.pdp11.sw.stop("run")
 
         print('run_in_terminal ends')
