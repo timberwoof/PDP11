@@ -121,7 +121,7 @@ class pdp11Run():
 
     def run(self):
         """Run PDP11 emulator without terminal process"""
-        print('begin PDP11 emulator')
+        print('run: begin PDP11 emulator')
         self.pdp11.reg.log_registers()
 
         # start the processor loop
@@ -143,7 +143,7 @@ class pdp11Run():
 
     def run_in_terminal(self):
         """run PDP11 with a PySimpleGUI terminal window."""
-        print('run_in_terminal begin')
+        print('run_in_terminal: begin PDP11 emulator')
 
         self.pdp11.reg.log_registers()
 

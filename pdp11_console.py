@@ -32,10 +32,10 @@ class Console:
     def make_window(self):
         """create the DL11 console using PySimpleGUI"""
         print('console make_window begins')
-        pc_display = self.pc_to_blinky_lights()
-        layout = [[sg.Text(pc_display, key='pc')],
-                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'),
-                   sg.Button('Halt'), sg.Button('Exit')]
+        pc_display = oct(self.pdp11.reg.get_pc())
+        pc_lights = self.pc_to_blinky_lights()
+        layout = [[sg.Text(pc_display, key='pc_display'), sg.Text(pc_lights, key='pc_lights')],
+                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]
                   ]
         self.window = sg.Window('PDP-11 Console', layout, location=(50,50),
                                 font=('Arial', 18), finalize=True)
@@ -43,8 +43,10 @@ class Console:
 
     def cycle(self, cpu_run):
         window_run = True
-        pc = self.window['pc']
-        pc.update(self.pc_to_blinky_lights())
+        pc_display = self.window['pc_display']
+        pc_display.update(oct(self.pdp11.reg.get_pc()))
+        pc_lights = self.window['pc_lights']
+        pc_lights.update(self.pc_to_blinky_lights())
         event, values = self.window.read(timeout=0)
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel

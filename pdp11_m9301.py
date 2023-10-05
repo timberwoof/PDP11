@@ -17,14 +17,21 @@ class M9301:
         # 7.3 Micrositch Settings. See p. 7-2 of
         # PDP11 M9301 bootstrap/terminator module maintenance and operator's manual
         m9301_start_ddress = ram.top_of_memory - 0o4777  # *** Only supports 16-bit address for now.
-        # switch81_1 = True  # low rom enable ON = True.
-        # "False" is not implemented. This calss behaves as though this is ON.
+
+        switch81_1 = True  # low rom enable ON = True.
+        # ON: get PC and PSW from 0o173024 and 0o173026
+        # OFF: get PC and PSW from 0o024 and 0o026,
+        # Do not respond to address requests between 0o765000 and 0o765777
+
+
         switch81_2 = True  # power up reboot enable ON = True
+        # The boot switch is on the console
         # If this is on (True) then processor will trap to a selectable address.
         # Switches 3-10 set the address.
         # If this is off (False) then  processor will trap to location 24 on startup.
 
         # Address switches. Configure this by setting the on/off variable to on or off.
+        # These switches are at 0o173024
         on = 0o000377
         off = 0o000000
         switch81_3 = 0o0400 & on    # bus address bit 8
