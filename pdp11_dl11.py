@@ -1,19 +1,10 @@
 """PDP11 DL11 communications console"""
-import PySimpleGUI as sg
-
-# https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
-CIRCLE = '⚫'
-CIRCLE_OUTLINE = '⚪'
-PC_DISPLAY = ''
-
 class DL11:
-    """DEC DL11 serial interface and terminal emulator"""
-    def __init__(self, ram, base_address, sw):
-        """dlss(ram object, base address for this device)
-        """
+    """DEC DL11 serial interface"""
+    def __init__(self, ram, base_address):
+        """dl11(ram object, base address for this device)"""
         print(f'initializing dl11({oct(base_address)})   {oct(ord("$"))}')
         self.ram = ram
-        self.sw = sw
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2
         self.XCSR_address = base_address + 4
@@ -52,8 +43,6 @@ class DL11:
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
 
-        # throttle window updates because they are very slow
-        self.cycles_since_window = 0
         print('initializing dl11 done')
 
     # DL11 Internal Interface to PDP-11 Emulator
@@ -141,91 +130,3 @@ class DL11:
             result = ""
         return result
 
-    # *********************
-    # PySimpleGUI Interface
-    # *** This should be a different class from teh DL11.
-    # *** It ought to be possible to run the emulator as a command-line program.
-    # *** In that case, the DL11 would just talk to the command line's emulator.
-    # *** That means the PySimpleGUI and Terminal ways should be different classes that talk to dl11.
-    def make_window(self):
-        """create the DL11 emulated terminal using PySimpleGUI"""
-        print('dl11 make_window begins')
-        layout = [[sg.Text(PC_DISPLAY, key='pc')],
-                  [sg.Multiline(size=(80, 24), key='crt', write_only=True, reroute_cprint=True, font=('Courier', 18), text_color='green yellow', background_color='black')],
-                  [sg.InputText('', size=(80, 1), focus=True, key='keyboard')],
-                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]                  ]
-        self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
-        self.window['keyboard'].bind("<Return>", "_Enter")
-        print('dl11 make_window done')
-
-        # autoscroll=True,
-
-    def get_pc_text(self, pdp11):
-        """create a display of the program counter"""
-        pc_text = ''
-        pc = pdp11.reg.get_pc()
-        mask = 1
-        bits = self.ram.top_of_memory
-        while bits > 0:
-            if pc & mask == mask:
-                pc_text = CIRCLE_OUTLINE + pc_text
-            else:
-                pc_text = CIRCLE + pc_text
-            bits = bits >> 1
-            mask = mask << 1
-        return pc_text
-
-    def terminal_window_cycle(self, cpu_run, pdp11):
-        """Run one iteration of the PySimpleGUI terminal window loop"""
-        self.sw.start('DL11 cycle')
-        self.cycles_since_window = self.cycles_since_window + 1
-        window_run = True
-
-        pc = self.window['pc']
-        pc.update(self.get_pc_text(pdp11))
-
-        # maybe get character from dl11 transmit buffer
-        if self.XCSR & self.XCSR_XMIT_RDY == 0 and self.XBUF != 0:
-            newchar = self.read_XBUF()
-            sg.cprint(chr(newchar), end='')
-
-        # Maybe read the window
-        if self.cycles_since_window > 100:
-            self.cycles_since_window = 0
-
-            # We should only do this when there's a keyboard event
-            # This takes on average 13 milliseocnds
-            self.sw.start('DL11 window read')
-            event, values = self.window.read(timeout=0)
-            self.sw.stop('DL11 window read')
-
-            # handle the window events
-            if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
-                window_run = False
-            elif event == "Run":
-                cpu_run = True
-                text = self.window['runLED']
-                text.update(CIRCLE_OUTLINE)
-            elif event == "Halt":
-                cpu_run = False
-                text = self.window['runLED']
-                text.update(CIRCLE)
-            elif event == "Exit":
-                cpu_run = False
-                window_run = False
-            elif event == 'keyboard_Enter':
-                self.window['keyboard'].Update('')
-                if self.RCSR & self.RCSR_RCVR_DONE == 0:
-                    self.write_RBUF(ord('\n'))
-            kbd = values['keyboard']
-            if kbd != '':
-                self.window['keyboard'].Update('')
-                if self.RCSR & self.RCSR_RCVR_DONE == 0:
-                    self.write_RBUF(ord(kbd[0:1]))
-
-        self.sw.stop('DL11 cycle')
-        return window_run, cpu_run
-
-    def close_terminal_window(self):
-        """close the terminal window"""
-        self.window.close()
