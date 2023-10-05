@@ -4,7 +4,6 @@ import PySimpleGUI as sg
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
 CIRCLE = '⚫'
 CIRCLE_OUTLINE = '⚪'
-PC_DISPLAY = ''
 
 class Console:
     """PDP11 Console"""
@@ -13,12 +12,12 @@ class Console:
         print(f'initializing console')
         self.pdp11 = pdp11
 
-    def get_pc_text(self):
-        """create a display of the program counter"""
+    def pc_to_blinky_lights(self):
+        """create a display of the pdp11's program counter"""
         pc_text = ''
         pc = self.pdp11.reg.get_pc()
         mask = 1
-        bits = self.ram.top_of_memory
+        bits = self.pdp11.ram.top_of_memory
         while bits > 0:
             if pc & mask == mask:
                 pc_text = CIRCLE_OUTLINE + pc_text
@@ -33,14 +32,19 @@ class Console:
     def make_window(self):
         """create the DL11 console using PySimpleGUI"""
         print('console make_window begins')
-        layout = [[sg.Text(PC_DISPLAY, key='pc')],
-                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]
+        pc_display = self.pc_to_blinky_lights()
+        layout = [[sg.Text(pc_display, key='pc')],
+                  [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'),
+                   sg.Button('Halt'), sg.Button('Exit')]
                   ]
-        self.window = sg.Window('PDP-11 Console', layout, font=('Arial', 18), finalize=True)
+        self.window = sg.Window('PDP-11 Console', layout, location=(50,50),
+                                font=('Arial', 18), finalize=True)
         print('console make_window done')
 
     def cycle(self, cpu_run):
         window_run = True
+        pc = self.window['pc']
+        pc.update(self.pc_to_blinky_lights())
         event, values = self.window.read(timeout=0)
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel

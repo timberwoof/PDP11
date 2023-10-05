@@ -27,32 +27,31 @@ class VT52:
         # autoscroll=True,
 
     def cycle(self):
-        """Run one iteration of the PySimpleGUI terminal window loop"""
-        self.cycles_since_window = self.cycles_since_window + 1
-
-        # maybe get character from dl11 transmit buffer
+        # if there's a  character in the dl11 transmit buffer,
+        # then send it to the display
         if self.dl11.XCSR & self.dl11.XCSR_XMIT_RDY == 0 and self.dl11.XBUF != 0:
             newchar = self.dl11.read_XBUF()
             sg.cprint(chr(newchar), end='')
 
-        # Maybe read the window.
-        # Do this only every 100 cpu cycles.
-        # *** maybe do this in PDP11
-        if self.cycles_since_window > 100:
-            self.cycles_since_window = 0
+        # read the window
+        event, values = self.window.read(timeout=0)
 
-            event, values = self.window.read(timeout=0)
+        # IF the Enter key was hit
+        # then send a CR to the serial interface.
+        # Shoudl this be CRLF?
+        if event == 'keyboard_Enter':
+            self.window['keyboard'].Update('')
+            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
+                self.dl11.write_RBUF(ord('\n'))
 
-            # handle the window events
-            if event == 'keyboard_Enter':
-                self.window['keyboard'].Update('')
-                if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                    self.dl11.write_RBUF(ord('\n'))
-            kbd = values['keyboard']
-            if kbd != '':
-                self.window['keyboard'].Update('')
-                if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                    self.dl11.write_RBUF(ord(kbd[0:1]))
+        # If there's a keyboard event,
+        # then read it and send character to dl11
+        kbd = values['keyboard']
+        if kbd != '':
+            self.window['keyboard'].Update('')
+            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
+                self.dl11.write_RBUF(ord(kbd[0:1]))
+
         return
 
     def close_window(self):
