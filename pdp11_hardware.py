@@ -396,6 +396,12 @@ class PSW:
         self.set_psw(n=n)
         return n
 
+    def set_cvzn(self, value):
+        """set condition codes (last four bits of psw)"""
+        non_psw_bits = 0o177760
+        psw_bits = 0o000017
+        self.psw = self.psw & non_psw_bits | value & psw_bits
+
     def set_z(self, b, value):
         """set condition code get_z based on the value
 
@@ -709,9 +715,6 @@ class AddressModes:
             # yield the effective jump address.
             x = self.ram.read_word_from_pc()
             address = self.reg.get(register)
-            # if it's R7 then that is old
-            if register == 7:
-                address = address - 0o4
             jump_address = address_offset(address, x)
             print(f'    mode j6: JMP relative. Immediate value {oct(x)} plus value in register {oct(address)} gets jump_address {oct(jump_address)}.')
         elif addressmode == 7:

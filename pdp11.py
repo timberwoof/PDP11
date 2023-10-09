@@ -10,6 +10,7 @@ from pdp11_no_operand_ops import NoOperandOps as nopr
 from pdp11_single_operand_ops import SingleOperandOps as sopr
 from pdp11_double_operand_ops import DoubleOperandOps as dopr
 from pdp11_branch_ops import BranchOps as br
+from pdp11_condition_code_ops import ConditionCodeOps as ccops
 from pdp11_other_ops import OtherOps as other
 from pdp11_console import Console
 from pdp11_dl11 import DL11
@@ -55,6 +56,7 @@ class PDP11():
         self.sopr = sopr(self.reg, self.ram, self.psw, self.am, self.sw)
         self.dopr = dopr(self.reg, self.ram, self.psw, self.am, self.sw)
         self.other = other(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.ccops = ccops(self.psw, self.sw)
 
         # i/o devices
         self.console = Console(self)
@@ -76,7 +78,10 @@ class PDP11():
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
-        if self.br.is_branch(instruction):
+        if self.ccops.is_condition_code_operation(instruction):
+            self.ccops.do_condition_code_operation(instruction)
+
+        elif self.br.is_branch(instruction):
             self.br.do_branch(instruction)
 
         elif self.nopr.is_no_operand(instruction):

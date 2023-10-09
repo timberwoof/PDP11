@@ -38,7 +38,6 @@ class TestClass():
     dopr = dopr(reg, ram, psw, am, sw)
     sopr = sopr(reg, ram, psw, am, sw)
 
-
     R0 = 0
     R1 = 1
     R2 = 2
@@ -182,7 +181,7 @@ class TestClass():
         # adding a 16 bit word to the register specified - JMP 20(PC)
         pc = 0o001000
         target = 0o001200
-        relative_address = target - pc # distance between instruction and the target
+        relative_address = target - pc -4 # distance between instruction and the target, less instruciton and data
         instruction = self.JMP(self.mode6, self.R7)
 
         self.ram.write_word(pc, instruction)

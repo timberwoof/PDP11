@@ -18,7 +18,6 @@ class NoOperandOps:
         self.no_operand_instructions[0o000004] = self.IOT
         self.no_operand_instructions[0o000005] = self.RESET
         self.no_operand_instructions[0o000006] = self.RTT
-        self.no_operand_instructions[0o000240] = self.NOP
 
         self.no_operand_instruction_namess = {}
         self.no_operand_instruction_namess[0o000000]= "HALT"
@@ -28,7 +27,6 @@ class NoOperandOps:
         self.no_operand_instruction_namess[0o000004]= "IOT"
         self.no_operand_instruction_namess[0o000005]= "RESET"
         self.no_operand_instruction_namess[0o000006]= "RTT"
-        self.no_operand_instruction_namess[0o000240]= "NOP"
 
     def HALT(self):
         """00 00 00 Halt"""
@@ -84,10 +82,6 @@ class NoOperandOps:
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop(), "RTT")
         self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
-        return True
-
-    def NOP(self):
-        """00 02 40 NOP no operation"""
         return True
 
     def is_no_operand(self, instruction):
