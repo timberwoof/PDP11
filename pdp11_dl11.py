@@ -117,16 +117,20 @@ class DL11:
     def read_XBUF(self):
         """DL11 calls this to read from transmitter buffer register."""
         result = self.XBUF
-        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
+        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         return result
 
     def safe_character(self, byte):
         """return character if it is printable"""
-        if byte > 32:
+        if byte > 31:
             result = chr(byte)
         else:
-            result = ""
+            low_ascii = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+                         'BS', 'HT', 'LF', 'VF', 'FF', 'CR', 'SO', 'SI',
+                         'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+                         'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
+            result = low_ascii[byte]
         return result
 

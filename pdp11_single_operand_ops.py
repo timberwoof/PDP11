@@ -103,7 +103,7 @@ class SingleOperandOps:
         self.single_operand_instruction_texts[0o006000] = "rotate right"
         self.single_operand_instruction_texts[0o006100] = "rotate left"
         self.single_operand_instruction_texts[0o006200] = "arithmetic shift right"
-        self.single_operand_instruction_texts[0o006300] = "srithmetic shift left"
+        self.single_operand_instruction_texts[0o006300] = "arithmetic shift left"
         # self.single_operand_instruction_texts[0o006400] = "subroutine cleanup"
         # self.single_operand_instruction_texts[0o006500] = "move from previous instruction space"
         # self.single_operand_instruction_texts[0o006600] = "move to previous instruction space"

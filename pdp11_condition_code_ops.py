@@ -14,7 +14,7 @@ class ConditionCodeOps:
         self.psw_bits = 0o000017
 
     def is_condition_code_operation(self, instruction):
-        return instruction & self.clear_opcode == self.clear_opcode
+        return (0o0000240 <= instruction & instruction <= 0o0000277)
 
     def do_condition_code_operation(self, instruction):
         """dispatch a condition code instruction"""
