@@ -102,12 +102,12 @@ class PDP11():
         self.sw.start("instruction cycle")
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
-        # print('----')
+        print('----')
         print(f'pc:{oct(pc)} opcode:{oct(instruction)}')
         # print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
-        #self.reg.log_registers()
+        self.reg.log_registers()
         self.sw.stop("instruction cycle")
         return run
 
@@ -127,19 +127,21 @@ class pdp11Run():
         # start the processor loop
         instructions_executed = 0
         time_start = time.time()
-        while True:
-            self.pdp11.instruction_cycle(self.sw)
+        running = True
+        while running:
+            running = self.pdp11.instruction_cycle()
             instructions_executed = instructions_executed + 1
 
         print(f'run instructions_executed: {instructions_executed}')
         time_end = time.time()
         time_elapsed = time_end - time_start
-        print(f'time_elapsed: {time_elapsed}:.2f seconds')
+        print(f'time_elapsed: {time_elapsed} seconds')
         ops_per_sec = instructions_executed / time_elapsed
         print(f'executed {ops_per_sec:.2f} instructions per second')
         if self.pdp11.reg.get_pc() > 0o200:
-            self.pdp11.Ram.dump(self.pdp11.reg.get_pc() - 0o20, self.pdp11.reg.get_pc() + 0o20)
+            self.pdp11.ram.dump(self.pdp11.reg.get_pc() - 0o20, self.pdp11.reg.get_pc() + 0o20)
         self.pdp11.am.address_mode_report()
+        self.pdp11.sw.report()
 
     def run_in_terminal(self):
         """run PDP11 with a PySimpleGUI terminal window."""

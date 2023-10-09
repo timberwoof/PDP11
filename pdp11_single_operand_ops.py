@@ -368,13 +368,14 @@ class SingleOperandOps:
         source = instruction & 0o000077
         opcode = instruction & 0o107700
         run = True
-        if instruction & 0o177700 == 0o000100: # JMP R7
+        if opcode == 0o000100:
             # special handling for JMP with R7.
-            run, source_value, out_register, out_address = self.am.addressing_mode_jmp(source)
+            run, source_value = self.am.addressing_mode_jmp(source)
             print(f'    {self.single_operand_instruction_names[opcode]} '
                  f'{self.single_operand_instruction_texts[opcode]} '
-                 f'{oct(instruction)} {oct(source_value)} '
-                 f'single-operand instruction register:{oct(out_register)}')
+                 f'{oct(instruction)} {oct(source_value)}'
+                 f'single-operand instruction')
+            result = self.single_operand_instructions[opcode](source_value, BW)
         else:
             source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
             print(f'    {self.single_operand_instruction_names[opcode]} '
