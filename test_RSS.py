@@ -18,6 +18,7 @@ class TestClass():
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
+    sw = sw()
     dopr = dopr(reg, ram, psw, am, sw)
 
     def test_MUL(self):
