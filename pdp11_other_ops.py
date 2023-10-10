@@ -29,6 +29,18 @@ class OtherOps:
     # ****************************************************
     # Other instructions
     # ****************************************************
+    def RTS(self, instruction):
+        """00 20 0R: RTS return from subroutine 4-60
+
+        | PC <- reg
+        | reg <- (SP)^
+        """
+        print('RTS')
+        R = instruction & 0o000007
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
+        self.reg.set_pc(self.reg.get(R), "RTS")
+        self.reg.set(R, self.stack.pop())
+
     def JSR(self, instruction):
         """00 4R DD: JSR jump to subroutine 4-58
 
@@ -36,24 +48,14 @@ class OtherOps:
         |  reg <- PC+2
         |  PC <- (dst)
         """
+        print('JSR')
         R = instruction & 0o000700 >> 6
         DD = instruction & 0o000077
         print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
-        tmp = DD
+        run, source_value = self.am.addressing_mode_jmp(DD)
         self.stack.push(self.reg.get(R))
-        self.reg.set(self.reg.get_pc())
-        self.reg.set_pc(tmp, "JSR")
-
-    def RTS(self, instruction):
-        """00 20 0R: RTS return from subroutine 4-60
-        
-        | PC <- reg
-        | reg <- (SP)^
-        """
-        R = instruction & 0o000007
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
-        self.reg.set_pc(self.reg.get(R), "RTS")
-        self.reg.set(R, self.stack.pop())
+        self.reg.set(R, self.reg.get_pc())
+        self.reg.set_pc(source_value, "JSR")
 
     def MARK(self, instruction):
         """00 64 NN mark 46-1"""
@@ -72,7 +74,10 @@ class OtherOps:
 
     def is_other_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-        return instruction & 0o777700 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600]
+        masked1 = instruction & 0o777700
+        masked2 = instruction & 0o777000
+        print (f'is_other_op {oct(instruction)}  masked1:{oct(masked1)} masked2:{oct(masked2)}')
+        return masked1 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
@@ -81,7 +86,11 @@ class OtherOps:
         result = False
         try:
             print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
-            self.other_instructions[instruction]
+            masked2 = instruction & 0o777000
+            if masked2 in [0o004000]:
+                instruction = masked2
+            print(f'instruction:{oct(instruction)}')
+            self.other_instructions[instruction](instruction)
             result = True
         except KeyError:
             print('Error: other opcode not found')
