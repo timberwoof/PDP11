@@ -218,6 +218,7 @@ class DoubleOperandOps:
         # 15-9 opcode
         # 8-6 reg
         # 5-0 src or dst
+        self.sw.start("double operand rss")
         opcode = instruction & 0o077000
         register = (instruction & 0o000700) >> 6
         source = instruction & 0o000077
@@ -228,6 +229,7 @@ class DoubleOperandOps:
         result = self.double_operand_RSS_instructions[opcode](register, source)
         # print(f'    result:{oct(result)}')
         self.reg.registers[register] = result
+        self.sw.stop("double operand rss")
         return run
 
     # ****************************************************
@@ -352,7 +354,7 @@ class DoubleOperandOps:
         # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
-        self.sw.start("double operand")
+        self.sw.start("double operand ssdd")
         self.reg.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
             bw = 'B'
@@ -386,6 +388,6 @@ class DoubleOperandOps:
             result = False
 
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
-        self.sw.stop("double operand")
+        self.sw.stop("double operand ssdd")
 
         return run

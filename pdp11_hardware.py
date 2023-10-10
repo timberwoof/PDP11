@@ -1,4 +1,4 @@
-"""PDP11 Registers, RAM, PSW"""
+"""PDP11 Registers, RAM, PSW, Stack"""
 
 import sys
 

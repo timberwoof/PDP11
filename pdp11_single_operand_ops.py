@@ -24,6 +24,7 @@ class SingleOperandOps:
         self.single_operand_instructions = {}
         self.single_operand_instructions[0o000100] = self.JMP
         self.single_operand_instructions[0o000300] = self.SWAB
+
         self.single_operand_instructions[0o005000] = self.CLR
         self.single_operand_instructions[0o005100] = self.COM
         self.single_operand_instructions[0o005200] = self.INC
@@ -36,10 +37,11 @@ class SingleOperandOps:
         self.single_operand_instructions[0o006100] = self.ROL
         self.single_operand_instructions[0o006200] = self.ASR
         self.single_operand_instructions[0o006300] = self.ASL
-        #self.single_operand_instructions[0o006400] = self.MARK
-        #self.single_operand_instructions[0o006500] = self.MFPI
-        #self.single_operand_instructions[0o006600] = self.MTPI
+        self.single_operand_instructions[0o006400] = self.MARK
+        self.single_operand_instructions[0o006500] = self.MFPI
+        self.single_operand_instructions[0o006600] = self.MTPI
         self.single_operand_instructions[0o006700] = self.SXT
+
         self.single_operand_instructions[0o105000] = self.CLR  # CLRB
         self.single_operand_instructions[0o105100] = self.COM  # COMB
         self.single_operand_instructions[0o105200] = self.INC  # INCB
@@ -52,12 +54,15 @@ class SingleOperandOps:
         self.single_operand_instructions[0o106100] = self.ROL  # ROLB
         self.single_operand_instructions[0o106200] = self.ASR  # ASRB
         self.single_operand_instructions[0o106300] = self.ASL  # ASLB
+        self.single_operand_instructions[0o106400] = self.MTPS
         self.single_operand_instructions[0o106500] = self.MFPD
         self.single_operand_instructions[0o106600] = self.MTPD
+        self.single_operand_instructions[0o106700] = self.MFPS
 
         self.single_operand_instruction_names = {}
         self.single_operand_instruction_names[0o000100] = "JMP"
         self.single_operand_instruction_names[0o000300] = "SWAB"
+
         self.single_operand_instruction_names[0o005000] = "CLR"
         self.single_operand_instruction_names[0o005100] = "COM"
         self.single_operand_instruction_names[0o005200] = "INC"
@@ -70,10 +75,11 @@ class SingleOperandOps:
         self.single_operand_instruction_names[0o006100] = "ROL"
         self.single_operand_instruction_names[0o006200] = "ASR"
         self.single_operand_instruction_names[0o006300] = "ASL"
-        # self.single_operand_instruction_names[0o006400] = "MARK"
-        # self.single_operand_instruction_names[0o006500] = "MFPI"
-        # self.single_operand_instruction_names[0o006600] = "MTPI"
+        self.single_operand_instruction_names[0o006400] = "MARK"
+        self.single_operand_instruction_names[0o006500] = "MFPI"
+        self.single_operand_instruction_names[0o006600] = "MTPI"
         self.single_operand_instruction_names[0o006700] = "SXT"
+
         self.single_operand_instruction_names[0o105000] = "CLRB"
         self.single_operand_instruction_names[0o105100] = "COMB"
         self.single_operand_instruction_names[0o105200] = "INCB"
@@ -86,12 +92,15 @@ class SingleOperandOps:
         self.single_operand_instruction_names[0o106100] = "ROLB"
         self.single_operand_instruction_names[0o106200] = "ASRB"
         self.single_operand_instruction_names[0o106300] = "ASLB"
+        self.single_operand_instruction_names[0o106400] = "MTPS"
         self.single_operand_instruction_names[0o106500] = "MFPD"
         self.single_operand_instruction_names[0o106600] = "MTPD"
+        self.single_operand_instruction_names[0o106700] = "MFPS"
 
         self.single_operand_instruction_texts = {}
         self.single_operand_instruction_texts[0o000100] = "jump"
         self.single_operand_instruction_texts[0o000300] = "swap bytes"
+
         self.single_operand_instruction_texts[0o005000] = "clear destination"
         self.single_operand_instruction_texts[0o005100] = "complement"
         self.single_operand_instruction_texts[0o005200] = "increment"
@@ -104,10 +113,11 @@ class SingleOperandOps:
         self.single_operand_instruction_texts[0o006100] = "rotate left"
         self.single_operand_instruction_texts[0o006200] = "arithmetic shift right"
         self.single_operand_instruction_texts[0o006300] = "arithmetic shift left"
-        # self.single_operand_instruction_texts[0o006400] = "subroutine cleanup"
-        # self.single_operand_instruction_texts[0o006500] = "move from previous instruction space"
-        # self.single_operand_instruction_texts[0o006600] = "move to previous instruction space"
+        self.single_operand_instruction_texts[0o006400] = "subroutine cleanup"
+        self.single_operand_instruction_texts[0o006500] = "move from previous instruction space"
+        self.single_operand_instruction_texts[0o006600] = "move to previous instruction space"
         self.single_operand_instruction_texts[0o006700] = "sign extend"
+
         self.single_operand_instruction_texts[0o105000] = "clear destination byte"
         self.single_operand_instruction_texts[0o105100] = "complement byte"
         self.single_operand_instruction_texts[0o105200] = "increment byte"
@@ -120,8 +130,10 @@ class SingleOperandOps:
         self.single_operand_instruction_texts[0o106100] = "rotate left byte"
         self.single_operand_instruction_texts[0o106200] = "arithmetic shift right byte"
         self.single_operand_instruction_texts[0o106300] = "arithmetic shift left byte"
+        self.single_operand_instruction_texts[0o106400] = "move to PSW"
         self.single_operand_instruction_texts[0o106500] = "move from previous data space"
         self.single_operand_instruction_texts[0o106600] = "move to previous data space"
+        self.single_operand_instruction_texts[0o106700] = "move from psw"
 
     def mask(self, value, B):
         """Apply the correct byte or word mask to the value"""
@@ -317,15 +329,45 @@ class SingleOperandOps:
         self.psw.set_psw(z=Z)
         return result
 
+    def MARK (self, operand, B):
+        # standard PDP11 subroutine return
+        # stack operation LSI11-03
+        print('MARK **** not implemented')
+        return operand
+
+    def MTPS (self, operand, B):
+        # move byte to PSW
+        # stack operation LSI11-03
+        print('MTPS **** not implemented')
+        return operand
+
+    def MFPI (self, operand, B):
+        # Move from Previous Instruction Space
+        # MMU instruction not in LSI11-03
+        print('MFPI NOT IMPLEMENTED')
+        return operand
+
+    def MTPI (self, operand, B):
+        # move to previous instruction space
+        # MMU instruction not in LSI11-03
+        print('MTPI NOT IMPLEMENTED')
+        return operand
+
+    def MFPS (self, operand, B):
+        # Not PDP11-40
+        # MMU instruction not in LSI11-03
+        print('MFPS NOT IMPLEMENTED')
+        return operand
+
     def MFPD(self, operand, B):
         """10 65 SS Move from previous data space"""
-        # *** unimplemented
+        # MMU instruction not in LSI11-03
         print('MFPD NOT IMPLEMENTED')
         return operand
 
     def MTPD(self, operand, B):
         """10 66 SS Move to previous data space"""
-        # *** unimplemented
+        # MMU instruction not in LSI11-03
         print('MTPD NOT IMPLEMENTED')
         return operand
 
