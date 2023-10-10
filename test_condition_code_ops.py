@@ -6,8 +6,6 @@ from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import AddressModes as am
-from pdp11 import PDP11
-from pdp11 import pdp11Run
 from pdp11_condition_code_ops import ConditionCodeOps as ccops
 from stopwatches import StopWatches as sw
 
