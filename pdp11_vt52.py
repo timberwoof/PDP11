@@ -43,7 +43,7 @@ class VT52:
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                self.dl11.write_RBUF(ord('\n'))
+                self.dl11.write_RBUF(0o15) # CR, not \n which is LF
 
         # If there's a keyboard event
         # then send the character to the serial interface

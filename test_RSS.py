@@ -37,7 +37,7 @@ class TestClass():
         print(f'product:{product}')
         assert product == a * b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_DIV(self):
@@ -66,6 +66,6 @@ class TestClass():
         assert quotient == a // b
         assert remainder == a % b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 

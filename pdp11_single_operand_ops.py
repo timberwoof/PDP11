@@ -384,7 +384,7 @@ class SingleOperandOps:
                  f'single-operand instruction register:{oct(out_register)}')
             try:
                 result = self.single_operand_instructions[opcode](source_value, BW)
-                print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
+                #print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
                 self.am.addressing_mode_set(BW, result, out_register, out_address)
             except KeyError:
                 print('Error: single-operand opcode not found')

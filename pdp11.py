@@ -112,7 +112,7 @@ class PDP11():
         # print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
         run = self.dispatch_opcode(instruction)
-        self.reg.log_registers()
+        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         self.sw.stop("instruction cycle")
         return run
 
@@ -127,7 +127,7 @@ class pdp11Run():
     def run(self):
         """Run PDP11 emulator without terminal process"""
         print('run: begin PDP11 emulator')
-        self.pdp11.reg.log_registers()
+        print(f'{self.pdp11.reg.registers_to_string()} {self.pdp11.psw.nvzc_to_string()}')
 
         # start the processor loop
         instructions_executed = 0
@@ -152,7 +152,7 @@ class pdp11Run():
         """run PDP11 with a PySimpleGUI terminal window."""
         print('run_in_terminal: begin PDP11 emulator')
 
-        self.pdp11.reg.log_registers()
+        print(f'{self.pdp11.reg.registers_to_string()} {self.pdp11.psw.nvzc_to_string()}')
 
         # Create and run the terminal window in PySimpleGUI
         print('run_in_terminal make windows')

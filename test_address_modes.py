@@ -72,7 +72,7 @@ class TestClass():
         sum = self.reg.get(2)
         assert sum == a + b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     # *****************************************
@@ -97,7 +97,7 @@ class TestClass():
         sum = self.reg.get(2)
         assert sum == a + b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_mode_1_D(self):
@@ -118,7 +118,7 @@ class TestClass():
         sum = self.ram.read_word(address)
         assert sum == a + b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
 
@@ -142,7 +142,7 @@ class TestClass():
         sum = self.ram.read_word(addressB)
         assert sum == A + B
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     # *****************************************
@@ -171,7 +171,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert address+2 == r1
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
 
@@ -195,7 +195,7 @@ class TestClass():
 
         assert address+2 == self.reg.get(2)
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_mode_2_SD(self):
@@ -247,7 +247,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert address+2 == r1
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
 
@@ -284,7 +284,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert address == r1
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     #def test_mode_4(self):
@@ -321,7 +321,7 @@ class TestClass():
 
         assert pointera == self.reg.get(1)
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
 
@@ -373,7 +373,7 @@ class TestClass():
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     #def test_mode_6(self):
@@ -425,7 +425,7 @@ class TestClass():
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     #def test_mode_7(self):
@@ -457,7 +457,7 @@ class TestClass():
         sum = self.reg.get(2)
         assert sum == a + b
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_2(self):
@@ -474,15 +474,15 @@ class TestClass():
         self.ram.write_word(address+2, 0o000010)
         self.reg.set(0, 0o000020)
         self.reg.set_pc(address, "test_PC_mode_2")
-        self.reg.log_registers()
+        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         self.reg.set_pc(address+2, "test_PC_mode_2")
         self.dopr.do_double_operand_SSDD(instruction)
-        self.reg.log_registers()
+        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
 
         assert self.reg.get(0) == 0o000030
         assert self.reg.get_pc() == 0o1024
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_3(self):
@@ -501,15 +501,15 @@ class TestClass():
         self.ram.write_word(address, 0o00300)
         self.reg.set(3, b)
         self.reg.set_pc(pc, "test_PC_mode_3")
-        self.reg.log_registers()
+        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         self.reg.set_pc(pc+2, "test_PC_mode_3")
         self.dopr.do_double_operand_SSDD(instruction)
-        self.reg.log_registers()
+        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
 
         assert self.reg.get(3) == a + b
         assert self.reg.get_pc() == pc+4
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_4(self):
@@ -534,7 +534,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert address == r1
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_5(self):
@@ -550,19 +550,19 @@ class TestClass():
         self.ram.write_word(address, 0o00000)
         self.reg.set_pc(pc, "test_PC_mode_5")
 
-        #self.reg.log_registers()
+        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1100)
 
         self.reg.set_pc(pc+2, "test_PC_mode_5")
         self.sopr.do_single_operand(instruction)
 
-        #self.reg.log_registers()
+        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1100)
 
         assert self.reg.get_pc() == 0o1024
         assert self.ram.read_word(0o1100) == 0o01
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_6(self):
@@ -601,7 +601,7 @@ class TestClass():
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_PC_mode_7(self):
@@ -620,17 +620,17 @@ class TestClass():
         self.ram.write_word(address, 0o100001)
         self.reg.set_pc(pc, "test_PC_mode_7")
 
-        #self.reg.log_registers()
+        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1060)
 
         self.reg.set_pc(pc + 2, "test_PC_mode_7")
         self.sopr.do_single_operand(instruction)
 
-        #self.reg.log_registers()
+        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1060)
 
         assert self.reg.get_pc() == 0o1024
         assert self.ram.read_word(address) == 0o0
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100"

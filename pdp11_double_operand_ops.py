@@ -236,6 +236,22 @@ class DoubleOperandOps:
     # 11 SS DD through 16 SS DD
     # ****************************************************
 
+    def bytify(self, BW, source, result):
+        """mask source and result like PDP11 does
+        @param BW:
+        @param source:
+        @param result:
+        @return: soursult
+        """
+        if BW == 'B':
+            # Only make the operation affect the low byte
+            # The high byte remains unnafected
+            return_value = (source & MASK_HIGH_BYTE) | (result & MASK_LOW_BYTE)
+        else:
+            return_value = result
+        # print(f'bytify({BW}, {oct(source)}, {oct(result)}) returns {oct(return_value)}')
+        return return_value
+
     def MOV(self, BW, source, dest):
         """01 SS DD move 4-23
 
@@ -268,7 +284,8 @@ class DoubleOperandOps:
         # Performs logical "and" comparison of the source and destination
         # and modifies condition codes accordingly.
         # Neither the source nor destination operands are affected.
-        result = source & dest
+        result = self.bytify(BW, source, source & dest)
+
         # print(f'    BIT source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
@@ -279,7 +296,7 @@ class DoubleOperandOps:
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
-        result = ~source & dest
+        result = self.bytify(BW, source, ~source & dest)
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
@@ -288,7 +305,7 @@ class DoubleOperandOps:
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) get_v (dst)"""
-        result = source | dest
+        result = self.bytify(BW, source, source | dest)
         # print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
@@ -362,7 +379,7 @@ class DoubleOperandOps:
         # print(f'    result = double_operand_SSDD_instructions')
         try:
             result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
-            # print(f'    result:{oct(result)}   get_nvzc_string:{self.psw.get_nvzc_string()}  PC:{oct(self.reg.get_pc())}')
+            # print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
             # print(f'    addressing_mode_set')
         except KeyError:
             print('Error: double operand opcode not found')

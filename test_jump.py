@@ -214,7 +214,7 @@ class TestClass():
         self.sopr.do_single_operand(instruction)
         assert self.reg.get_pc() == 0o1024
         assert self.ram.read_word(address) == 0o0
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100"
 
     def test_m9301(self):

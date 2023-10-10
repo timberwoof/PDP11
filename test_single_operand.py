@@ -33,7 +33,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o0
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100"
 
     def test_COM(self):
@@ -48,7 +48,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o164444
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001"
 
     def test_INC(self):
@@ -63,6 +63,20 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o013334
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
+    def test_SWAB(self):
+        print('test_SWAB')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0o077777)
+
+        instruction = 0o000301  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        self.sopr.do_single_operand(instruction)
+
+        r1 = self.reg.get(1)
+        assert r1 == 0o177577
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"

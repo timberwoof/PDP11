@@ -43,13 +43,13 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
     def test_BICB(self):
         print('test_BICB')
         self.psw.set_psw(psw=0)
-        # evil test puts word data into a byte test and expects byte result
+        # evil test shows that The high byte is unaffected.
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
 
@@ -58,8 +58,43 @@ class TestClass():
         self.dopr.do_double_operand_SSDD(instruction)
 
         r2 = self.reg.get(2)
-        assert r2 == 0b0000000001010101
+        assert r2 == 0b1010101001010101 # The high byte is unaffected.
 
-        condition_codes = self.psw.get_nvzc_string()
+        condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
+    def test_BIC_2(self):
+        print('test_BIC_2')
+        # PDP-11/40 p. 4-21
+        self.psw.set_psw(psw=0)
+        # evil test puts word data into a byte test and expects byte result
+        self.reg.set(3, 0o001234)
+        self.reg.set(4, 0o001111)
+
+        instruction = self.op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
+        assert self.dopr.is_double_operand_SSDD(instruction)
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        assert self.reg.get(3) == 0o001234
+        assert self.reg.get(4) == 0o000101
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"
+
+    def test_BICB_2(self):
+        print('test_BICB_2')
+        # PDP-11/40 p. 4-21
+        self.psw.set_psw(psw=0)
+        # evil test puts word data into a byte test and expects byte result
+        self.reg.set(3, 0o001234)
+        self.reg.set(4, 0o001111)
+
+        instruction = self.op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
+        assert self.dopr.is_double_operand_SSDD(instruction)
+        self.dopr.do_double_operand_SSDD(instruction)
+
+        assert self.reg.get(3) == 0o001234
+        assert self.reg.get(4) == 0o001101
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"

@@ -75,6 +75,7 @@ class Registers:
 
     def set_pc(self, newpc=0o24, whocalled=''):
         """set program counter to arbitrary value"""
+        # print(f"set_pc({oct(newpc)}, {whocalled})")
         newpc = newpc & MASK_WORD # *** might have to be bigger if we use a bigger address space
         self.registers[self.pc] = newpc
         # print(f'    set_pc R7<-{oct(newpc)} called by {whocalled}')
@@ -111,15 +112,14 @@ class Registers:
         # print(f'{oct(wassp)} setsp {oct(newsp)}')
         return newsp
 
-    def log_registers(self):
+    def registers_to_string(self):
         """print all the registers in the log"""
-        # *** this ought to go into hardware
         index = 0
         report = ''
         for register in self.registers:
             report = report + f'R{index}:{oct(register)}  '
             index = index + 1
-        print(report)
+        return report
 
 class Ram:
     """PDP11 Random Access Memory 64kB including io page"""
@@ -290,7 +290,7 @@ class Ram:
 class PSW:
     """PDP11 Processor Status Word"""
 
-    #  f'get_nvzc_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
+    #  f'nvzc_to_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
@@ -452,7 +452,7 @@ class PSW:
         """carry status bit of PSW"""
         return self.psw & self.c_mask
 
-    def get_nvzc_string(self):
+    def nvzc_to_string(self):
         """stringify these psw bits"""
         return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
 
