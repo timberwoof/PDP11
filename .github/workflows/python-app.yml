@@ -34,6 +34,7 @@ jobs:
         pytest test_hardware_ram.py
         pytest test_hardware_psw.py
         pytest test_address_modes.py
+        pytest test_condition_code_ops.py
         pytest test_single_operand.py
         pytest test_double_operand.py
         pytest test_RSS.py
