@@ -48,14 +48,14 @@ class OtherOps:
         |  reg <- PC+2
         |  PC <- (dst)
         """
-        print('JSR')
-        R = instruction & 0o000700 >> 6
+        R = (instruction & 0o000700) >> 6
         DD = instruction & 0o000077
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
-        run, source_value = self.am.addressing_mode_jmp(DD)
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)}')
+        run, address = self.am.addressing_mode_jmp(DD)
+        print(f'    address:{oct(address)}')
         self.stack.push(self.reg.get(R))
         self.reg.set(R, self.reg.get_pc())
-        self.reg.set_pc(source_value, "JSR")
+        self.reg.set_pc(self.ram.read_word(address), "JSR")
 
     def MARK(self, instruction):
         """00 64 NN mark 46-1"""
@@ -76,7 +76,6 @@ class OtherOps:
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
         masked1 = instruction & 0o777700
         masked2 = instruction & 0o777000
-        print (f'is_other_op {oct(instruction)}  masked1:{oct(masked1)} masked2:{oct(masked2)}')
         return masked1 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
 
     def other_opcode(self, instruction):
@@ -86,11 +85,14 @@ class OtherOps:
         result = False
         try:
             print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
+            masked1 = instruction & 0o777700
             masked2 = instruction & 0o777000
             if masked2 in [0o004000]:
-                instruction = masked2
+                opcode = masked2
+            else:
+                opcode = masked1
             print(f'instruction:{oct(instruction)}')
-            self.other_instructions[instruction](instruction)
+            self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
             print('Error: other opcode not found')
