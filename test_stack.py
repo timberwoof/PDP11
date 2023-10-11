@@ -95,6 +95,57 @@ class TestClass():
     def test_rts(self):
         print ('test_rts')
 
+        R7 = 7
+        R6 = 6
+        R5 = 5
+        mode1 = 1
+        mode2 = 2
+        mode3 = 3
+        mode6 = 6
+
+        # from pdp11-40 4-59
+        # arbitrary values for test:
+        PC = 0o01002
+        SP = 0o02000 - 2
+        SBR = 0o03000
+        Data0 = 0o01234
+        Data1 = 0o12345
+
+        self.reg.set(R7, SBR)
+        self.reg.set(R6, SP)
+        self.ram.write_word(SP, Data1)
+        self.ram.write_word(SP+2, Data0)
+
+        opcode = 0o000200 | R5
+        print (f'opcode:{oct(opcode)}')
+        self.ram.write_word(PC, opcode)
+
+        assert self.other.is_other_op(opcode)
+        print ('is other opcode')
+
+        reg7 = self.reg.get(R7)
+        reg6 = self.reg.get(R6)
+        reg5 = self.reg.get(R5)
+        top = self.ram.read_word(reg6)
+        self.reg.set(R7, PC+2)
+        print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+
+        self.other.other_opcode(opcode)
+
+        reg7 = self.reg.get(R7)
+        reg6 = self.reg.get(R6)
+        reg5 = self.reg.get(R5)
+        top = self.ram.read_word(reg6)
+        print(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+
+        #assert actual == expected
+        assert reg7 == PC
+        assert reg6 == SP + 2
+        assert reg5 == Data1
+        assert top == Data0
+
+
+
     def test_mark(self):
         print ('test_mark')
 

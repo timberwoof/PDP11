@@ -20,7 +20,7 @@ class OtherOps:
         self.sw = sw
 
         self.other_instructions = {}
-        self.other_instructions[0o002000] = self.RTS
+        self.other_instructions[0o000200] = self.RTS
         self.other_instructions[0o004000] = self.JSR
         self.other_instructions[0o006400] = self.MARK
         self.other_instructions[0o006500] = self.MFPI
@@ -37,7 +37,7 @@ class OtherOps:
         """
         print('RTS')
         R = instruction & 0o000007
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS R{R}')
         self.reg.set_pc(self.reg.get(R), "RTS")
         self.reg.set(R, self.stack.pop())
 
@@ -76,7 +76,7 @@ class OtherOps:
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
         masked1 = instruction & 0o777700
         masked2 = instruction & 0o777000
-        return masked1 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
+        return masked1 in [0o000200, 0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
@@ -91,7 +91,7 @@ class OtherOps:
                 opcode = masked2
             else:
                 opcode = masked1
-            print(f'instruction:{oct(instruction)}')
+            print(f'instruction:{oct(instruction)} opcode:{oct(opcode)}')
             self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
