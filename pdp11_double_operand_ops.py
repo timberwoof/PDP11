@@ -76,14 +76,17 @@ class DoubleOperandOps:
         (R, R+1) < (R, R+1) * (src)"""
         # get_c: set if the result < -2^15 or result >= 2^15-1
         # print(f'    MUL {register} * {source}')
-        # *** not correctly implemented
         a = self.reg.registers[register]
-        result = a * source
+        result = a * source  # results in a 32-bit number
+        high_result = result >> 16
+        low_result = result & MASK_WORD
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         self.psw.set_psw(v=0)
         self.psw.set_psw(c=0)  # **** this needs to be handled
-        return result
+        if register % 2 == 0:
+            self.reg.registers[register+1] = high_result
+        return low_result
 
     def DIV(self, register, source):
         """07 1R SS DIV 4-32
