@@ -20,7 +20,7 @@ class OtherOps:
         self.sw = sw
 
         self.other_instructions = {}
-        self.other_instructions[0o002000] = self.RTS
+        self.other_instructions[0o000200] = self.RTS
         self.other_instructions[0o004000] = self.JSR
         self.other_instructions[0o006400] = self.MARK
         self.other_instructions[0o006500] = self.MFPI
@@ -29,6 +29,18 @@ class OtherOps:
     # ****************************************************
     # Other instructions
     # ****************************************************
+    def RTS(self, instruction):
+        """00 20 0R: RTS return from subroutine 4-60
+
+        | PC <- reg
+        | reg <- (SP)^
+        """
+        print('RTS')
+        R = instruction & 0o000007
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS R{R}')
+        self.reg.set_pc(self.reg.get(R), "RTS")
+        self.reg.set(R, self.stack.pop())
+
     def JSR(self, instruction):
         """00 4R DD: JSR jump to subroutine 4-58
 
@@ -36,24 +48,14 @@ class OtherOps:
         |  reg <- PC+2
         |  PC <- (dst)
         """
-        R = instruction & 0o000700 >> 6
+        R = (instruction & 0o000700) >> 6
         DD = instruction & 0o000077
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR r{R} {oct(DD)}')
-        tmp = DD
+        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)}')
+        run, address = self.am.addressing_mode_jmp(DD)
+        print(f'    address:{oct(address)}')
         self.stack.push(self.reg.get(R))
-        self.reg.set(self.reg.get_pc())
-        self.reg.set_pc(tmp, "JSR")
-
-    def RTS(self, instruction):
-        """00 20 0R: RTS return from subroutine 4-60
-        
-        | PC <- reg
-        | reg <- (SP)^
-        """
-        R = instruction & 0o000007
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS r{R}')
-        self.reg.set_pc(self.reg.get(R), "RTS")
-        self.reg.set(R, self.stack.pop())
+        self.reg.set(R, self.reg.get_pc())
+        self.reg.set_pc(self.ram.read_word(address), "JSR")
 
     def MARK(self, instruction):
         """00 64 NN mark 46-1"""
@@ -72,7 +74,9 @@ class OtherOps:
 
     def is_other_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
-        return instruction & 0o777700 in [0o002000, 0o004000, 0o006400, 0o006500, 0o006600]
+        masked1 = instruction & 0o777700
+        masked2 = instruction & 0o777000
+        return masked1 in [0o000200, 0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
 
     def other_opcode(self, instruction):
         """dispatch a leftover opcode"""
@@ -81,7 +85,14 @@ class OtherOps:
         result = False
         try:
             print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
-            self.other_instructions[instruction]
+            masked1 = instruction & 0o777700
+            masked2 = instruction & 0o777000
+            if masked2 in [0o004000]:
+                opcode = masked2
+            else:
+                opcode = masked1
+            print(f'instruction:{oct(instruction)} opcode:{oct(opcode)}')
+            self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
             print('Error: other opcode not found')

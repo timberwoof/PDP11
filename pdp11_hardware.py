@@ -454,7 +454,7 @@ class PSW:
 
     def nvzc_to_string(self):
         """stringify these psw bits"""
-        return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
+        return f'NZVC:{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
 
     def add_byte(self, b1, b2):
         """add byte, limit to 8 bits, set PSW"""

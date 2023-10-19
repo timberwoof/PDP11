@@ -77,12 +77,16 @@ class DoubleOperandOps:
         # get_c: set if the result < -2^15 or result >= 2^15-1
         # print(f'    MUL {register} * {source}')
         a = self.reg.registers[register]
-        result = a * source
+        result = a * source  # results in a 32-bit number
+        high_result = result >> 16
+        low_result = result & MASK_WORD
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         self.psw.set_psw(v=0)
         self.psw.set_psw(c=0)  # **** this needs to be handled
-        return result
+        if register % 2 == 0:
+            self.reg.registers[register+1] = high_result
+        return low_result
 
     def DIV(self, register, source):
         """07 1R SS DIV 4-32
@@ -97,6 +101,7 @@ class DoubleOperandOps:
         # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
         # get_c: set if divide 0 attempted; cleared otherwise
         if source == 0:
+            # *** divide by zero needs to trap
             v = 0
             c = 0
             self.psw.set_psw(v=v, c=c)
