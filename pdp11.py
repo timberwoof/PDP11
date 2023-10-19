@@ -72,6 +72,20 @@ class PDP11():
         self.vt52 = VT52(self.dl11)
         print('pdp11CPU initializing done')
 
+    def oct6(self, word):
+        """format an octal to be 6 digits wide:
+        0o2127 -> 0o002127"""
+        octal = oct(word)
+        paddingZeroes = '000000'[0:8-len(octal)]
+        result = f'{octal[0:2]}{paddingZeroes}{octal[2:]}'
+        return result
+
+    def pad20(self, string):
+        """pad a string to 20 charactcers"""
+        padding = '                    '[0:20-len(string)]
+        result = f'{string}{padding}'
+        return result
+
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
         # print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
@@ -79,27 +93,27 @@ class PDP11():
         run = True
 
         if self.ccops.is_condition_code_operation(instruction):
-            self.ccops.do_condition_code_operation(instruction)
+            run, report = self.ccops.do_condition_code_operation(instruction)
 
         elif self.br.is_branch(instruction):
-            self.br.do_branch(instruction)
+            run, report = self.br.do_branch(instruction)
 
         elif self.nopr.is_no_operand(instruction):
-            run = self.nopr.do_no_operand(instruction)
+            run, report = self.nopr.do_no_operand(instruction)
 
         elif self.sopr.is_single_operand(instruction):
-            run = self.sopr.do_single_operand(instruction)
+            run, report = self.sopr.do_single_operand(instruction)
 
         elif self.dopr.is_double_operand_RSS(instruction):
-            run = self.dopr.do_double_operand_RSS(instruction)
+            run, report = self.dopr.do_double_operand_RSS(instruction)
 
         elif self.dopr.is_double_operand_SSDD(instruction):
-            run = self.dopr.do_double_operand_SSDD(instruction)
+            run, report = self.dopr.do_double_operand_SSDD(instruction)
 
         else:
-            run = self.other.other_opcode(instruction)
+            run, report = self.other.other_opcode(instruction)
 
-        return run
+        return run, report
 
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
@@ -107,12 +121,10 @@ class PDP11():
         self.sw.start("instruction cycle")
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
-        print('----')
-        print(f'pc:{oct(pc)} opcode:{oct(instruction)}')
         # print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
-        run = self.dispatch_opcode(instruction)
-        print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        run, report = self.dispatch_opcode(instruction)
+        print(f'{oct(pc)} {self.oct6(instruction)} {self.pad20(report)};{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         self.sw.stop("instruction cycle")
         return run
 
@@ -127,7 +139,7 @@ class pdp11Run():
     def run(self):
         """Run PDP11 emulator without terminal process"""
         print('run: begin PDP11 emulator')
-        print(f'{self.pdp11.reg.registers_to_string()} {self.pdp11.psw.nvzc_to_string()}')
+        print(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
 
         # start the processor loop
         instructions_executed = 0
@@ -152,7 +164,7 @@ class pdp11Run():
         """run PDP11 with a PySimpleGUI terminal window."""
         print('run_in_terminal: begin PDP11 emulator')
 
-        print(f'{self.pdp11.reg.registers_to_string()} {self.pdp11.psw.nvzc_to_string()}')
+        print(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
 
         # Create and run the terminal window in PySimpleGUI
         print('run_in_terminal make windows')
