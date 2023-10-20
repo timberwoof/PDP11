@@ -93,10 +93,10 @@ class NoOperandOps:
         # parameter: opcode of form * 000 0** *** *** ***
         self.sw.start("no operand")
         try:
-            report = f'{self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction'
+            assembly = f'{self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction'
             result = self.no_operand_instructions[instruction]()
         except KeyError:
-            report = 'Error: no-operand opcode not found'
+            assembly = 'Error: no-operand opcode not found'
             result = False
         self.sw.stop("no operand")
-        return result, report
+        return result, '', '', assembly
