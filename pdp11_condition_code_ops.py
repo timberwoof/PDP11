@@ -21,12 +21,12 @@ class ConditionCodeOps:
         self.sw.start("condition code")
         if (instruction & self.set_opcode) == self.set_opcode:
             set_bits = instruction & self.psw_bits
-            print(f'    SETCC {oct(set_bits)}')
+            report = f'SETCC {oct(set_bits)}'
             self.psw.set_cvzn(set_bits)
         elif (instruction & self.clear_opcode) == self.clear_opcode:
             clr_bits = instruction & self.psw_bits
             set_bits = self.psw.psw & ~clr_bits
-            print(f'    CLRCC {oct(clr_bits)}:{oct(set_bits)}')
+            report = f'CLRCC {oct(clr_bits)}'
             self.psw.set_cvzn(set_bits)
         self.sw.stop("condition code")
-        return
+        return True, report

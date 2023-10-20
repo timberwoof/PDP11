@@ -412,25 +412,19 @@ class SingleOperandOps:
         run = True
         if opcode == 0o000100:
             # special handling for JMP with R7.
-            run, source_value = self.am.addressing_mode_jmp(source)
-            print(f'    {self.single_operand_instruction_names[opcode]} '
-                 f'{self.single_operand_instruction_texts[opcode]} '
-                 f'{oct(instruction)} {oct(source_value)}'
-                 f'single-operand instruction')
+            run, source_value, parameter = self.am.addressing_mode_jmp(source)
+            report = f'{self.single_operand_instruction_names[opcode]} {parameter}'
             result = self.single_operand_instructions[opcode](source_value, BW)
         else:
-            source_value, out_register, out_address = self.am.addressing_mode_get(BW, source)
-            print(f'    {self.single_operand_instruction_names[opcode]} '
-                 f'{self.single_operand_instruction_texts[opcode]} '
-                 f'{oct(instruction)} {oct(source_value)} '
-                 f'single-operand instruction register:{oct(out_register)}')
+            source_value, out_register, out_address, operand = self.am.addressing_mode_get(BW, source)
+            report = f'{self.single_operand_instruction_names[opcode]} {operand}'
             try:
                 result = self.single_operand_instructions[opcode](source_value, BW)
                 #print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
                 self.am.addressing_mode_set(BW, result, out_register, out_address)
             except KeyError:
-                print('Error: single-operand opcode not found')
+                report = 'Error: single-operand opcode not found'
                 result = False
 
         self.sw.stop("single operand")
-        return run
+        return run, report

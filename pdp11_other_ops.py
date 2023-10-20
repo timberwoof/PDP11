@@ -84,18 +84,17 @@ class OtherOps:
         self.sw.start("other_opcode")
         result = False
         try:
-            print(f'{oct(self.reg.get_pc())} {oct(instruction)} other_opcode')
             masked1 = instruction & 0o777700
             masked2 = instruction & 0o777000
             if masked2 in [0o004000]:
                 opcode = masked2
             else:
                 opcode = masked1
-            print(f'instruction:{oct(instruction)} opcode:{oct(opcode)}')
+            report = f'instruction:{oct(instruction)} opcode:{oct(opcode)}'
             self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
-            print('Error: other opcode not found')
+            report = 'Error: other opcode not found'
             result =  False
         self.sw.stop("other_opcode")
-        return result
+        return result, report

@@ -79,7 +79,7 @@ class BranchOps:
     def BNE(self, offset):
         """00 10 XXX branch if not equal get_z=0"""
         # Tests the state of the get_z-bit and causes a branch if the get_z-bit is clear.
-        print(f"    BNE get_z:{self.psw.get_z()}")
+        #print(f"    BNE get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 0:
             self.reg.set_pc_2x_offset(offset, "BNE")
         return True
@@ -87,7 +87,7 @@ class BranchOps:
     def BEQ(self, offset):
         """00 14 XXX branch if equal get_z=1"""
         # Tests the state of the get_z-bit and causes a branch if get_z is set
-        print(f"    BEQ get_z:{self.psw.get_z()}")
+        #print(f"    BEQ get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 1:
             self.reg.set_pc_2x_offset(offset, "BEQ")
         return True
@@ -184,11 +184,11 @@ class BranchOps:
         opcode = instruction & MASK_HIGH_BYTE
         offset = instruction & MASK_LOW_BYTE
         try:
-            print(f'    {self.branch_instruction_names[opcode]} {oct(instruction)} offset:{oct(offset)}')
+            report = f'{self.branch_instruction_names[opcode]} {oct(offset)}' #     ; branch offset {oct(2*offset+2)}'
             result = self.branch_instructions[opcode](offset)
         except KeyError:
-            print('Error: branch opcode not found')
+            report = 'Error: branch opcode not found'
             result = False
 
         self.sw.stop("branch")
-        return result
+        return result, report
