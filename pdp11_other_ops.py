@@ -90,11 +90,11 @@ class OtherOps:
                 opcode = masked2
             else:
                 opcode = masked1
-            report = f'instruction:{oct(instruction)} opcode:{oct(opcode)}'
+            assemblu = f'instruction:{oct(instruction)} opcode:{oct(opcode)}'
             self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
-            report = 'Error: other opcode not found'
+            assemblu = 'Error: other opcode not found'
             result =  False
         self.sw.stop("other_opcode")
-        return result, report
+        return result, '', '', assemblu

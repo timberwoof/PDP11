@@ -49,8 +49,8 @@ class TestClass():
         return 0o060000 | self.SS(modeS, regS) | self.DD(modeD, regD)
     
     def do_double_operand_SSDD_and_report(self, instruction):
-        run, report = self.dopr.do_double_operand_SSDD(instruction)
-        print(report)
+        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        print(assembly)
         
 
     # *****************************************

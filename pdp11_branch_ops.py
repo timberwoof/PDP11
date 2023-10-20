@@ -184,11 +184,11 @@ class BranchOps:
         opcode = instruction & MASK_HIGH_BYTE
         offset = instruction & MASK_LOW_BYTE
         try:
-            report = f'{self.branch_instruction_names[opcode]} {oct(offset)}' #     ; branch offset {oct(2*offset+2)}'
+            assembly = f'{self.branch_instruction_names[opcode]} {oct(offset)}' #     ; branch offset {oct(2*offset+2)}'
             result = self.branch_instructions[opcode](offset)
         except KeyError:
-            report = 'Error: branch opcode not found'
+            assembly = 'Error: branch opcode not found'
             result = False
 
         self.sw.stop("branch")
-        return result, report
+        return result, '', '', assembly

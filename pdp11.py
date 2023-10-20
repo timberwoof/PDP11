@@ -36,6 +36,20 @@ from stopwatches import StopWatches as sw
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 # self.ram.dump(0o165000, 0o165000+32)
 
+def oct6(word):
+    """format an octal to be 6 digits wide:
+    0o2127 -> 0o002127"""
+    octal = oct(word)
+    paddingZeroes = '000000'[0:8 - len(octal)]
+    result = f'{octal[2:2]}{paddingZeroes}{octal[2:]}'
+    return result
+
+def pad(string, width):
+    """pad a string to width charactcers"""
+    padding = '                    '[0:width - len(string)]
+    result = f'{string}{padding}'
+    return result
+
 class PDP11():
     """Timber's PDP11 emulator"""
     def __init__(self):
@@ -72,20 +86,6 @@ class PDP11():
         self.vt52 = VT52(self.dl11)
         print('pdp11CPU initializing done')
 
-    def oct6(self, word):
-        """format an octal to be 6 digits wide:
-        0o2127 -> 0o002127"""
-        octal = oct(word)
-        paddingZeroes = '000000'[0:8-len(octal)]
-        result = f'{octal[0:2]}{paddingZeroes}{octal[2:]}'
-        return result
-
-    def pad20(self, string):
-        """pad a string to 20 charactcers"""
-        padding = '                    '[0:20-len(string)]
-        result = f'{string}{padding}'
-        return result
-
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
         # print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
@@ -93,27 +93,27 @@ class PDP11():
         run = True
 
         if self.ccops.is_condition_code_operation(instruction):
-            run, report = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly = self.ccops.do_condition_code_operation(instruction)
 
         elif self.br.is_branch(instruction):
-            run, report = self.br.do_branch(instruction)
+            run, operand1, operand2, assembly = self.br.do_branch(instruction)
 
         elif self.nopr.is_no_operand(instruction):
-            run, report = self.nopr.do_no_operand(instruction)
+            run, operand1, operand2, assembly = self.nopr.do_no_operand(instruction)
 
         elif self.sopr.is_single_operand(instruction):
-            run, report = self.sopr.do_single_operand(instruction)
+            run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
 
         elif self.dopr.is_double_operand_RSS(instruction):
-            run, report = self.dopr.do_double_operand_RSS(instruction)
+            run, operand1, operand2, assembly = self.dopr.do_double_operand_RSS(instruction)
 
         elif self.dopr.is_double_operand_SSDD(instruction):
-            run, report = self.dopr.do_double_operand_SSDD(instruction)
+            run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
 
         else:
-            run, report = self.other.other_opcode(instruction)
+            run, operand1, operand2, assembly = self.other.other_opcode(instruction)
 
-        return run, report
+        return run, operand1, operand2, assembly
 
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
@@ -123,8 +123,12 @@ class PDP11():
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         # print(f'pc:{oct(self.reg.get_pc())}')
         # decode and execute opcode
-        run, report = self.dispatch_opcode(instruction)
-        print(f'{oct(pc)} {self.oct6(instruction)} {self.pad20(report)};{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        run, operand1, operand2, report = self.dispatch_opcode(instruction)
+        print(f'{oct6(pc)} {oct6(instruction)} {pad(report, 20)};{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        if operand1 != '':
+            print(f'{oct6(pc+2)} {pad(operand1, 7)}')
+        if operand2 != '':
+            print(f'{oct6(pc+4)} {pad(operand2, 7)}')
         self.sw.stop("instruction cycle")
         return run
 

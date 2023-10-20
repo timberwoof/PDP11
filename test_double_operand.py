@@ -38,8 +38,8 @@ class TestClass():
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, report = self.dopr.do_double_operand_SSDD(instruction)
-        print(report)
+        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        print(assembly)
 
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
@@ -56,8 +56,8 @@ class TestClass():
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, report = self.dopr.do_double_operand_SSDD(instruction)
-        print(report)
+        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        print(assembly)
 
         r2 = self.reg.get(2)
         assert r2 == 0b1010101001010101 # The high byte is unaffected.
@@ -75,8 +75,8 @@ class TestClass():
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, report = self.dopr.do_double_operand_SSDD(instruction)
-        print(report)
+        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        print(assembly)
 
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o000101
@@ -94,8 +94,8 @@ class TestClass():
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, report = self.dopr.do_double_operand_SSDD(instruction)
-        print(report)
+        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        print(assembly)
 
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o001101
