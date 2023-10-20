@@ -41,14 +41,22 @@ def formatted_offset(offset):
 def oct6(word):
     """format an octal to be 6 digits wide:
     0o2127 -> 0o002127"""
-    octal = oct(word)
-    paddingZeroes = '000000'[0:8 - len(octal)]
-    result = f'{octal[2:2]}{paddingZeroes}{octal[2:]}'
+    octal = oct(word)[2:]
+    paddingZeroes = '00000000'[0:6-len(octal)]
+    result = f'{paddingZeroes}{octal}'
+    return result
+
+def oct3(word):
+    """format an octal to be 6 digits wide:
+    0o2127 -> 0o002127"""
+    octal = oct(word)[2:]
+    paddingZeroes = '0000'[0:3-len(octal)]
+    result = f'{paddingZeroes}{octal}'
     return result
 
 def pad20(self, string):
     """pad a string to 20 charactcers"""
-    padding = '                    '[0:20 - len(string)]
+    padding = '                    '[0:20-len(string)]
     result = f'{string}{padding}'
     return result
 
@@ -290,13 +298,14 @@ class Ram:
 
         print_line = ""
         for row_address in range(start, stop, display_bytes):
-            print_line =  ("{0:o}".format(row_address)).rjust(6, "O")+" "  #row_address
+            print_line =   f'{oct6(row_address)} '
+            print_line = print_line + " "
             for word_address in range(row_address, row_address+display_bytes, 2):
-                print_line = print_line + ("{0:o}".format(self.read_word(word_address))).rjust(6, "O")
+                print_line = print_line +  f'{oct6(self.read_word(word_address))} '
                 #+" " self.read_word(word_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):
-                print_line = print_line + ("{0:o}".format(self.read_byte(byte_address))).rjust(3, "O")
+                print_line = print_line + f'{oct3(self.read_byte(byte_address))} '
                 #+" " self.read_byte(byte_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):

@@ -54,12 +54,12 @@ class DL11:
     # 0: reader enable (wo) clears 7
     def write_RCSR(self, byte):
         """write to receiver status register"""
-        #print(f'    dl11.write_RCSR({oct(byte)})')
+        print(f'    dl11.write_RCSR({oct(byte)})')
         self.RCSR = byte
 
     def read_RCSR(self):
         """read from receiver status register"""
-        #print(f'    dl11.read_RCSR() returns {oct(self.RCSR)}')
+        print(f'    dl11.read_RCSR() returns {oct(self.RCSR)}')
         return self.RCSR
 
     # RBUF reciever data buffer (ro)
@@ -70,14 +70,14 @@ class DL11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        #print(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        print(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
-        #print(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        print(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
@@ -91,21 +91,21 @@ class DL11:
     # 0: break. when set sends continuous space (rw)
     def write_XCSR(self, byte):
         """write to transmitter status register"""
-        #print(f'    dl11.write_XCSR({oct(byte)})')
+        print(f'    dl11.write_XCSR({oct(byte)})')
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
 
     def read_XCSR(self):
         """read from transitter status register"""
-        #print(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
+        print(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
         return self.XCSR
 
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        #print(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        print(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -119,7 +119,7 @@ class DL11:
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        #print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        print(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         return result
 
     def safe_character(self, byte):
