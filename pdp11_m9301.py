@@ -53,7 +53,7 @@ class M9301:
         switch81_9 = 0o0004 & off   # bus address bit 2
         switch81_10 = 0o0002 & off  # bus address bit 1
         # Set the switches you want to have '1' digits to on.
-        # Where the DEC manual says to have a switch OFF, include it
+        # Where the DEC manual says to have a switch OFF, set off.
         # Thus none of the switches results in CPU Diagnostics with Console Emulator:
         # PC = m9301_start_address
         # console boot switch causes M9301 to be activated

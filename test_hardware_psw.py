@@ -15,6 +15,46 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
+
+def add_byte(psw, b1, b2):
+    """add byte, limit to 8 bits, set PSW"""
+    result = b1 + b2
+    if result > (result & MASK_LOW_BYTE):
+        psw.set_psw(v=1)
+    if result == 0:
+        psw.set_psw(z=1)
+    result = result & MASK_LOW_BYTE
+    return result
+
+
+def subtract_byte(psw, b1, b2):
+    """subtract bytes b1 - b2, limit to 8 bits, set PSW"""
+    result = b1 - b2
+    if result < 0:
+        psw.set_psw(n=1)
+    result = result & MASK_LOW_BYTE
+    return result
+
+
+def add_word(psw, b1, b2):
+    """add words, limit to 16 bits, set PSW"""
+    result = b1 + b2
+    if result > (result & MASK_WORD):
+        psw.set_psw(v=1)
+    if result == 0:
+        psw.set_psw(z=1)
+    result = result & MASK_WORD
+    return result
+
+
+def subtract_word(psw, b1, b2):
+    """subtract words b1 - b2, limit to 16 bits, set PSW"""
+    result = b1 - b2
+    if result < 0:
+        psw.set_psw(n=1)
+    result = result & MASK_WORD
+    return result
+
 class TestClass():
     reg = reg()
     ram = Ram(reg)
@@ -84,7 +124,7 @@ class TestClass():
         self.psw.set_psw(psw=0)
         a = 3
         b = 4
-        sum = self.psw.add_byte(a, b)
+        sum = add_byte(self.psw, a, b)
         assert sum == a + b
         assert self.psw.get_v() == 0
         assert self.psw.get_z() == 0
@@ -93,7 +133,7 @@ class TestClass():
         self.psw.set_psw(psw=0)
         a = 191
         b = 191
-        sum = self.psw.add_byte(a, b)
+        sum = add_byte(self.psw, a, b)
         assert sum == 126
         assert self.psw.get_v() == 1
         assert self.psw.get_z() == 0

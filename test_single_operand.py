@@ -66,8 +66,9 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
-    def test_SWAB(self):
-        print('test_SWAB')
+    def test_SWAB1(self):
+        print('test_SWAB1')
+        # from pdp11 book 0111111111111111 -> 1111111101111111
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0o077777)
 
@@ -80,3 +81,55 @@ class TestClass():
 
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
+
+    def test_SWAB2(self):
+        print('test_SWAB2')
+        # reverse of pdp11 book 1111111101111111 -> 0111111111111111
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0o177577)
+
+        instruction = 0o000301  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        self.sopr.do_single_operand(instruction)
+
+        r1 = self.reg.get(1)
+        assert r1 == 0o077777
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1000"
+
+    def test_SWAB3(self):
+        print('test_SWAB3')
+        # BFI reverse bits 0000000011111111 -> 1111111100000000
+        self.psw.set_psw(psw=0o0177777)
+        # 0 000 000 011 111 111
+        self.reg.set(1, 0o000377)
+
+        instruction = 0o000301  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        self.sopr.do_single_operand(instruction)
+
+        r1 = self.reg.get(1)
+        # 1 111 111 100 000 000
+        assert r1 == 0o177400
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0100" # NZVC
+
+    def test_SWAB4(self):
+        print('test_SWAB4')
+        # BFI reverse bits back 1111111100000000 -> 0000000011111111
+        self.psw.set_psw(psw=0o0177777)
+        # 0 000 000 011 111 111
+        self.reg.set(1, 0o177400)
+
+        instruction = 0o000301  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        self.sopr.do_single_operand(instruction)
+
+        r1 = self.reg.get(1)
+        # 1 111 111 100 000 000
+        assert r1 == 0o000377
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1000" # NZVC

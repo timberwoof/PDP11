@@ -152,7 +152,7 @@ class SingleOperandOps:
 
     def SWAB(self, operand, B):
         """00 03 DD Swap Bytes 4-17"""
-        # Exchanges high-order byte and low-order byte of the destina- tion word
+        # Exchanges high-order byte and low-order byte of the destination word
         # get_n: set if high-order bit of low-order byte (bit 7) of result is set; cleared otherwise
         # get_z: set if low-order byte of result = 0; cleared otherwise
         # get_v: cleared

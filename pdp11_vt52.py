@@ -9,6 +9,7 @@ class VT52:
         self.dl11 = dl11
         # throttle window updates because they are very slow
         self.cycles_since_window = 0
+        self.buffer = 0  # for holding LF after CR was sent
 
     # *********************
     # PySimpleGUI Interface
@@ -27,6 +28,15 @@ class VT52:
         # autoscroll=True,
 
     def cycle(self):
+        # This is an attenpt to make the VT52 automatcaly send LF after CR.
+        # It doesn't seem to help.
+        # The console emulator isn't working
+        # If there's a character in our buffer, send it to the DL11
+        if self.buffer != 0:
+            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
+                self.dl11.write_RBUF(self.buffer)
+                self.buffer = 0
+
         # if there's a character in the dl11 transmit buffer,
         # then send it to the display
         if self.dl11.XCSR & self.dl11.XCSR_XMIT_RDY == 0:
@@ -39,11 +49,13 @@ class VT52:
         event, values = self.window.read(timeout=0)
 
         # If the Enter key was hit
-        # then send a CR to the serial interface.
+        # then send CR LF to the serial interface
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
                 self.dl11.write_RBUF(0o15) # CR, not \n which is LF
+                # put the LF into our buffer
+                self.buffer = 0o12
 
         # If there's a keyboard event
         # then send the character to the serial interface

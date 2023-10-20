@@ -409,6 +409,12 @@ class PSW:
         # print(f'set_psw will write {oct(self.PSW)} to {oct(self.PSW_address)}')
         self.ram.write_word(self.psw_address, self.psw)
 
+    def set_nzvc(self, value):
+        """set condition codes (last four bits of psw)"""
+        non_psw_bits = 0o177760
+        psw_bits = 0o000017
+        self.psw = (self.psw & non_psw_bits) | (value & psw_bits)
+
     def set_n(self, b, value):
         """set condition code get_n based on the msb negative bit
 
@@ -419,18 +425,12 @@ class PSW:
             n_mask = MASK_BYTE_MSB
         else:
             n_mask = MASK_WORD_MSB
-        if value & n_mask == n_mask:
+        if (value & n_mask) == n_mask:
             n = 1
         else:
             n = 0
         self.set_psw(n=n)
         return n
-
-    def set_cvzn(self, value):
-        """set condition codes (last four bits of psw)"""
-        non_psw_bits = 0o177760
-        psw_bits = 0o000017
-        self.psw = self.psw & non_psw_bits | value & psw_bits
 
     def set_z(self, b, value):
         """set condition code get_z based on the value
@@ -442,7 +442,7 @@ class PSW:
             z_mask = MASK_LOW_BYTE
         else:
             z_mask = MASK_WORD
-        if value & z_mask == 0:
+        if (value & z_mask) == 0:
             z = 1
         else:
             z = 0
@@ -458,13 +458,12 @@ class PSW:
             v_mask = MASK_WORD_MSB << 1
         else:
             v_mask = MASK_BYTE_MSB << 1
-        if value & v_mask == v_mask:
+        if (value & v_mask) == v_mask:
             v = 1
         else:
             v = 0
         self.set_psw(v=v)
         return v
-
 
     def get_n(self):
         """negative status bit of PSW"""
@@ -485,42 +484,6 @@ class PSW:
     def nvzc_to_string(self):
         """stringify these psw bits"""
         return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
-
-    def add_byte(self, b1, b2):
-        """add byte, limit to 8 bits, set PSW"""
-        result = b1 + b2
-        if result > (result & MASK_LOW_BYTE):
-            self.set_psw(v=1)
-        if result == 0:
-            self.set_psw(z=1)
-        result = result & MASK_LOW_BYTE
-        return result
-
-    def subtract_byte(self, b1, b2):
-        """subtract bytes b1 - b2, limit to 8 bits, set PSW"""
-        result = b1 - b2
-        if result < 0:
-            self.set_psw(n=1)
-        result = result & MASK_LOW_BYTE
-        return result
-
-    def add_word(self, b1, b2):
-        """add words, limit to 16 bits, set PSW"""
-        result = b1 + b2
-        if result > (result & MASK_WORD):
-            self.set_psw(v=1)
-        if result == 0:
-            self.set_psw(z=1)
-        result = result & MASK_WORD
-        return result
-
-    def subtract_word(self, b1, b2):
-        """subtract words b1 - b2, limit to 16 bits, set PSW"""
-        result = b1 - b2
-        if result < 0:
-            self.set_psw(n=1)
-        result = result & MASK_WORD
-        return result
 
 class Stack:
     """PDP11 Stack"""
