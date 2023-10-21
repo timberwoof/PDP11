@@ -450,7 +450,7 @@ class PSW:
         return z
 
     def set_v(self, b, value):
-        """set condition code get_v based on the value
+        """set condition code v based on the value
         :param b: "B" or "" for Byte or Word
         :param value: value to test
         """

@@ -78,7 +78,8 @@ class BranchOps:
 
     def BNE(self, offset):
         """00 10 XXX branch if not equal get_z=0"""
-        # Tests the state of the get_z-bit and causes a branch if the get_z-bit is clear.
+        # Tests the state of the z-bit and
+        # branches if the z-bit is clear.
         #print(f"    BNE get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 0:
             self.reg.set_pc_2x_offset(offset, "BNE")

@@ -243,7 +243,7 @@ class DoubleOperandOps:
     # 11 SS DD through 16 SS DD
     # ****************************************************
 
-    def bytify(self, BW, source, result):
+    def byte_mask(self, BW, source, result):
         """mask source and result like PDP11 does
         @param BW:
         @param source:
@@ -256,7 +256,7 @@ class DoubleOperandOps:
             return_value = (source & MASK_HIGH_BYTE) | (result & MASK_LOW_BYTE)
         else:
             return_value = result
-        # print(f'bytify({BW}, {oct(source)}, {oct(result)}) returns {oct(return_value)}')
+        # print(f'byte_mask({BW}, {oct(source)}, {oct(result)}) returns {oct(return_value)}')
         return return_value
 
     def MOV(self, BW, source, dest):
@@ -264,6 +264,7 @@ class DoubleOperandOps:
 
         (dst) < (src)"""
         result = source
+        #result = self.byte_mask(BW, source, dest)
         # print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         self.psw.set_n(BW, source)
         self.psw.set_z(BW, source)
@@ -277,6 +278,7 @@ class DoubleOperandOps:
         # set the condition code based on that result
         # but don't change the destination
         result = source - dest
+        #result = self.byte_mask(BW, source, source - dest)
         # print(f'    CMP source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
@@ -291,7 +293,7 @@ class DoubleOperandOps:
         # Performs logical "and" comparison of the source and destination
         # and modifies condition codes accordingly.
         # Neither the source nor destination operands are affected.
-        result = self.bytify(BW, source, source & dest)
+        result = self.byte_mask(BW, source, source & dest)
 
         # print(f'    BIT source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
@@ -303,7 +305,11 @@ class DoubleOperandOps:
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
-        result = self.bytify(BW, source, ~source & dest)
+        result = self.byte_mask(BW, source, ~source & dest)
+        # for byte operations,
+        # low-order byte is affected
+        # high-order byte is unchanged
+        #print (f'BIC source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
@@ -312,7 +318,7 @@ class DoubleOperandOps:
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) get_v (dst)"""
-        result = self.bytify(BW, source, source | dest)
+        result = self.byte_mask(BW, source, source | dest)
         # print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
@@ -374,14 +380,14 @@ class DoubleOperandOps:
         source_value, source_register, source_address, operand1, assembly1 = self.am.addressing_mode_get(bw, source)
         # print(f'    dest_value = addressing_mode_get')
         dest_value, dest_register, dest_address, operand2, assembly2 = self.am.addressing_mode_get(bw, dest)
-        print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
+        # print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
         # print(f'    result = double_operand_SSDD_instructions')
         try:
             result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
             assembly = f'{self.double_operand_SSDD_instruction_names[name_opcode]} {assembly1},{assembly2}'
-            print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
+            # print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
         except KeyError:
             assembly = 'Error: double operand opcode not found'
             result = False
