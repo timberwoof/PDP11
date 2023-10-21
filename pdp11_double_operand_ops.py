@@ -243,29 +243,29 @@ class DoubleOperandOps:
     # 11 SS DD through 16 SS DD
     # ****************************************************
 
-    def byte_mask(self, BW, source, result):
+    def byte_mask(self, BW, value, target):
         """mask source and result like PDP11 does
         @param BW:
-        @param source:
-        @param result:
-        @return: soursult
+        @param value: new value to stuff into the return value
+        @param target: resgiter where it's going
+        @return: result with maybe old high byte
         """
         if BW == 'B':
             # Only make the operation affect the low byte
-            # The high byte remains unnafected
-            return_value = (source & MASK_HIGH_BYTE) | (result & MASK_LOW_BYTE)
+            # The target high byte remains unnafected
+            return_value = (value & MASK_LOW_BYTE) | (target & MASK_HIGH_BYTE)
+            #print(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
         else:
-            return_value = result
-        # print(f'byte_mask({BW}, {oct(source)}, {oct(result)}) returns {oct(return_value)}')
+            return_value = value
         return return_value
 
     def MOV(self, BW, source, dest):
         """01 SS DD move 4-23
 
         (dst) < (src)"""
-        result = source
-        #result = self.byte_mask(BW, source, dest)
-        # print(f'    MOV source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
+        #result = source
+        #print(f'                                  ; MOV {bin(source)},{bin(dest)}')
+        result = self.byte_mask(BW, source, dest)
         self.psw.set_n(BW, source)
         self.psw.set_z(BW, source)
         self.psw.set_psw(v=0)
@@ -277,8 +277,8 @@ class DoubleOperandOps:
         # subtract dest from source
         # set the condition code based on that result
         # but don't change the destination
-        result = source - dest
-        #result = self.byte_mask(BW, source, source - dest)
+        #result = source - dest
+        result = self.byte_mask(BW, source - dest, dest)
         # print(f'    CMP source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
@@ -305,7 +305,7 @@ class DoubleOperandOps:
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
-        result = self.byte_mask(BW, source, ~source & dest)
+        result = self.byte_mask(BW, ~source & dest, dest)
         # for byte operations,
         # low-order byte is affected
         # high-order byte is unchanged
@@ -318,7 +318,7 @@ class DoubleOperandOps:
     def BIS(self, BW, source, dest):
         """bit set 4-30
         (dst) < (src) get_v (dst)"""
-        result = self.byte_mask(BW, source, source | dest)
+        result = self.byte_mask(BW, source | dest, dest)
         # print(f'    BIS {oct(source)} {oct(dest)} -> {oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)

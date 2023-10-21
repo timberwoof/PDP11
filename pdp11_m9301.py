@@ -89,5 +89,5 @@ class M9301:
     # That's perfectly acceptable as this only does anything on startup.
 
     def read_dip_switches(self):
-        print(f'read_dip_switches returns {oct(self.switch_settings)}')
+        print(f'                                  ; read_dip_switches returns {oct(self.switch_settings)}')
         return self.switch_settings
