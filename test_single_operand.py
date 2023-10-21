@@ -52,7 +52,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_INC(self):
-        print('test_CLR')
+        print('test_INC')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o013333)
 
@@ -62,6 +62,21 @@ class TestClass():
 
         r1 = self.reg.get(1)
         assert r1 == 0o013334
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"
+
+    def test_INCB(self):
+        print('test_INCB')
+        self.psw.set_psw(psw=0)
+        self.reg.set(1, 0o000033)
+
+        instruction = 0o105201  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        self.sopr.do_single_operand(instruction)
+
+        r1 = self.reg.get(1)
+        assert r1 == 0o000034
 
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"

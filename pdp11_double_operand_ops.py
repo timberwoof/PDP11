@@ -374,19 +374,19 @@ class DoubleOperandOps:
         source_value, source_register, source_address, operand1, assembly1 = self.am.addressing_mode_get(bw, source)
         # print(f'    dest_value = addressing_mode_get')
         dest_value, dest_register, dest_address, operand2, assembly2 = self.am.addressing_mode_get(bw, dest)
-        # print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
+        print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
         # print(f'    result = double_operand_SSDD_instructions')
         try:
             result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
             assembly = f'{self.double_operand_SSDD_instruction_names[name_opcode]} {assembly1},{assembly2}'
-            # print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
-            # print(f'    addressing_mode_set')
+            print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
         except KeyError:
             assembly = 'Error: double operand opcode not found'
             result = False
 
+        # print(f'    addressing_mode_set')
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
         self.sw.stop("double operand ssdd")
 

@@ -68,7 +68,7 @@ class TestClass():
     def test_BIC_2(self):
         print('test_BIC_2')
         # PDP-11/40 p. 4-21
-        self.psw.set_psw(psw=0)
+        self.psw.set_psw(psw=0o777777)
         # evil test puts word data into a byte test and expects byte result
         self.reg.set(3, 0o001234)
         self.reg.set(4, 0o001111)
@@ -82,7 +82,7 @@ class TestClass():
         assert self.reg.get(4) == 0o000101
 
         condition_codes = self.psw.nvzc_to_string()
-        assert condition_codes == "0000"
+        assert condition_codes == "0001"
 
     def test_BICB_2(self):
         print('test_BICB_2')

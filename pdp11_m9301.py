@@ -5,7 +5,12 @@ class M9301:
         print('initializing M9301')
         # 7.3 Micrositch Settings. See p. 7-2 of
         # PDP11 M9301 bootstrap/terminator module maintenance and operator's manual
+        self.ram = ram
         m9301_start_address = ram.top_of_memory - 0o4777  # *** Only supports 16-bit address for now.
+
+        self.base_address = 0o173000
+        self.switch_address = 0o173024
+        self.switch_settings = 0o0
 
         switch81_1 = True  # low rom enable ON = True for normal operation.
         # ON: get PC and PSW from 0o173024 and 0o173026
@@ -42,16 +47,17 @@ class M9301:
 
         # Address switches. Configure this by setting the on/off variable to on or off.
         # These switches are at 0o173024
-        on = 0o000377 # 0 bits in switches
-        off = 0o000000 # 1 bits in switchws
+        on = 0o000000 # 0 bits in switches
+        off = 0o000777 # 1 bits in switchws
+        #  	DIP switches xx01101111  (173440)
         switch81_3 = 0o0400 & off    # bus address bit 8
-        switch81_4 = 0o0200 & off   # bus address bit 7
-        switch81_5 = 0o0100 & off   # bus address bit 6
+        switch81_4 = 0o0200 & on   # bus address bit 7
+        switch81_5 = 0o0100 & on   # bus address bit 6
         switch81_6 = 0o0040 & off    # bus address bit 5
-        switch81_7 = 0o0020 & off   # bus address bit 4
-        switch81_8 = 0o0010 & off   # bus address bit 3
-        switch81_9 = 0o0004 & off   # bus address bit 2
-        switch81_10 = 0o0002 & off  # bus address bit 1
+        switch81_7 = 0o0020 & on   # bus address bit 4
+        switch81_8 = 0o0010 & on   # bus address bit 3
+        switch81_9 = 0o0004 & on   # bus address bit 2
+        switch81_10 = 0o0002 & on  # bus address bit 1
         # Set the switches you want to have '1' digits to on.
         # Where the DEC manual says to have a switch OFF, set off.
         # Thus none of the switches results in CPU Diagnostics with Console Emulator:
@@ -66,15 +72,22 @@ class M9301:
             # Manual says  773000 through 773776 length 0o776
             # That's an offset of about 0o600000
             boot.read_pdp11_assembly_file('source/M9301-YA.txt')
-            switch_address = switch81_3 + switch81_4 + switch81_5 + switch81_6 + \
-                 switch81_7 + switch81_8 + switch81_9 + switch81_10
-            print(f'm9301 switch_address:{oct(switch_address)}')
-            PC = m9301_start_address + switch_address
-            reg.set_pc(PC, f"M9301 switch81_2 True")
+            self.switch_settings = switch81_3 + switch81_4 + switch81_5 + switch81_6 + \
+                 switch81_7 + switch81_8 + switch81_9 + switch81_10 + self.base_address
+            print(f'    switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
+            reg.set_pc(self.switch_settings, f"M9301 switch81_2 True")
         else:
             reg.set_pc(0o24,"M9301 else switch81_2 False")
+
+        # Register address 173024 like an io device
+
+        self.ram.register_io_reader(self.switch_address, self.read_dip_switches)
 
         print(f'initializing M9301 done. PC:{oct(reg.get_pc())}')
 
     # Pylint complains that this has too few public methods.
     # That's perfectly acceptable as this only does anything on startup.
+
+    def read_dip_switches(self):
+        print(f'read_dip_switches returns {oct(self.switch_settings)}')
+        return self.switch_settings
