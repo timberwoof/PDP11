@@ -65,16 +65,17 @@ class Registers:
     def __init__(self):
         print('initializing pdp11_hardware registers')
         self.registermask = 0o07
-        self.sp = 0o06  # R6 is the stack pointer
-        self.pc = 0o07  # R7 is the program counter
-        self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
+        self.__sp = 0o06  # R6 is the stack pointer
+        self.__pc = 0o07  # R7 is the program counter
+        self.__registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
     def get(self, register):
         """read a single register
 
         :param register: integer 0-7
         :return: register contents"""
-        result = self.registers[register]
+        result = self.__registers[register]
+        assert type(result) == type(1)
         #print(f'    ; get R{register}={oct(result)}')
         return result
 
@@ -83,14 +84,14 @@ class Registers:
         :param register: integer 0-7
         :param value: integer
         """
-        #print(f'    ; set R{register}<-{oct(value)}')
-        self.registers[register] = value
+        assert type(value) == type(1)
+        self.__registers[register] = value
         #print(f'    ; confirm set R{register}={oct(self.registers[register])}')
 
     def get_pc(self):
         """get program counter without incrementing.
         :return: program counter"""
-        result = self.registers[self.pc]
+        result = self.__registers[self.__pc]
         # print(f'    get_pc returns {oct(result)}')
         return result
 
@@ -99,15 +100,15 @@ class Registers:
         The Program Counter points to the word after the instruction being interpreted.
 
         :return: new program counter"""
-        self.registers[self.pc] = self.registers[self.pc] + 2
+        self.__registers[self.__pc] = self.__registers[self.__pc] + 2
         # print(f'    inc_pc R7<-{oct(self.registers[self.pc])} called by {whocalled}')
-        return self.registers[self.pc]
+        return self.__registers[self.__pc]
 
     def set_pc(self, newpc=0o24, whocalled=''):
         """set program counter to arbitrary value"""
         # print(f"set_pc({oct(newpc)}, {whocalled})")
         newpc = (newpc & MASK_WORD) # *** might have to be bigger if we use a bigger address space
-        self.registers[self.pc] = newpc
+        self.__registers[self.__pc] = newpc
         # print(f'    set_pc R7<-{oct(newpc)} called by {whocalled}')
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
@@ -122,15 +123,15 @@ class Registers:
         if offset > MASK_LOW_BYTE:  # if we overflowed with the sign bit
             offset = offset | MASK_HIGH_BYTE  # this is now signed word
             offset = fix_sign(offset)
-        newpc = self.registers[self.pc] + offset
-        self.registers[self.pc] = newpc
+        newpc = self.__registers[self.__pc] + offset
+        self.__registers[self.__pc] = newpc
         # print(f'    set_pc_2x_offset pc:{oct(waspc)} by {oct(offset)} to {oct(newpc)} called by {whocalled} ')
 
     def get_sp(self):
         """get stack pointer
 
         :return: stack pointer"""
-        return self.registers[self.sp]
+        return self.__registers[self.__sp]
 
     def set_sp(self, value, whocalled=''):
         """set stack pointer
@@ -138,7 +139,7 @@ class Registers:
         :return: new stack pointer"""
         #wassp =  self.registers[self.SP]
         newsp = (value & MASK_WORD)
-        self.registers[self.sp] = newsp
+        self.__registers[self.__sp] = newsp
         # print(f'{oct(wassp)} setsp {oct(newsp)}')
         return newsp
 
@@ -146,7 +147,7 @@ class Registers:
         """print all the registers in the log"""
         index = 0
         report = ''
-        for register in self.registers:
+        for register in self.__registers:
             report = f'{report} {oct6(register)}'  # f'R{index}:{oct(register)}  '
             index = index + 1
         return report

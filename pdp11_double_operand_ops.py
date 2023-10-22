@@ -76,7 +76,7 @@ class DoubleOperandOps:
         (R, R+1) < (R, R+1) * (src)"""
         # get_c: set if the result < -2^15 or result >= 2^15-1
         # print(f'    MUL {register} * {source}')
-        a = self.reg.registers[register]
+        a = self.reg.get(register)
         result = a * source  # results in a 32-bit number
         high_result = result >> 16
         low_result = result & MASK_WORD
@@ -85,8 +85,8 @@ class DoubleOperandOps:
         self.psw.set_psw(v=0)
         self.psw.set_psw(c=0)  # **** this needs to be handled
         if register % 2 == 0:
-            self.reg.registers[register+1] = high_result
-        return low_result
+            self.reg.set(register+1, high_result)
+        return low_result, ''
 
     def DIV(self, register, source):
         """07 1R SS DIV 4-32
@@ -105,20 +105,20 @@ class DoubleOperandOps:
             v = 0
             c = 0
             self.psw.set_psw(v=v, c=c)
-            return 0
+            return 0, 'DIV Divide by Zero'
 
-        R = self.reg.registers[register]
-        Rv1 = self.reg.registers[register + 1]
+        R = self.reg.get(register)
+        Rv1 = self.reg.get(register + 1)
 
         numerator = (R << 16) + Rv1
         quotient = numerator // source
         remainder = numerator % source
-        self.reg.registers[register] = quotient
-        self.reg.registers[register + 1] = remainder
+        self.reg.set(register, quotient)
+        self.reg.set(register + 1, remainder)
         self.psw.set_n('', quotient)
         self.psw.set_z('', quotient)
         self.psw.set_psw(v=0, c=0)
-        return quotient
+        return quotient, ''
 
     def ASH(self, register, source):
         """07 2R SS ASH arithmetic shift 4-33
@@ -138,9 +138,9 @@ class DoubleOperandOps:
         shifts = source & 0o037
         shift_sign = source & 0o040
         if shift_sign == 0:
-            result = self.reg.registers[register] << shifts
+            result = self.reg.get(register) << shifts
         else:
-            result = self.reg.registers[register] >> (shifts + 1)
+            result = self.reg.get(register) >> (shifts + 1)
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         result_sign = result & 0o100000
@@ -150,7 +150,7 @@ class DoubleOperandOps:
             v = 0
         # *** need to calculate Carry status
         self.psw.set_psw(v=v, c=0)
-        return result
+        return result, ''
 
     def ASHC(self, register, source):
         """07 3R SS ASHC arithmetic shift combined 4-34
@@ -176,10 +176,10 @@ class DoubleOperandOps:
         #    loaded with low order bit when right shift
         #    (loaded with the last bit shifted out of the 32-bit operand)
 
-        result = self.reg.registers[register] >> source
+        result = self.reg.get(register) >> source
         self.psw.set_n('', result)
         self.psw.set_z('', result)
-        return result
+        return result, ''
 
     def XOR(self, register, source):
         """07 4R DD XOR 4-35
@@ -192,18 +192,17 @@ class DoubleOperandOps:
         # get_z set if result = 0: cleared otherwise
         # get_v: cleared
         # get_c: unaffected
-        result = self.reg.registers[register] ^ source
+        result = self.reg.get(register) ^ source
         self.psw.set_n('', result)
         self.psw.set_z('', result)
-        return result
+        return result, ''
 
     def SOB(self, register, source):
         """07 7R NN SOB sutract one and branch 4-63
 
         R < R -1, then maybe branch"""
-        print('SOB unimplemented')
-        result = self.reg.registers[register] * source
-        return result
+        result = self.reg.get(register) * source
+        return result, 'SOB unimplemented'
 
     def is_double_operand_RSS(self, instruction):
         """Using instruction bit pattern, determine whether it's an RSS RDD RNN instruction"""
@@ -229,13 +228,12 @@ class DoubleOperandOps:
         source = instruction & 0o000077
 
         run = True
-        report = f'    {self.double_operand_RSS_instruction_names[opcode]} {oct(instruction)} double_operand_RSS ' +\
-              f'r{register}={oct(self.reg.registers[register])} {oct(source)}'
-        result = self.double_operand_RSS_instructions[opcode](register, source)
+        assembly = f'{self.double_operand_RSS_instruction_names[name_opcode]} {assembly1},{assembly2}'
+        result, report = self.double_operand_RSS_instructions[opcode](register, source)
         # print(f'    result:{oct(result)}')
-        self.reg.registers[register] = result
+        self.reg.set(register, result)
         self.sw.stop("double operand rss")
-        return run, report
+        return run, operand1, operand2, assembly, report
 
     # ****************************************************
     # Double-Operand SSDD instructions
@@ -269,7 +267,7 @@ class DoubleOperandOps:
         self.psw.set_n(BW, source)
         self.psw.set_z(BW, source)
         self.psw.set_psw(v=0)
-        return result  # "**0-"
+        return result, ''
 
     def CMP(self, BW, source, dest):
         """compare 4-24
@@ -279,11 +277,11 @@ class DoubleOperandOps:
         # but don't change the destination
         #result = source - dest
         result = self.byte_mask(BW, source - dest, dest)
-        # print(f'    CMP source:{source} dest:{dest} result:{result}')
+        print(f'    ; CMP source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
-        return dest  # "***-"
+        return dest, ''
 
     def BIT(self, BW, source, dest):
         """bit test 4-28
@@ -299,21 +297,21 @@ class DoubleOperandOps:
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result  # "**0-"
+        return result, ''
 
     def BIC(self, BW, source, dest):
         """bit clear 4-29
 
         (dst) < ~(src)&(dst)"""
-        result = self.byte_mask(BW, ~source & dest, dest)
+        wsource = ~(source | 0o400000) & MASK_WORD
+        result = self.byte_mask(BW, wsource & dest, dest)
         # for byte operations,
         # low-order byte is affected
         # high-order byte is unchanged
-        #print (f'BIC source:{oct(source)} dest:{oct(dest)} result:{oct(result)}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result  # "**0-"
+        return result, f'    ; BIC{BW}({bin(source)},{bin(dest)}) result: {bin(result)}'
 
     def BIS(self, BW, source, dest):
         """bit set 4-30
@@ -323,7 +321,7 @@ class DoubleOperandOps:
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result  # "**0-"
+        return result, ''
 
     def ADDSUB(self, BW, source, dest):
         """06 SS DD: ADD 4-25 (dst) < (src) + (dst)
@@ -340,7 +338,7 @@ class DoubleOperandOps:
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
         # need to detect overflow, truncate result
-        return result  # "****"
+        return result, ''
 
     def is_double_operand_SSDD(self, instruction):
         """Using instruction bit pattern, determine whether it's a souble operand instruction"""
@@ -385,7 +383,7 @@ class DoubleOperandOps:
         run = True
         # print(f'    result = double_operand_SSDD_instructions')
         try:
-            result = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
+            result, report = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
             assembly = f'{self.double_operand_SSDD_instruction_names[name_opcode]} {assembly1},{assembly2}'
             # print(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
         except KeyError:
@@ -396,4 +394,4 @@ class DoubleOperandOps:
         self.am.addressing_mode_set(bw, result, dest_register, dest_address)
         self.sw.stop("double operand ssdd")
 
-        return run, operand1, operand2, assembly
+        return run, operand1, operand2, assembly, report

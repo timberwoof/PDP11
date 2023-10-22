@@ -19,25 +19,24 @@ class NoOperandOps:
         self.no_operand_instructions[0o000005] = self.RESET
         self.no_operand_instructions[0o000006] = self.RTT
 
-        self.no_operand_instruction_namess = {}
-        self.no_operand_instruction_namess[0o000000]= "HALT"
-        self.no_operand_instruction_namess[0o000001]= "WAIT"
-        self.no_operand_instruction_namess[0o000002]= "RTI"
-        self.no_operand_instruction_namess[0o000003]= "BPT"
-        self.no_operand_instruction_namess[0o000004]= "IOT"
-        self.no_operand_instruction_namess[0o000005]= "RESET"
-        self.no_operand_instruction_namess[0o000006]= "RTT"
+        self.no_operand_instruction_names = {}
+        self.no_operand_instruction_names[0o000000]= "HALT"
+        self.no_operand_instruction_names[0o000001]= "WAIT"
+        self.no_operand_instruction_names[0o000002]= "RTI"
+        self.no_operand_instruction_names[0o000003]= "BPT"
+        self.no_operand_instruction_names[0o000004]= "IOT"
+        self.no_operand_instruction_names[0o000005]= "RESET"
+        self.no_operand_instruction_names[0o000006]= "RTT"
 
     def HALT(self):
         """00 00 00 Halt"""
-        return False
+        return False, ''
 
     def WAIT(self):
         """00 00 01 Wait 4-75"""
         # *** unimplemented
-        print('WAIT unimplemented')
         self.reg.inc_pc('WAIT')
-        return False
+        return False, 'WAIT unimplemented'
 
     def RTI(self):
         """00 00 02 RTI return from interrupt 4-69
@@ -45,14 +44,13 @@ class NoOperandOps:
         """
         self.reg.set_pc(self.stack.pop(), "RTI")
         self.psw.set_psw(psw=self.stack.pop())
-        return True
+        return True, 'RTI unimplemented'
 
     def BPT(self):
         """00 00 03 BPT breakpoint trap 4-67"""
         # *** unimplemented
-        print('BPT unimplemented')
         self.reg.inc_pc('BPT')
-        return False
+        return False, 'BPT unimplemented'
 
     def IOT(self):
         """00 00 04 IOT input/output trap 4-68
@@ -69,20 +67,19 @@ class NoOperandOps:
         self.stack.push(self.reg.get_pc())
         self.reg.set_pc(0o20, "IOT")
         self.reg.set_sp(0o22, "IOT")
-        return True
+        return True, ''
 
     def RESET(self):
         """00 00 05 RESET reset external bus 4-76"""
         # *** unimplemented
-        print('BPT unimplemented')
-        return True
+        return True, 'BPT unimplemented'
 
     def RTT(self):
         """00 00 06 RTT return from interrupt 4-70"""
         self.reg.set_pc(self.stack.pop(), "RTT")
         self.reg.set_sp(self.stack.pop(), "RTT")
         self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
-        return True
+        return True, ''
 
     def is_no_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
@@ -93,10 +90,11 @@ class NoOperandOps:
         # parameter: opcode of form * 000 0** *** *** ***
         self.sw.start("no operand")
         try:
-            assembly = f'{self.no_operand_instruction_namess[instruction]} {oct(instruction)} no-operand instruction'
-            result = self.no_operand_instructions[instruction]()
+            assembly = f'{self.no_operand_instruction_names[instruction]}'
+            result, report = self.no_operand_instructions[instruction]()
         except KeyError:
-            assembly = 'Error: no-operand opcode not found'
+            assembly = ''
+            report = 'Error: no-operand opcode not found'
             result = False
         self.sw.stop("no operand")
-        return result, '', '', assembly
+        return result, '', '', assembly, report

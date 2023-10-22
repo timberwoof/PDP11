@@ -93,42 +93,43 @@ class PDP11():
         run = True
 
         if self.ccops.is_condition_code_operation(instruction):
-            run, operand1, operand2, assembly = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
 
         elif self.br.is_branch(instruction):
-            run, operand1, operand2, assembly = self.br.do_branch(instruction)
+            run, operand1, operand2, assembly, report = self.br.do_branch(instruction)
 
         elif self.nopr.is_no_operand(instruction):
-            run, operand1, operand2, assembly = self.nopr.do_no_operand(instruction)
+            run, operand1, operand2, assembly, report = self.nopr.do_no_operand(instruction)
 
         elif self.sopr.is_single_operand(instruction):
-            run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+            run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
 
         elif self.dopr.is_double_operand_RSS(instruction):
-            run, operand1, operand2, assembly = self.dopr.do_double_operand_RSS(instruction)
+            run, operand1, operand2, assembly, report = self.dopr.do_double_operand_RSS(instruction)
 
         elif self.dopr.is_double_operand_SSDD(instruction):
-            run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+            run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
 
         else:
-            run, operand1, operand2, assembly = self.other.other_opcode(instruction)
+            run, operand1, operand2, assembly, report = self.other.other_opcode(instruction)
 
-        return run, operand1, operand2, assembly
+        return run, operand1, operand2, assembly, report
 
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
+        print('----')
         self.sw.start("instruction cycle")
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
-        # print(f'pc:{oct(self.reg.get_pc())}')
-        # decode and execute opcode
-        run, operand1, operand2, report = self.dispatch_opcode(instruction)
-        print(f'{oct6(pc)} {oct6(instruction)} {pad(report, 20)};{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
+        print(f'{oct6(pc)} {oct6(instruction)} {pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         if operand1 != '':
             print(f'{oct6(pc+2)} {pad(operand1, 7)}')
         if operand2 != '':
             print(f'{oct6(pc+4)} {pad(operand2, 7)}')
+        if report != '':
+            print(report)
         self.sw.stop("instruction cycle")
         return run
 

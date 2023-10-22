@@ -5,6 +5,34 @@ class M9301:
         print('initializing M9301')
         # 7.3 Micrositch Settings. See p. 7-2 of
         # PDP11 M9301 bootstrap/terminator module maintenance and operator's manual
+        # https://gunkies.org/wiki/M9301_ROM
+
+        # M9301-YA - (ROMs 034A9, 035A9, 036A9, 037A9) -
+        # PDP-11/04 and PDP-11/34 OEM version; had basic diagnostics,
+        # console emulator, booted from various devices
+        # (RK11 and RP11 disks, TC11 DECtape, TM11 magnetic tape, serial line,
+        # PC11 high-speed paper-tape reader, TA11 casette tape, RX11 8-inch floppy disk),
+        # supported auto-boot on power on, and also power-fail restart
+
+        # M9301-YB - (ROMs 038A9, 039A9, 040A9, 041A9) -
+        # /04 and /34 end user version; had basic diagnostics,
+        # console emulator, booted from various devices
+        # (RK11, RP11, TC11, TM11, TA11, RX11, serial line,
+        # high-speed paper-tape reader, RJS, RJP, TJU),
+        # also power-fail restart
+
+        # M9301-YF - (ROMs 480A9, 481A9, 482A9, 483A9) -
+        # All models (auto-start not available on PDP-11/45, PDP-11/50);
+        # had basic diagnostics, console emulator, booted from various devices
+        # (RK11, RK06, RP11, TC11, TM11, TA11, RX11, serial line,
+        # high-speed paper-tape reader, RJS, RJP, TJU),
+        # supported auto-boot on power on, and also power-fail restart
+
+        # M9301-YH - (ROMs 332A9, 333A9, 334A9, 335A9) -
+        # /60 and /70 version; contained basic CPU, cache and memory diagnostics,
+        # booted from various devices
+        # (TM11, TC11, RK11, RP11, RK06, RJS, RJP, TJU, RX11, high-speed paper-tape reader)
+
         self.ram = ram
         m9301_start_address = ram.top_of_memory - 0o4777  # *** Only supports 16-bit address for now.
 

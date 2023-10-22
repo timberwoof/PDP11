@@ -164,7 +164,7 @@ class SingleOperandOps:
         """00 01 DD JMP jump 4-56"""
         # print(f'JMP calling set_pc({oct(operand)})')
         self.reg.set_pc(operand, 'JMP')
-        return operand
+        return operand, ''
 
     def SWAB(self, operand, B):
         """00 03 DD Swap Bytes 4-17"""
@@ -177,13 +177,13 @@ class SingleOperandOps:
         self.psw.set_n("B", result & 0x00FF)
         self.psw.set_z("B", result & 0x00FF)
         self.psw.set_psw(v=0, c=0)
-        return result
+        return result, ''
 
     def CLR(self, operand, B):
         """00 50 DD Clear Destination"""
         result = self.byte_mask(B, 0, operand)
         self.psw.set_psw(n=0, z=1, v=0, c=0)
-        return result
+        return result, ''
 
     def COM(self, operand, B):
         """00 51 DD Complement Destination"""
@@ -193,11 +193,10 @@ class SingleOperandOps:
         woperand = operand | 0o400000
         result = ~woperand & MASK_WORD
         result = self.byte_mask(B, result, operand)
-        print(f'COM({bin(operand)})={bin(result)}')
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
         self.psw.set_psw(v=0, c=1)
-        return result
+        return result, f'COM({bin(operand)})={bin(result)}'
 
     def INC(self, operand, B):
         """00 52 DD Increment Destination"""
@@ -206,18 +205,16 @@ class SingleOperandOps:
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
-        return result
+        return result, ''
 
     def DEC(self, operand, B):
         """00 53 DD Decrement Destination"""
         result = operand -1
-        print(f'DEC({oct(operand)}) = {oct(result)}')
         result = self.byte_mask(B, result, operand)
-        print(f'DEC({oct(operand)}) = {oct(result)}')
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
-        return result
+        return result, f'DEC({oct(operand)}) = {oct(result)}'
 
     def NEG(self, operand, B):
         """00 54 DD negate Destination"""
@@ -226,26 +223,26 @@ class SingleOperandOps:
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
-        return result
+        return result, ''
 
     def ADC(self, operand, B):
         """00 55 DD Add Carry"""
         result = operand + self.psw.get_c()
         result = self.byte_mask(B, result, operand)
-        return result
+        return result, ''
 
     def SBC(self, operand, B):
         """00 56 DD Subtract Carry"""
         result = operand - self.psw.get_c()
         result = self.byte_mask(B, result, operand)
-        return result
+        return result, ''
 
     def TST(self, operand, B):
         """00 57 DD Test Destination"""
         self.psw.set_n(B, operand)
         self.psw.set_z(B, operand)
         self.psw.set_psw(v=0, c=0)
-        return operand
+        return operand, ''
 
     def ROR(self, operand, B):
         """00 60 DD ROR rotate right"""
@@ -269,7 +266,7 @@ class SingleOperandOps:
         C = result & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result
+        return result, ''
 
     def ROL(self, operand, B):
         """00 61 DD ROL rotate left"""
@@ -296,7 +293,7 @@ class SingleOperandOps:
         C = result & msb >> bits
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result
+        return result, ''
 
     def ASR(self, operand, B):
         """00 62 DD ASR arithmetic shift right"""
@@ -317,7 +314,7 @@ class SingleOperandOps:
         C = result & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result
+        return result, ''
 
     def ASL(self, operand, B):
         """00 63 DD ASL arithmetic shift left"""
@@ -340,7 +337,7 @@ class SingleOperandOps:
         C = result & msb >> bits
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result
+        return result, ''
 
     def SXT(self, operand, B):
         """00 67 DD Sign Extend"""
@@ -355,49 +352,42 @@ class SingleOperandOps:
             Z = self.psw.get_z()
         self.psw.set_psw(z=Z)
         result = self.byte_mask(B, result, operand)
-        return result
+        return result, ''
 
     def MARK (self, operand, B):
         # standard PDP11 subroutine return
         # stack operation LSI11-03
-        print('MARK **** not implemented')
-        return operand
+        return operand, 'MARK **** not implemented'
 
     def MTPS (self, operand, B):
         # move byte to PSW
         # stack operation LSI11-03
-        print('MTPS **** not implemented')
-        return operand
+        return operand, 'MTPS **** not implemented'
 
     def MFPI (self, operand, B):
         # Move from Previous Instruction Space
         # MMU instruction not in LSI11-03
-        print('MFPI NOT IMPLEMENTED')
-        return operand
+        return operand, 'MFPI NOT IMPLEMENTED'
 
     def MTPI (self, operand, B):
         # move to previous instruction space
         # MMU instruction not in LSI11-03
-        print('MTPI NOT IMPLEMENTED')
-        return operand
+        return operand, 'MTPI NOT IMPLEMENTED'
 
     def MFPS (self, operand, B):
         # Not PDP11-40
         # MMU instruction not in LSI11-03
-        print('MFPS NOT IMPLEMENTED')
-        return operand
+        return operand, 'MFPS NOT IMPLEMENTED'
 
     def MFPD(self, operand, B):
         """10 65 SS Move from previous data space"""
         # MMU instruction not in LSI11-03
-        print('MFPD NOT IMPLEMENTED')
-        return operand
+        return operand, 'MFPD NOT IMPLEMENTED'
 
     def MTPD(self, operand, B):
         """10 66 SS Move to previous data space"""
         # MMU instruction not in LSI11-03
-        print('MTPD NOT IMPLEMENTED')
-        return operand
+        return operand, 'MTPD NOT IMPLEMENTED'
 
     def is_single_operand(self, instruction):
         """Using instruction bit pattern, determine whether it's a single-operand instruction"""
@@ -411,12 +401,10 @@ class SingleOperandOps:
         # bits 5-0 can be anything
         # 0o000301 is one of these
         # 0 000 000 101 *** ***
-        # print(f'    is_single_operand({oct(instruction)})')
         bits_14_13_12 = instruction & 0o070000 == 0o000000
         bits_11_10_9 = instruction & 0o007000 in [0o006000, 0o005000]
         is_jmp = instruction & 0o177700 == 0o000100
         is_swab = instruction & 0o177700 == 0o000300
-        # print(f'    is_single_operand {bits_14_13_12} {bits_11_10_9} {is_swab}  {is_jmp}')
         return (bits_14_13_12 and bits_11_10_9) or is_swab or is_jmp
 
     def do_single_operand(self, instruction):
@@ -442,17 +430,17 @@ class SingleOperandOps:
             # special handling for JMP with R7.
             run, source_value, operand, assembly = self.am.addressing_mode_jmp(source)
             assembly = f'{self.single_operand_instruction_names[opcode]} {assembly}'
-            result = self.single_operand_instructions[opcode](source_value, BW)
+            result, report = self.single_operand_instructions[opcode](source_value, BW)
         else:
             source_value, out_register, out_address, operand, assembly = self.am.addressing_mode_get(BW, source)
             assembly = f'{self.single_operand_instruction_names[opcode]} {assembly}'
             try:
-                result = self.single_operand_instructions[opcode](source_value, BW)
-                #print(f'    result:{oct(result)}  source_value:{oct(source_value)}  out_address:{oct(out_address)}  ')
+                result, report = self.single_operand_instructions[opcode](source_value, BW)
                 self.am.addressing_mode_set(BW, result, out_register, out_address)
             except KeyError:
-                assembly = 'Error: single-operand opcode not found'
+                assembly = ''
+                report = 'Error: single-operand opcode not found'
                 result = False
 
         self.sw.stop("single operand")
-        return run, operand, '', assembly
+        return run, operand, '', assembly, report

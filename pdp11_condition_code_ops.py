@@ -29,4 +29,4 @@ class ConditionCodeOps:
             assembly = f'CLRCC {oct(clr_bits)}'
             self.psw.set_nzvc(set_bits)
         self.sw.stop("condition code")
-        return True, '', '', assembly
+        return True, '', '', assembly, ''

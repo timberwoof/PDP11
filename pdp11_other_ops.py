@@ -35,11 +35,10 @@ class OtherOps:
         | PC <- reg
         | reg <- (SP)^
         """
-        print('RTS')
         R = instruction & 0o000007
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS R{R}')
         self.reg.set_pc(self.reg.get(R), "RTS")
         self.reg.set(R, self.stack.pop())
+        return 'RTS', f'    {oct(self.reg.get_pc())} {oct(instruction)} RTS R{R}'
 
     def JSR(self, instruction):
         """00 4R DD: JSR jump to subroutine 4-58
@@ -50,27 +49,26 @@ class OtherOps:
         """
         R = (instruction & 0o000700) >> 6
         DD = instruction & 0o000077
-        print(f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)}')
         run, address = self.am.addressing_mode_jmp(DD)
-        print(f'    address:{oct(address)}')
         self.stack.push(self.reg.get(R))
         self.reg.set(R, self.reg.get_pc())
         self.reg.set_pc(self.ram.read_word(address), "JSR")
+        return 'JSR', f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)} address:{oct(address)}'
 
     def MARK(self, instruction):
         """00 64 NN mark 46-1"""
         # *** unimplemented
-        print(f'    MARK {oct(instruction)} unimplemented')
+        return 'MARK', f'{oct(instruction)} unimplemented'
 
     def MFPI(self, instruction):
         """00 65 SS move from previous instruction space 4-77"""
         # *** unimplemented
-        print(f'    MFPI {oct(instruction)} unimplemented')
+        return 'MFPI', f'{oct(instruction)} unimplemented'
 
     def MTPI(self, instruction):
         """00 66 DD move to previous instruction space 4-78"""
         # *** unimplemented
-        print(f'    MTPI {oct(instruction)} unimplemented')
+        return 'MTPI', f'{oct(instruction)} unimplemented'
 
     def is_other_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
@@ -90,11 +88,11 @@ class OtherOps:
                 opcode = masked2
             else:
                 opcode = masked1
-            assemblu = f'instruction:{oct(instruction)} opcode:{oct(opcode)}'
-            self.other_instructions[opcode](instruction)
+            assembly, report = self.other_instructions[opcode](instruction)
             result = True
         except KeyError:
-            assemblu = 'Error: other opcode not found'
+            assembly = f'{oct(instruction)}'
+            report = 'Error: other opcode not found'
             result =  False
         self.sw.stop("other_opcode")
-        return result, '', '', assemblu
+        return result, '', '', assembly, report
