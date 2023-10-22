@@ -85,6 +85,7 @@ class Registers:
         :param value: integer
         """
         assert type(value) == type(1)
+        assert value <= MASK_WORD
         self.__registers[register] = value
         #print(f'    ; confirm set R{register}={oct(self.registers[register])}')
 
@@ -104,10 +105,10 @@ class Registers:
         # print(f'    inc_pc R7<-{oct(self.registers[self.pc])} called by {whocalled}')
         return self.__registers[self.__pc]
 
-    def set_pc(self, newpc=0o24, whocalled=''):
+    def set_pc(self, newpc, whocalled=''):
         """set program counter to arbitrary value"""
         # print(f"set_pc({oct(newpc)}, {whocalled})")
-        newpc = (newpc & MASK_WORD) # *** might have to be bigger if we use a bigger address space
+        assert newpc <= MASK_WORD
         self.__registers[self.__pc] = newpc
         # print(f'    set_pc R7<-{oct(newpc)} called by {whocalled}')
 
@@ -133,15 +134,12 @@ class Registers:
         :return: stack pointer"""
         return self.__registers[self.__sp]
 
-    def set_sp(self, value, whocalled=''):
+    def set_sp(self, newsp, whocalled=''):
         """set stack pointer
 
         :return: new stack pointer"""
-        #wassp =  self.registers[self.SP]
-        newsp = (value & MASK_WORD)
+        assert newsp <= MASK_WORD
         self.__registers[self.__sp] = newsp
-        # print(f'{oct(wassp)} setsp {oct(newsp)}')
-        return newsp
 
     def registers_to_string(self):
         """print all the registers in the log"""
@@ -203,17 +201,20 @@ class Ram:
 
     def register_io_writer(self, device_address, method):
         """map i/o write handler into memory"""
+        assert device_address < self.top_of_memory
         print(f'    register_io_writer({oct(device_address)}, {method.__name__})')
         self.iomap_writers[device_address] = method
 
     def register_io_reader(self, device_address, method):
         """map i/o read handler into memory"""
+        assert device_address < self.top_of_memory
         print(f'    register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
 
     def write_byte(self, address, data):
         """write a byte to memory.
         address can be even or odd"""
+        assert address < self.top_of_memory
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers:
             # print(f'    write_byte io({oct(address)}, {oct(data)})')
@@ -224,6 +225,7 @@ class Ram:
 
     def read_byte(self, address):
         """Read one byte of memory."""
+        assert address < self.top_of_memory
         if address in self.iomap_readers:
             result = self.iomap_readers[address]()
             # print(f'    read_byte io({oct(address)}) returns {oct(result)}')
@@ -240,6 +242,8 @@ class Ram:
         :param data:
         """
         # print(f'    write_word({oct(address)}, {oct(data)})')
+        assert address < self.top_of_memory
+        assert data <= MASK_WORD
         if address in self.iomap_writers:
             # print(f'write_word io({oct(address)}, {oct(data)})')
             self.iomap_writers[address] = (data)
@@ -258,6 +262,7 @@ class Ram:
         Crashes silumlator if we go out of bounds."""
         # Low bytes are stored at even-numbered memory locations
         # and high bytes at are stored at odd-numbered memory locations.
+        assert address < self.top_of_memory
         result = ""
         if address in self.iomap_readers:
             result =  self.iomap_readers[address]()

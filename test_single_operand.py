@@ -28,7 +28,7 @@ class TestClass():
 
         instruction = 0o05001  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "CLR R1"
 
         r1 = self.reg.get(1)
@@ -46,7 +46,7 @@ class TestClass():
 
         instruction = 0o005101 # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "COM R1"
 
         r1 = self.reg.get(1)
@@ -65,7 +65,7 @@ class TestClass():
 
         instruction = 0o005101 # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "COM R1"
 
         r1 = self.reg.get(1)
@@ -81,7 +81,7 @@ class TestClass():
 
         instruction = 0o105101 # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "COMB R1"
 
         r1 = self.reg.get(1)
@@ -97,7 +97,7 @@ class TestClass():
 
         instruction = 0o05201  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "INC R1"
 
         r1 = self.reg.get(1)
@@ -113,7 +113,7 @@ class TestClass():
 
         instruction = 0o105201  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "INCB R1"
 
         r1 = self.reg.get(1)
@@ -129,7 +129,7 @@ class TestClass():
 
         instruction = 0o05301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -145,7 +145,7 @@ class TestClass():
 
         instruction = 0o05301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -161,7 +161,7 @@ class TestClass():
 
         instruction = 0o05301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -177,7 +177,7 @@ class TestClass():
 
         instruction = 0o105301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "DECB R1"
 
         r1 = self.reg.get(1)
@@ -194,7 +194,7 @@ class TestClass():
 
         instruction = 0o000301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -211,7 +211,7 @@ class TestClass():
 
         instruction = 0o000301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -229,7 +229,7 @@ class TestClass():
 
         instruction = 0o000301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -248,7 +248,7 @@ class TestClass():
 
         instruction = 0o000301  # mode 0 R1
         assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly = self.sopr.do_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -257,3 +257,57 @@ class TestClass():
 
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1000" # NZVC
+
+    def test_ROR_1(self):
+        print('\ntest_ROR_1')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1111111100000000)
+        instruction = 0o006001  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert assembly == "ROR R1"
+        r1 = self.reg.get(1)
+        assert r1 == 0b0111111110000000
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000" # NZVC
+
+    def test_ROR_2(self):
+        print('\ntest_ROR_2')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b0000000011111111)
+        instruction = 0o006001  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert assembly == "ROR R1"
+        r1 = self.reg.get(1)
+        assert r1 == 0b1000000001111111
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1001" # NZVC
+
+    def test_RORB_1(self):
+        print('\ntest_RORB_1')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b0000111111110000)
+        instruction = 0o106001  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert assembly == "RORB R1"
+        print (report)
+        r1 = self.reg.get(1)
+        assert r1 == 0b1000011111111000
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1010" # NZVC
+
+    def test_RORB_2(self):
+        print('\ntest_RORB_2')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1111000000001111)
+        instruction = 0o106001  # mode 0 R1
+        assert self.sopr.is_single_operand(instruction)
+        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert assembly == "RORB R1"
+        print (report)
+        r1 = self.reg.get(1)
+        assert r1 == 0b0111100010000111
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1001" # NZVC

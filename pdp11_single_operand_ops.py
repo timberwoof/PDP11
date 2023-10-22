@@ -169,10 +169,10 @@ class SingleOperandOps:
     def SWAB(self, operand, B):
         """00 03 DD Swap Bytes 4-17"""
         # Exchanges high-order byte and low-order byte of the destination word
-        # get_n: set if high-order bit of low-order byte (bit 7) of result is set; cleared otherwise
-        # get_z: set if low-order byte of result = 0; cleared otherwise
-        # get_v: cleared
-        # get_c: cleared
+        # n: set if high-order bit of low-order byte (bit 7) of result is set; cleared otherwise
+        # z: set if low-order byte of result = 0; cleared otherwise
+        # v: cleared
+        # c: cleared
         result = ((operand & 0xFF00) >> 8) + ((operand & 0x00FF) << 8)
         self.psw.set_n("B", result & 0x00FF)
         self.psw.set_z("B", result & 0x00FF)
@@ -247,38 +247,45 @@ class SingleOperandOps:
     def ROR(self, operand, B):
         """00 60 DD ROR rotate right"""
         # Rotates all bits of the destination right one place.
-        # Bit 0 is loaded into the get_c-bit and
-        # the previous contents of the get_c-bit are loaded into bit 15 of the destination.
-        # get_n: set if the high-order bit of the result is set (result < 0); cleared otherwise
-        # get_z: set if all bits of result = 0; cleared otherwise
-        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit
+        # Bit 0 is loaded into the internal C-bit and
+        # the previous contents of the carry-bit are loaded into bit 15 of the destination.
+        # N: set if the high-order bit of the result is set (result < 0); cleared otherwise
+        # Z: set if all bits of result = 0; cleared otherwise
+        # C: loaded with the low-order bit of the destination
+        # V: loaded with the Exclusive OR of N and C
         # (as set by the completion of the rotate operation)
-        # get_c: loaded with the low-order bit of the destination
-        rotatebit = operand & 0o01
         if B == "B":
-            bits = 8
+            bit8 = (operand & 0b0000000100000000) << 7
+            highbyte = operand & MASK_HIGH_BYTE | 0o400000
+            bit0 = (operand & 0o0000000000000001) << 7
+            lowbyte = operand & MASK_LOW_BYTE | 0o400000
+            result = bit8 | (highbyte >> 1) | bit0 | (lowbyte >> 1)
+            byteresult = result & MASK_LOW_BYTE
         else:
-            bits = 16
-        result = operand >> 1 + rotatebit << bits
-        result = self.byte_mask(B, result, operand)
+            operand = operand | 0o400000  # set the high bit for python weirdness
+            bit0 = (operand & 0o0000000000000001) << 15
+            result = bit0 | (operand >> 1)
+            operand = operand & MASK_WORD
+
+        result = result & MASK_WORD  # take off that bit
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)
         C = result & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result, ''
+        return result, f'ROR {bin(operand)} -> {bin(result)}'
 
     def ROL(self, operand, B):
         """00 61 DD ROL rotate left"""
         # Rotate all bits of the destination left one place.
-        # Bit 15 is loaded into the get_c·bit of the status word and
-        # the previous contents of the get_c-bit are loaded into Bit 0 of the destination.
-        # get_n: set if the high-order bit of the result word is set
+        # Bit 15 is loaded into the carry·bit of the status word and
+        # the previous contents of the carry-bit are loaded into Bit 0 of the destination.
+        # N: set if the high-order bit of the result word is set
         # (result < 0): cleared otherwise
-        # get_z: set if all bits of the result word =0; cleared otherwise
-        # get_v: loaded with the Exclusive OR of the get_n-bit and get_c-bit
+        # Z: set if all bits of the result word =0; cleared otherwise
+        # V: loaded with the Exclusive OR of the get_n-bit and carry-bit
         # (as set by the completion of the rotate operation)
-        # get_c: loaded with the high-order bit of the destination
+        # C: loaded with the high-order bit of the destination
         if B == "B":
             msb = MASK_WORD_MSB & operand
             bits = 8
@@ -298,11 +305,11 @@ class SingleOperandOps:
     def ASR(self, operand, B):
         """00 62 DD ASR arithmetic shift right"""
         # Shifts all bits of the destination right one place. Bit 15 is replicated.
-        # get_n: set if the high-order bit of the result is set (result < 0); cleared otherwise
-        # get_z: set if the result = 0; cleared otherwise
-        # get_v: loaded from the Exclusive OR of theN-bit and get_c-bit
+        # n: set if the high-order bit of the result is set (result < 0); cleared otherwise
+        # z: set if the result = 0; cleared otherwise
+        # v: loaded from the Exclusive OR of n-bit and c-bit
         # (as set by the completion of the shift operation)
-        # get_c: loaded from low-order bit of the destination
+        # c: loaded from low-order bit of the destination
         if B == "B":
             msb = MASK_WORD_MSB & operand
         else:
@@ -319,11 +326,11 @@ class SingleOperandOps:
     def ASL(self, operand, B):
         """00 63 DD ASL arithmetic shift left"""
         # Shifts all bits of the destination left one place. Bit 0 is loaded with an 0.
-        # get_n: set if high-order bit of the result is set (result < 0); cleared otherwise
-        # get_z: set if the result =0; cleared otherwise
-        # get_v: loaded with the exclusive OR of the get_n-bit and get_c-bit
+        # n: set if high-order bit of the result is set (result < 0); cleared otherwise
+        # z: set if the result =0; cleared otherwise
+        # v: loaded with the exclusive OR of the n-bit and c-bit
         # (as set by the completion of the shift operation)
-        # get_c: loaded with the high-order bit of the destination
+        # c: loaded with the high-order bit of the destination
         result = operand << 1
         result = self.byte_mask(B, result, operand)
         if B == "B":
@@ -343,7 +350,7 @@ class SingleOperandOps:
         """00 67 DD Sign Extend"""
         # (dst)<- 0 if get_n bit is clear
         # (dst)<- -1 get_n bit is set
-        # get_z: set if get_n bit clear
+        # Z: set if get_n bit clear
         if self.psw.get_n() == 0:
             result = 0
             Z = 1
