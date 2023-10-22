@@ -135,6 +135,22 @@ class SingleOperandOps:
         self.single_operand_instruction_texts[0o106600] = "move to previous data space"
         self.single_operand_instruction_texts[0o106700] = "move from psw"
 
+    def byte_mask(self, BW, value, target):
+        """mask source and result like PDP11 does
+        @param BW:
+        @param value: new value to stuff into the return value
+        @param target: resgiter where it's going
+        @return: result with maybe old high byte
+        """
+        if BW == 'B':
+            # Only make the operation affect the low byte
+            # The target high byte remains unnafected
+            return_value = (value & MASK_LOW_BYTE) | (target & MASK_HIGH_BYTE)
+            #print(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
+        else:
+            return_value = value
+        return return_value
+
     def mask(self, value, B):
         """Apply the correct byte or word mask to the value"""
         result = 0o0
@@ -165,7 +181,7 @@ class SingleOperandOps:
 
     def CLR(self, operand, B):
         """00 50 DD Clear Destination"""
-        result = 0o0
+        result = self.byte_mask(B, 0, operand)
         self.psw.set_psw(n=0, z=1, v=0, c=0)
         return result
 
@@ -173,7 +189,11 @@ class SingleOperandOps:
         """00 51 DD Complement Destination"""
         # Replaces the contents of the destination address by their logical complement
         # (each bit equal to 0 is set and each bit equal to 1 is cleared)
-        result = ~operand
+        # Because of the way Python does things, we add a leading bit and then strip it off.
+        woperand = operand | 0o400000
+        result = ~woperand & MASK_WORD
+        result = self.byte_mask(B, result, operand)
+        print(f'COM({bin(operand)})={bin(result)}')
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
         self.psw.set_psw(v=0, c=1)
@@ -182,6 +202,7 @@ class SingleOperandOps:
     def INC(self, operand, B):
         """00 52 DD Increment Destination"""
         result = operand + 1
+        result = self.byte_mask(B, result, operand)
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
@@ -189,7 +210,10 @@ class SingleOperandOps:
 
     def DEC(self, operand, B):
         """00 53 DD Decrement Destination"""
-        result = operand - 1
+        result = operand -1
+        print(f'DEC({oct(operand)}) = {oct(result)}')
+        result = self.byte_mask(B, result, operand)
+        print(f'DEC({oct(operand)}) = {oct(result)}')
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
@@ -198,24 +222,23 @@ class SingleOperandOps:
     def NEG(self, operand, B):
         """00 54 DD negate Destination"""
         result = -operand
+        result = self.byte_mask(B, result, operand)
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
-        if result == 0:
-            C = 1
-        else:
-            C = 0
-        return self.mask(result, B)
+        return result
 
     def ADC(self, operand, B):
         """00 55 DD Add Carry"""
         result = operand + self.psw.get_c()
-        return self.mask(result, B)
+        result = self.byte_mask(B, result, operand)
+        return result
 
     def SBC(self, operand, B):
         """00 56 DD Subtract Carry"""
         result = operand - self.psw.get_c()
-        return self.mask(result, B)
+        result = self.byte_mask(B, result, operand)
+        return result
 
     def TST(self, operand, B):
         """00 57 DD Test Destination"""
@@ -240,12 +263,13 @@ class SingleOperandOps:
         else:
             bits = 16
         result = operand >> 1 + rotatebit << bits
+        result = self.byte_mask(B, result, operand)
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)
         C = result & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return self.mask(result, B)
+        return result
 
     def ROL(self, operand, B):
         """00 61 DD ROL rotate left"""
@@ -266,12 +290,13 @@ class SingleOperandOps:
             bits = 16
         rotatebit = operand & msb
         result = operand << 1 + rotatebit >> bits
+        result = self.byte_mask(B, result, operand)
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)
         C = result & msb >> bits
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return self.mask(result, B)
+        return result
 
     def ASR(self, operand, B):
         """00 62 DD ASR arithmetic shift right"""
@@ -286,6 +311,7 @@ class SingleOperandOps:
         else:
             msb = MASK_BYTE_MSB & operand
         result = (operand >> 1) | msb
+        result = self.byte_mask(B, result, operand)
         N = self.psw.set_n(B, result)
         Z = self.psw.set_z(B, result)
         C = result & 0o01
@@ -302,6 +328,7 @@ class SingleOperandOps:
         # (as set by the completion of the shift operation)
         # get_c: loaded with the high-order bit of the destination
         result = operand << 1
+        result = self.byte_mask(B, result, operand)
         if B == "B":
             msb = MASK_WORD_MSB & result
             bits = 8
@@ -327,6 +354,7 @@ class SingleOperandOps:
             result = 1
             Z = self.psw.get_z()
         self.psw.set_psw(z=Z)
+        result = self.byte_mask(B, result, operand)
         return result
 
     def MARK (self, operand, B):

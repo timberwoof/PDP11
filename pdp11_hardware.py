@@ -323,6 +323,7 @@ class PSW:
     """PDP11 Processor Status Word"""
 
     #  f'nvzc_to_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
+    # PSW memory locaiton needs to be registered like an io device
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
@@ -362,6 +363,9 @@ class PSW:
         self.z_mask = 0o000004  # Zero
         self.v_mask = 0o000002  # Overflow
         self.c_mask = 0o000001  # Carry
+
+        # set up psw as an io device so we're not constantly writing to ram
+        self.ram.register_io_reader(self.psw_address, self.get_psw)
 
         print(f'    psw initilialized @{oct(self.psw_address)}')
 
@@ -408,8 +412,6 @@ class PSW:
         if c > -1:
             self.psw = (self.psw & ~self.c_mask) | c
             # print(f'set_psw get_c self.PSW:{self.PSW}')
-        # print(f'set_psw will write {oct(self.PSW)} to {oct(self.PSW_address)}')
-        self.ram.write_word(self.psw_address, self.psw)
 
     def set_nzvc(self, value):
         """set condition codes (last four bits of psw)"""
