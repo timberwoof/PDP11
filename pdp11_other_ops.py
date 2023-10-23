@@ -49,11 +49,11 @@ class OtherOps:
         """
         R = (instruction & 0o000700) >> 6
         DD = instruction & 0o000077
-        run, address = self.am.addressing_mode_jmp(DD)
+        run, jump_address, operand_word, assembly = self.am.addressing_mode_jmp(DD)
         self.stack.push(self.reg.get(R))
         self.reg.set(R, self.reg.get_pc())
-        self.reg.set_pc(self.ram.read_word(address), "JSR")
-        return 'JSR', f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)} address:{oct(address)}'
+        self.reg.set_pc(self.ram.read_word(jump_address), "JSR")
+        return 'JSR', f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)} address:{oct(jump_address)}'
 
     def MARK(self, instruction):
         """00 64 NN mark 46-1"""

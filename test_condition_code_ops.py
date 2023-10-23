@@ -33,7 +33,7 @@ class TestClass():
             instruction = self.SEX(test_code)
             assert self.ccops.is_condition_code_operation(instruction)
 
-            run, operand1, operand2, assembly = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
             print(assembly)
@@ -51,7 +51,7 @@ class TestClass():
 
             expected = (self.psw.get_psw() & self.psw_bits) & ~test_code
 
-            run, operand1, operand2, assembly = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
             print(assembly)

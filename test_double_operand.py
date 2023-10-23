@@ -78,7 +78,7 @@ class TestClass():
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == 'BIC R1,R2'
 
         r2 = self.reg.get(2)
@@ -97,7 +97,7 @@ class TestClass():
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == 'BICB R1,R2'
 
         r2 = self.reg.get(2)
@@ -116,7 +116,7 @@ class TestClass():
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "BIC R3,R4"
 
         assert self.reg.get(3) == 0o001234
@@ -135,7 +135,7 @@ class TestClass():
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "BICB R3,R4"
 
         assert self.reg.get(3) == 0o001234
@@ -151,7 +151,7 @@ class TestClass():
         self.reg.set(4,0o000000)
         instruction = self.op(opcode=0o010000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "MOV R3,R4"
 
         r3 = self.reg.get(3)
@@ -170,7 +170,7 @@ class TestClass():
         self.reg.set(4,0b0000000000000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -189,7 +189,7 @@ class TestClass():
         self.reg.set(4,0b0000000000000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -208,7 +208,7 @@ class TestClass():
         self.reg.set(4,0b1010011100000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -222,7 +222,7 @@ class TestClass():
 
     def test_MOVB_04(self):
         print('\ntest_MOVB_04')
-        # 1165250 112512 MOVB (R5)+,@R2 from M9301-YA
+        # 165250 112512 MOVB (R5)+,@R2 from M9301-YA
         # MOVB (R5)+,@R2
         self.psw.set_psw(psw=0o777777)
         self.reg.set(2,0o000500)
@@ -234,9 +234,9 @@ class TestClass():
         assert self.ram.read_word(self.reg.get(5)) == 0o177777
 
         instruction = 0o112512
-        self.reg.set_pc(0o1165252)
+        self.reg.set_pc(0o165250)
         assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly = self.dopr.do_double_operand_SSDD(instruction)
+        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
         assert assembly == "MOVB (R5)+,@R2"
         assert self.reg.get(5) == 0o165321
         atr2  = self.ram.read_byte(self.reg.get(2))

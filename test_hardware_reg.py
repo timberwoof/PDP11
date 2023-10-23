@@ -29,7 +29,7 @@ class TestClass():
             assert self.reg.get(i) == test_value
 
     def test_pc(self):
-        test_value = 0o1232225
+        test_value = 0o165250
         expected_value = test_value & MASK_WORD
         self.reg.set_pc(test_value, "test_pc")
         assert self.reg.get_pc() == expected_value
@@ -46,7 +46,7 @@ class TestClass():
 
         test_offset = 0o277
         self.reg.set_pc_2x_offset(test_offset, "test_pc")
-        expected_value = 0o32273
+        expected_value = 0o165316
         assert self.reg.get_pc() == expected_value
 
     def test_sp(self):

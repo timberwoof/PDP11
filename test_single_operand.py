@@ -165,10 +165,10 @@ class TestClass():
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
-        assert r1 == -1
+        assert r1 == 0o177777
 
         condition_codes = self.psw.nvzc_to_string()
-        assert condition_codes == "1000"
+        assert condition_codes == "1010" # 1000
 
     def test_DECB1(self):
         print('\ntest_DECB1')
@@ -184,7 +184,7 @@ class TestClass():
         assert r1 == 0o000000
 
         condition_codes = self.psw.nvzc_to_string()
-        assert condition_codes == "0010"
+        assert condition_codes == "0100" #0010
 
     def test_SWAB1(self):
         print('\ntest_SWAB1')

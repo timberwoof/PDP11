@@ -209,7 +209,8 @@ class SingleOperandOps:
 
     def DEC(self, operand, B):
         """00 53 DD Decrement Destination"""
-        result = operand -1
+        woperand = operand | 0o400000
+        result = (woperand - 1) & MASK_WORD
         result = self.byte_mask(B, result, operand)
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)

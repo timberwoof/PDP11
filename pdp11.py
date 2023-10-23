@@ -118,7 +118,6 @@ class PDP11():
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute cycle"""
         # fetch opcode and increment program counter
-        print('----')
         self.sw.start("instruction cycle")
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc

@@ -228,12 +228,12 @@ class DoubleOperandOps:
         source = instruction & 0o000077
 
         run = True
-        assembly = f'{self.double_operand_RSS_instruction_names[name_opcode]} {assembly1},{assembly2}'
+        assembly = f'{self.double_operand_RSS_instruction_names[opcode]}'
         result, report = self.double_operand_RSS_instructions[opcode](register, source)
-        # print(f'    result:{oct(result)}')
+        print(f'    result:{oct(result)}')
         self.reg.set(register, result)
         self.sw.stop("double operand rss")
-        return run, operand1, operand2, assembly, report
+        return run, assembly, report
 
     # ****************************************************
     # Double-Operand SSDD instructions
