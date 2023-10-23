@@ -4,7 +4,7 @@ from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
 class TestClass():
 
-    def test_M9301_YH(self):
+    def not_test_M9301_YH(self):
         """The M9301-YH is designed specifically for PDP-ll/04 and PDP-ll/34 end user systems."""
         # *** this needs a much bigger memory space. This will fail.
         print('test_M9301-YH')

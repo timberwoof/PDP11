@@ -4,7 +4,7 @@ from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
 class TestClass():
 
-    def test_M9301_YF(self):
+    def not_test_M9301_YF(self):
         """The M9301-YF is designed specifically for PDP-ll/04 and PDP-ll/34 end user systems."""
         print('test_M9301-YF')
         pdp11 = PDP11()

@@ -76,7 +76,7 @@ class TestClass():
 
     def test_ram_word_top(self):
         test_value = 0o123232
-        test_address = Ram.top_of_memory - 2
+        test_address = Ram.top_of_memory - 1
 
         self.ram.write_word(test_address,test_value)
 

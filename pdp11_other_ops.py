@@ -76,10 +76,10 @@ class other_ops:
         masked2 = instruction & 0o777000
         return masked1 in [0o000200, 0o002000, 0o004000, 0o006400, 0o006500, 0o006600] or masked2 in [0o004000]
 
-    def other_opcode(self, instruction):
+    def do_other_op(self, instruction):
         """dispatch a leftover opcode"""
         # parameter: opcode of form that doesn't fit the rest
-        self.sw.start("other_opcode")
+        self.sw.start("do_other_op")
         result = False
         try:
             masked1 = instruction & 0o777700
@@ -94,5 +94,5 @@ class other_ops:
             assembly = f'{oct(instruction)}'
             report = 'Error: other opcode not found'
             result =  False
-        self.sw.stop("other_opcode")
+        self.sw.stop("do_other_op")
         return result, '', '', assembly, report
