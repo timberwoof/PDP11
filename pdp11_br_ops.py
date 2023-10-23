@@ -181,7 +181,7 @@ class br_ops:
     def do_br_op(self, instruction):
         """dispatch a branch opcode"""
         #parameter: opcode of form X 000 0XX X** *** ***
-        self.sw.start("branch")
+        self.sw.start("br")
         opcode = instruction & MASK_HIGH_BYTE
         offset = instruction & MASK_LOW_BYTE
         try:
@@ -191,5 +191,5 @@ class br_ops:
             assembly = 'Error: branch opcode not found'
             result = False
 
-        self.sw.stop("branch")
+        self.sw.stop("br")
         return result, '', '', assembly, ''

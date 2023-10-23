@@ -169,7 +169,7 @@ class ssdd_ops:
         # •4SSDD * 100 *** *** *** *** BIC bit clear (double)
         # •5SSDD * 101 *** *** *** *** BIS bit set (double)
 
-        self.sw.start("double operand ssdd")
+        self.sw.start("ssdd")
         self.reg.PC_increment = 0
         if (instruction & 0o100000) >> 15 == 1:
             bw = 'B'
@@ -198,6 +198,6 @@ class ssdd_ops:
 
         # print(f'    addressing_mode_set')
         self.am.addressing_mode_set(bw, dest_addressmode, result, dest_register, dest_address)
-        self.sw.stop("double operand ssdd")
+        self.sw.stop("ssdd")
 
         return run, operand1, operand2, assembly, report

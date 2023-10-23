@@ -18,7 +18,7 @@ class cc_ops:
 
     def do_cc_op(self, instruction):
         """dispatch a condition code instruction"""
-        self.sw.start("condition code")
+        self.sw.start("cc")
         if (instruction & self.set_opcode) == self.set_opcode:
             set_bits = instruction & self.psw_bits
             assembly = f'SETCC {oct(set_bits)}'
@@ -28,5 +28,5 @@ class cc_ops:
             set_bits = self.psw.psw & ~clr_bits
             assembly = f'CLRCC {oct(clr_bits)}'
             self.psw.set_nzvc(set_bits)
-        self.sw.stop("condition code")
+        self.sw.stop("cc")
         return True, '', '', assembly, ''

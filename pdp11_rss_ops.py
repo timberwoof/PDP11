@@ -197,7 +197,7 @@ class rss_ops:
         # 15-9 opcode
         # 8-6 reg
         # 5-0 src or dst
-        self.sw.start("double operand rss")
+        self.sw.start("rss")
         opcode = instruction & 0o077000
         register = (instruction & 0o000700) >> 6
         source = instruction & 0o000077
@@ -207,5 +207,5 @@ class rss_ops:
         result, report = self.double_operand_RSS_instructions[opcode](register, source)
         print(f'    result:{oct(result)}')
         self.reg.set(register, result)
-        self.sw.stop("double operand rss")
+        self.sw.stop("rss")
         return run, assembly, report

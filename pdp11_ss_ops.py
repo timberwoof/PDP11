@@ -443,7 +443,7 @@ class ss_ops:
         # 15 is 0 to indicate a word instruction
         # 5-0 dst
 
-        self.sw.start("single operand")
+        self.sw.start("ss")
 
         # is it a Byte or Word instruction?
         if (instruction & 0o100000) == 0o100000:
@@ -469,5 +469,5 @@ class ss_ops:
                 report = 'Error: single-operand opcode not found'
                 result = False
 
-        self.sw.stop("single operand")
+        self.sw.stop("ss")
         return run, operand, '', assembly, report
