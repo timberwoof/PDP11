@@ -4,7 +4,6 @@
 from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
-from pdp11_condition_code_ops import ConditionCodeOps as ccops
 
 class TestClass():
 
@@ -16,19 +15,19 @@ class TestClass():
             print(f'testing opcode {opcode}')
             is_op = False
 
-            if pdp11.ccops.is_condition_code_operation(opcode):
+            if pdp11.cc_ops.is_cc_op(opcode):
                 is_op = True
-            elif pdp11.br.is_branch(opcode):
+            elif pdp11.br.is_br_op(opcode):
                 is_op = True
-            elif pdp11.nopr.is_no_operand(opcode):
+            elif pdp11.noopr_ops.is_noopr_op(opcode):
                 is_op = True
-            elif pdp11.sopr.is_single_operand(opcode):
+            elif pdp11.ss_ops.is_ss_op(opcode):
                 is_op = True
-            elif pdp11.dopr.is_double_operand_RSS(opcode):
+            elif pdp11.rss_ops.is_rss_op(opcode):
                 is_op = True
-            elif pdp11.dopr.is_double_operand_SSDD(opcode):
+            elif pdp11.ssdd_ops.is_ssdd_op(opcode):
                 is_op = True
-            elif pdp11.other.other_opcode(opcode):
+            elif pdp11.other_ops.other_opcode(opcode):
                 is_op = True
 
             if not is_op:

@@ -65,17 +65,18 @@ class Registers:
     def __init__(self):
         print('initializing pdp11_hardware registers')
         self.registermask = 0o07
-        self.sp = 0o06  # R6 is the stack pointer
-        self.pc = 0o07  # R7 is the program counter
-        self.registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
+        self.__sp = 0o06  # R6 is the stack pointer
+        self.__pc = 0o07  # R7 is the program counter
+        self.__registers = [0, 0, 0, 0, 0, 0, 0, 0]  # R0 R1 R2 R3 R4 R5 R6 R7
 
     def get(self, register):
         """read a single register
 
         :param register: integer 0-7
         :return: register contents"""
-        result = self.registers[register & self.registermask]
-        # print(f'    get R{register}={oct(result)}')
+        result = self.__registers[register]
+        assert type(result) == type(1)
+        #print(f'    ; get R{register}={oct(result)}')
         return result
 
     def set(self, register, value):
@@ -83,13 +84,15 @@ class Registers:
         :param register: integer 0-7
         :param value: integer
         """
-        # print(f'    set R{register}<-{oct(value)}')
-        self.registers[register & self.registermask] = value & MASK_WORD
+        assert type(value) == type(1)
+        assert value <= MASK_WORD
+        self.__registers[register] = value
+        #print(f'    ; confirm set R{register}={oct(self.registers[register])}')
 
     def get_pc(self):
         """get program counter without incrementing.
         :return: program counter"""
-        result = self.registers[self.pc]
+        result = self.__registers[self.__pc]
         # print(f'    get_pc returns {oct(result)}')
         return result
 
@@ -98,15 +101,15 @@ class Registers:
         The Program Counter points to the word after the instruction being interpreted.
 
         :return: new program counter"""
-        self.registers[self.pc] = self.registers[self.pc] + 2
+        self.__registers[self.__pc] = self.__registers[self.__pc] + 2
         # print(f'    inc_pc R7<-{oct(self.registers[self.pc])} called by {whocalled}')
-        return self.registers[self.pc]
+        return self.__registers[self.__pc]
 
-    def set_pc(self, newpc=0o24, whocalled=''):
+    def set_pc(self, newpc, whocalled=''):
         """set program counter to arbitrary value"""
         # print(f"set_pc({oct(newpc)}, {whocalled})")
-        newpc = newpc & MASK_WORD # *** might have to be bigger if we use a bigger address space
-        self.registers[self.pc] = newpc
+        assert newpc <= MASK_WORD
+        self.__registers[self.__pc] = newpc
         # print(f'    set_pc R7<-{oct(newpc)} called by {whocalled}')
 
     def set_pc_2x_offset(self, offset=0, whocalled=''):
@@ -121,31 +124,28 @@ class Registers:
         if offset > MASK_LOW_BYTE:  # if we overflowed with the sign bit
             offset = offset | MASK_HIGH_BYTE  # this is now signed word
             offset = fix_sign(offset)
-        newpc = self.registers[self.pc] + offset
-        self.registers[self.pc] = newpc
+        newpc = self.__registers[self.__pc] + offset
+        self.__registers[self.__pc] = newpc
         # print(f'    set_pc_2x_offset pc:{oct(waspc)} by {oct(offset)} to {oct(newpc)} called by {whocalled} ')
 
     def get_sp(self):
         """get stack pointer
 
         :return: stack pointer"""
-        return self.registers[self.sp]
+        return self.__registers[self.__sp]
 
-    def set_sp(self, value, whocalled=''):
+    def set_sp(self, newsp, whocalled=''):
         """set stack pointer
 
         :return: new stack pointer"""
-        #wassp =  self.registers[self.SP]
-        newsp = value & MASK_WORD
-        self.registers[self.sp] = newsp
-        # print(f'{oct(wassp)} setsp {oct(newsp)}')
-        return newsp
+        assert newsp <= MASK_WORD
+        self.__registers[self.__sp] = newsp
 
     def registers_to_string(self):
         """print all the registers in the log"""
         index = 0
         report = ''
-        for register in self.registers:
+        for register in self.__registers:
             report = f'{report} {oct6(register)}'  # f'R{index}:{oct(register)}  '
             index = index + 1
         return report
@@ -201,33 +201,37 @@ class Ram:
 
     def register_io_writer(self, device_address, method):
         """map i/o write handler into memory"""
-        print(f'    register_io_writer({oct(device_address)}, {method.__name__})')
+        assert device_address < self.top_of_memory
+        # print(f'    register_io_writer({oct(device_address)}, {method.__name__})')
         self.iomap_writers[device_address] = method
 
     def register_io_reader(self, device_address, method):
         """map i/o read handler into memory"""
-        print(f'    register_io_reader({oct(device_address)}, {method.__name__})')
+        assert device_address < self.top_of_memory
+        # print(f'    register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
 
     def write_byte(self, address, data):
         """write a byte to memory.
         address can be even or odd"""
+        assert address < self.top_of_memory
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers:
             # print(f'    write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            # print(f'    write_byte({oct(address)}, {oct(data)})')
+            # print(f'    ; write_byte({oct(address)}, {oct(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
         """Read one byte of memory."""
+        assert address < self.top_of_memory
         if address in self.iomap_readers:
             result = self.iomap_readers[address]()
             # print(f'    read_byte io({oct(address)}) returns {oct(result)}')
         else:
             result = self.memory[address]
-            # print(f'    read_byte ({oct(address)}) returns {oct(result)}')
+            # print(f'    ; read_byte ({oct(address)}) returns {oct(result)}')
         return result
 
     def write_word(self, address, data):
@@ -238,16 +242,19 @@ class Ram:
         :param data:
         """
         # print(f'    write_word({oct(address)}, {oct(data)})')
+        assert address < self.top_of_memory
+        assert data <= MASK_WORD
         if address in self.iomap_writers:
             # print(f'write_word io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
             hi = (data & MASK_HIGH_BYTE) >> 8  # 1 111 111 100 000 000
             lo = data & MASK_LOW_BYTE  # 0 000 000 011 111 111
-            # print(f'hi:{oct(hi)} lo:{oct(lo)}')
+            # print(f'write_word hi:{oct(hi)} lo:{oct(lo)}')
             self.memory[address + 1] = hi
             self.memory[address] = lo
             # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
+            # print(f'    ; write_word({oct(address)},{oct(data)}) -> {oct(self.memory[address + 1])} {oct(self.memory[address])}')
 
     def read_word(self, address):
         """Read a word of memory.
@@ -255,6 +262,7 @@ class Ram:
         Crashes silumlator if we go out of bounds."""
         # Low bytes are stored at even-numbered memory locations
         # and high bytes at are stored at odd-numbered memory locations.
+        assert address < self.top_of_memory
         result = ""
         if address in self.iomap_readers:
             result =  self.iomap_readers[address]()
@@ -262,7 +270,7 @@ class Ram:
             hi = self.memory[address + 1]
             low = self.memory[address]
             result = (hi << 8) + low
-        # print(f'    readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
+            #print(f'    ; readword({oct(address)}): {oct(hi)} {oct(low)} result:{oct(result)}')
         return result
 
     def read_word_from_pc(self):
@@ -321,6 +329,7 @@ class PSW:
     """PDP11 Processor Status Word"""
 
     #  f'nvzc_to_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
+    # PSW memory location needs to be registered like an io device
 
     def __init__(self, ram):
         """initialize PDP11 PSW"""
@@ -360,6 +369,9 @@ class PSW:
         self.z_mask = 0o000004  # Zero
         self.v_mask = 0o000002  # Overflow
         self.c_mask = 0o000001  # Carry
+
+        # set up psw as an io device so we're not constantly writing to ram
+        self.ram.register_io_reader(self.psw_address, self.get_psw)
 
         print(f'    psw initilialized @{oct(self.psw_address)}')
 
@@ -406,8 +418,6 @@ class PSW:
         if c > -1:
             self.psw = (self.psw & ~self.c_mask) | c
             # print(f'set_psw get_c self.PSW:{self.PSW}')
-        # print(f'set_psw will write {oct(self.PSW)} to {oct(self.PSW_address)}')
-        self.ram.write_word(self.psw_address, self.psw)
 
     def set_nzvc(self, value):
         """set condition codes (last four bits of psw)"""
@@ -571,7 +581,7 @@ class AddressModes:
             # print(f'    mode 0 Register: R{register}: register contains operand')
             operand = self.reg.get(register)
             assembly = f'R{register}'
-            # print(f'    mode 0 R{register} = operand:{oct(operand)}')
+            # print(f'    ; addressing_mode_get mode 0 R{register} = operand:{oct(operand)}')
         elif addressmode == 1:
             # print(f'    mode 1 Register Deferred: (R{register}): register contains address of operand')
             address = self.reg.get(register)
@@ -632,7 +642,7 @@ class AddressModes:
             assembly = f'@{formatted_offset(x)}(R{register})'
             # print(f'    mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
-        # print(f'    addressing_mode_get returns operand:{oct(operand)}')
+        # print(f'    ; addressing_mode_get returns operand:{bin(operand)}')
         return operand, register, address, operand_word, assembly
 
     # https://retrocomputing.stackexchange.com/questions/9248/pdp-11-jmp-and-jsr-how-was-the-target-specified
@@ -678,13 +688,13 @@ class AddressModes:
         register = mode_register & 0o07
         address = 0
 
-        #print(f'    addressing_mode_jmp mode:{oct(addressmode)} reg:{oct(register)}')
+        # print(f'    addressing_mode_jmp mode:{oct(addressmode)} reg:{oct(register)}')
         operand_word = '' #oct6(self.ram.read_word(self.reg.get(7)))
         assembly = ''
 
         run = True
         if addressmode == 0:
-            #print(f'    mode j0: JMP direct illegal register address; halt')
+            # print(f'    mode j0: JMP direct illegal register address; halt')
             jump_address = 0o0
             run = False
             # *** this should call a trap
@@ -692,10 +702,10 @@ class AddressModes:
         elif addressmode == 1:
             jump_address = self.reg.get(register)
             assembly = f'@R{register}'
-            #print(f'    mode j1: JMP register deferred. R{register} contains jump_address {oct(jump_address)}.')
+            # print(f'    mode j1: JMP register deferred. R{register} contains jump_address {oct(jump_address)}.')
         elif addressmode == 2:
             jump_address = self.reg.get(register)
-            #print(f'    mode j2: JMP immediate: R{register} contains jump_address {oct(jump_address)}, then incremented.')
+            # print(f'    mode j2: JMP immediate: R{register} contains jump_address {oct(jump_address)}, then incremented.')
             self.reg.set(register, self.reg.get(register) + 2)
             assembly = f'(R{register})+'
         elif addressmode == 3:
@@ -705,7 +715,7 @@ class AddressModes:
             jump_address = self.ram.read_word(address)
             self.reg.set(register, self.reg.get(register) + 2)
             assembly = f'@(R{register})+'
-            #print(f'    mode j3: JMP absolute: R{register} contains jump_address {oct(jump_address)}, then incremented.')
+            # print(f'    mode j3: JMP absolute: R{register} contains jump_address {oct(jump_address)}, then incremented.')
         elif addressmode == 4:
             # The contents of the register specified as (ER) are decremented
             # before being used as the address of the operand.
@@ -713,7 +723,7 @@ class AddressModes:
             address = self.reg.get(register)
             jump_address = self.ram.read_word(address)
             assembly = f'-(R{register})'
-            #print(f'    mode j4: JMP Autodecrement: R{register} is decremented, then contains the address {oct(address)} of the jump_address {oct(jump_address)}.')
+            # print(f'    mode j4: JMP Autodecrement: R{register} is decremented, then contains the address {oct(address)} of the jump_address {oct(jump_address)}.')
         elif addressmode == 5:
             # The contents of the register specified a s (ER) are decremented
             # before being used as the pointer to the address of the operand.
@@ -722,7 +732,7 @@ class AddressModes:
             address = self.ram.read_word(pointer)
             jump_address = self.ram.read_word(address)
             assembly = f'@-(R{register})'
-            #print(f'    mode j5: JMP Autodecrement: R{register} is decremented, then contains a pointer {oct(pointer)} to the address {oct(address)}of the jump_address {oct(jump_address)}.')
+            # print(f'    mode j5: JMP Autodecrement: R{register} is decremented, then contains a pointer {oct(pointer)} to the address {oct(address)}of the jump_address {oct(jump_address)}.')
         elif addressmode == 6:
             # The expression E, plus the contents of the PC,
             # yield the effective jump address.
@@ -731,22 +741,22 @@ class AddressModes:
             jump_address = address_offset(address, x)
             operand_word = oct6(x)
             assembly = f'{formatted_offset(x)}(R{register})'
-            #print(f'    mode j6: JMP relative. Immediate value {oct(x)} plus value in register {oct(address)} gets jump_address {oct(jump_address)}.')
+            # print(f'    mode j6: JMP relative. Immediate value {oct(x)} plus value in register {oct(address)} gets jump_address {oct(jump_address)}.')
         elif addressmode == 7:
             # The expression E, plus the contents of the PC
             # yield a pointer to the effective address of the operand.
             x = self.ram.read_word_from_pc()
-            #print(f'    mode j7: JMP relative deferred. immediate value {oct(x)} plus PC={oct(self.reg.get_pc())} gets pointer to address.')
+            # print(f'    mode j7: JMP relative deferred. immediate value {oct(x)} plus PC={oct(self.reg.get_pc())} gets pointer to address.')
             pointer = address_offset(self.reg.get(register), x)
             address = self.ram.read_word(pointer)
             word = self.ram.read_word(address)
             jump_address = self.reg.get_pc() + word
             operand_word = oct6(x)
             assembly = f'@{formatted_offset(x)}(R{register})'
-            #print(f'    pointer:{oct(pointer)} address:{oct(address)} word:{oct(word)} jump_address:{oct(jump_address)}')
+            # print(f'    pointer:{oct(pointer)} address:{oct(address)} word:{oct(word)} jump_address:{oct(jump_address)}')
 
-        #print(f'    addressmode:{addressmode}  register:{register}')
-        #print(f'    addressing_mode_jmp returns run:{run} jump_address:{oct(jump_address)} ')
+        # print(f'    addressmode:{addressmode}  register:{register}')
+        # print(f'    addressing_mode_jmp returns run:{run} jump_address:{oct(jump_address)} ')
         return run, jump_address, operand_word, assembly
 
     def addressing_mode_set(self, b, result, register, address):

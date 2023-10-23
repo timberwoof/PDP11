@@ -3,7 +3,15 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
+
+from pdp11_br_ops import br_ops
+from pdp11_cc_ops import cc_ops
+from pdp11_noopr_ops import noopr_ops
+from pdp11_other_ops import other_ops
+from pdp11_rss_ops import rss_ops
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
@@ -19,7 +27,8 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    dopr = dopr(reg, ram, psw, am, sw)
+
+    rss_ops = rss_ops(reg, ram, psw, am, sw)
 
     def test_MUL(self):
         print('test_MUL')
@@ -31,8 +40,8 @@ class TestClass():
         self.reg.set(R, a)
         instruction = 0o070000 | R << 6 | b
         print(oct(instruction))  # 0o0171312
-        assert self.dopr.is_double_operand_RSS(instruction)
-        self.dopr.do_double_operand_RSS(instruction)
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
 
         product = self.reg.get(R)
         print(f'product:{product}')
@@ -57,8 +66,8 @@ class TestClass():
 
         instruction = 0o071000 | R << 6 | b
         print(f'test_DIV instruction:{oct(instruction)}')  # 0o0171312
-        assert self.dopr.is_double_operand_RSS(instruction)
-        self.dopr.do_double_operand_RSS(instruction)
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
 
         quotient = self.reg.get(R)
         remainder = self.reg.get(Rv1)

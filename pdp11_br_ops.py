@@ -1,4 +1,4 @@
-"""pdp11_branch_ops.py branch instructions"""
+"""pdp11_br_ops.py branch instructions"""
 
 # masks for accessing words and bytes
 MASK_LOW_BYTE = 0o000377
@@ -13,7 +13,7 @@ MASK_BYTE_MSB = 0o000200
 # multiply by two
 # add to PC to make branch address
 
-class BranchOps:
+class br_ops:
     """Implements PDP11 branch operations"""
     def __init__(self, reg, ram, psw, sw):
         print('initializing branchOps')
@@ -78,8 +78,8 @@ class BranchOps:
 
     def BNE(self, offset):
         """00 10 XXX branch if not equal get_z=0"""
-        # Tests the state of the z-bit and
-        # branches if the z-bit is clear.
+        # Tests the state of the z-bit.
+        # If the z-bit is clear, branches.
         #print(f"    BNE get_z:{self.psw.get_z()}")
         if self.psw.get_z() == 0:
             self.reg.set_pc_2x_offset(offset, "BNE")
@@ -165,7 +165,7 @@ class BranchOps:
             self.reg.set_pc_2x_offset(offset, 'BCS')
         return True
 
-    def is_branch(self, instruction):
+    def is_br_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a branch instruction"""
         # *0 ** xxx
         # bit 15 can be 1 or 0; mask = 0o100000
@@ -178,7 +178,7 @@ class BranchOps:
         # print(f'{instruction} {blankbits} and ({lowbits0} or {lowbits1})')
         return blankbits and (lowbits0 or lowbits1)
 
-    def do_branch(self, instruction):
+    def do_br_op(self, instruction):
         """dispatch a branch opcode"""
         #parameter: opcode of form X 000 0XX X** *** ***
         self.sw.start("branch")
@@ -192,4 +192,4 @@ class BranchOps:
             result = False
 
         self.sw.stop("branch")
-        return result, '', '', assembly
+        return result, '', '', assembly, ''

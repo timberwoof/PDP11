@@ -70,14 +70,19 @@ class TestClass():
         """set maintenance bit and verify that bytes go in and bytes go out"""
         pdp11 = PDP11()
         print('test_maintenance')
+        print(f'test_maintenance pdp11.dl11.XCSR_MAINT:{oct(pdp11.dl11.XCSR_MAINT)}')
 
         # set the maintenance bit and verify it.
         # This means DL11 connects its X output to R input
         # get the state of the XCSR
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+        print(f'test_maintenance XCSR:{oct(XCSR)}')
         # set the maintenance bit true and leave the rest
-        pdp11.ram.write_word(pdp11.dl11.XCSR_address, XCSR | pdp11.dl11.XCSR_MAINT)
+        set_word = XCSR | pdp11.dl11.XCSR_MAINT
+        print(f'test_maintenance set XCSR:{oct(set_word)}')
+        pdp11.ram.write_word(pdp11.dl11.XCSR_address, set_word)
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
+        print(f'test_maintenance XCSR:{oct(XCSR)}')
         assert XCSR & pdp11.dl11.XCSR_MAINT == pdp11.dl11.XCSR_MAINT
 
         # verify that there's no byte to read
