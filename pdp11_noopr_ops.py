@@ -71,8 +71,7 @@ class noopr_ops:
 
     def RESET(self):
         """00 00 05 RESET reset external bus 4-76"""
-        # *** unimplemented
-        return True, 'BPT unimplemented'
+        return True, '; RESET unimplemented (mostly harmless)'
 
     def RTT(self):
         """00 00 06 RTT return from interrupt 4-70"""

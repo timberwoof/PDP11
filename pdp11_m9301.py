@@ -57,7 +57,7 @@ class M9301:
         # So they set those last zeroes.
         #
         # Entry point -- Console emulator w/ CPU Diagnostics 1-5
-        # DIP switches xx11111111  (173000) (all off)
+        # DIP switches xx11111111  (173000)
         # 173000 000574		BR	GODIAG
         #
         # Entry point -- Console Emulator
@@ -77,11 +77,11 @@ class M9301:
         # These switches are at 0o173024
         on = 0o000000 # 0 bits in switches
         off = 0o000777 # 1 bits in switchws
-        #  	DIP switches xx01101111  (173440)
-        switch81_3 = 0o0400 & off    # bus address bit 8
+        #  	DIP switches xx01101111  (173440) - ran all the diagnosics and barfed on final boot
+        switch81_3 = 0o0400 & on    # bus address bit 8
         switch81_4 = 0o0200 & on   # bus address bit 7
         switch81_5 = 0o0100 & on   # bus address bit 6
-        switch81_6 = 0o0040 & off    # bus address bit 5
+        switch81_6 = 0o0040 & on    # bus address bit 5
         switch81_7 = 0o0020 & on   # bus address bit 4
         switch81_8 = 0o0010 & on   # bus address bit 3
         switch81_9 = 0o0004 & on   # bus address bit 2

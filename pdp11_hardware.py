@@ -76,7 +76,7 @@ class Registers:
         :return: register contents"""
         result = self.__registers[register]
         assert type(result) == type(1)
-        print(f'    ; get R{register} = {oct(result)}')
+        # print(f'    ; get R{register} = {oct(result)}')
         return result
 
     def set(self, register, value):
@@ -87,7 +87,7 @@ class Registers:
         assert type(value) == type(1)
         assert value <= MASK_WORD
         self.__registers[register] = value
-        print(f'    ; set R{register} = {oct(self.__registers[register])}')
+        # print(f'    ; set R{register} = {oct(self.__registers[register])}')
 
     def get_pc(self):
         """get program counter without incrementing.
@@ -220,7 +220,7 @@ class Ram:
             # print(f'    write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            print(f'    ; write_byte({oct6(address)}, {oct3(data)})')
+            # print(f'    ; write_byte({oct6(address)}, {oct3(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
@@ -231,7 +231,7 @@ class Ram:
             # print(f'    read_byte io({oct(address)}) returns {oct(result)}')
         else:
             result = self.memory[address]
-            print(f'    ; read byte {oct6(address)}) = {oct3(result)}')
+            # print(f'    ; read byte {oct6(address)}) = {oct3(result)}')
         return result
 
     def write_word(self, address, data):
@@ -255,7 +255,7 @@ class Ram:
             self.memory[address + 1] = hi
             self.memory[address] = lo
             # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
-            print(f'    ; write_word({oct6(address)},{oct6(data)}) -> {oct3(self.memory[address + 1])} {oct3(self.memory[address])}')
+            # print(f'    ; write_word({oct6(address)},{oct6(data)}) -> {oct3(self.memory[address + 1])} {oct3(self.memory[address])}')
 
     def read_word(self, address):
         """Read a word of memory.
@@ -272,7 +272,7 @@ class Ram:
             hi = self.memory[address + 1]
             low = self.memory[address]
             result = (hi << 8) + low
-            print(f'    ; read word {oct6(address)} = {oct6(result)}')
+            # print(f'    ; read word {oct6(address)} = {oct6(result)}')
         return result
 
     def read_word_from_pc(self):

@@ -83,7 +83,7 @@ class ssdd_ops:
         # but don't change the destination
         #result = source - dest
         result = self.byte_mask(BW, source - dest, dest)
-        print(f'    ; CMP source:{source} dest:{dest} result:{result}')
+        #print(f'    ; CMP source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
@@ -117,7 +117,7 @@ class ssdd_ops:
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_psw(v=0)
-        return result, f'    ; BIC{BW}({bin(source)},{bin(dest)}) result: {bin(result)}'
+        return result, '' #f'    ; BIC{BW}({bin(source)},{bin(dest)}) result: {bin(result)}'
 
     def BIS(self, BW, source, dest):
         """bit set 4-30

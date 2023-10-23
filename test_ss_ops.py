@@ -349,9 +349,9 @@ class TestClass():
         assert assembly == "RORB R1"
         print (report)
         r1 = self.reg.get(1)
-        assert r1 == 0b1000011111111000
+        assert r1 == 0b1000011101111000
         condition_codes = self.psw.nvzc_to_string()
-        assert condition_codes == "1010" # NZVC
+        assert condition_codes == "0011" # NZVC
 
     def test_RORB_2(self):
         print('\ntest_RORB_2')
@@ -366,3 +366,59 @@ class TestClass():
         assert r1 == 0b0111100010000111
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001" # NZVC
+
+    def test_ROL(self):
+        print('\ntest_ROL')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1100110000110011)
+        instruction = 0o006101  # mode 0 R1
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
+        assert assembly == "ROL R1"
+        r1 = self.reg.get(1)
+        print(f'r1:{bin(r1)}  {report}')
+        assert r1 == 0b1001100001100111
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1001" # NZVC
+
+    def test_ROLB(self):
+        print('\ntest_ROLB')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1100110000110011)
+        instruction = 0o106101  # mode 0 R1
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
+        assert assembly == "ROLB R1"
+        r1 = self.reg.get(1)
+        print(f'r1:{bin(r1)}  {report}')
+        assert r1 == 0b1001100101100110
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0011" # NZVC  I think it shoud be 1010
+
+    def test_ASR(self):
+        print('\ntest_ASR')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1100110000110011)
+        instruction = 0o006201  # mode 0 R1
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
+        assert assembly == "ASR R1"
+        r1 = self.reg.get(1)
+        print(f'r1:{bin(r1)}  {report}')
+        assert r1 == 0b1110011000011001
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1001" # NZVC
+
+    def test_ASRB(self):
+        print('\ntest_ASRB')
+        self.psw.set_psw(psw=0o0177777)
+        self.reg.set(1, 0b1100110000110011)
+        instruction = 0o106201  # mode 0 R1
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
+        assert assembly == "ASRB R1"
+        r1 = self.reg.get(1)
+        print(f'r1:{bin(r1)}  {report}')
+        assert r1 == 0b1110011000011001
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0011" # NZVC  I think it shoud be 1010

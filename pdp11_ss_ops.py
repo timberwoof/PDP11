@@ -196,7 +196,7 @@ class ss_ops:
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
         self.psw.set_psw(v=0, c=1)
-        return result, f'COM({bin(operand)})={bin(result)}'
+        return result, '' #f'COM({bin(operand)})={bin(result)}'
 
     def INC(self, operand, B):
         """00 52 DD Increment Destination"""
@@ -215,7 +215,7 @@ class ss_ops:
         self.psw.set_v(B, result)
         self.psw.set_n(B, result)
         self.psw.set_z(B, result)
-        return result, f'DEC({oct(operand)}) = {oct(result)}'
+        return result, '' #f'DEC({oct(operand)}) = {oct(result)}'
 
     def NEG(self, operand, B):
         """00 54 DD negate Destination"""
@@ -256,25 +256,26 @@ class ss_ops:
         # V: loaded with the Exclusive OR of N and C
         # (as set by the completion of the rotate operation)
         if B == "B":
-            bit8 = (operand & 0b0000000100000000) << 7
+            bit8 = operand & 0b0000000100000000
             highbyte = operand & MASK_HIGH_BYTE | 0o400000
-            bit0 = (operand & 0o0000000000000001) << 7
+            bit0 = operand & 0b0000000000000001
             lowbyte = operand & MASK_LOW_BYTE | 0o400000
-            result = bit8 | (highbyte >> 1) | bit0 | (lowbyte >> 1)
-            byteresult = result & MASK_LOW_BYTE
+            result = (bit8 << 7) | (highbyte >> 1) & MASK_HIGH_BYTE | (bit0 << 7) | (lowbyte >> 1) & MASK_LOW_BYTE
+            carry = result & 0o01 | (result & 0b0000000100000000) >> 8
+            testresult = result & MASK_LOW_BYTE
         else:
             operand = operand | 0o400000  # set the high bit for python weirdness
-            bit0 = (operand & 0o0000000000000001) << 15
-            result = bit0 | (operand >> 1)
-            operand = operand & MASK_WORD
+            bit0 = operand & 0b0000000000000001
+            result = ((bit0 << 15) | (operand >> 1)) & MASK_WORD
+            carry = result & 0o01
+            testresult = result
 
-        result = result & MASK_WORD  # take off that bit
-        N = self.psw.set_n(B, result)
-        Z = self.psw.set_z(B, result)
-        C = result & 0o01
+        N = self.psw.set_n(B, testresult)
+        Z = self.psw.set_z(B, testresult)
+        C = carry & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result, f'ROR {bin(operand)} -> {bin(result)}'
+        return result, '' #f'ROR {bin(operand)} -> {bin(result)}'
 
     def ROL(self, operand, B):
         """00 61 DD ROL rotate left"""
@@ -288,20 +289,25 @@ class ss_ops:
         # (as set by the completion of the rotate operation)
         # C: loaded with the high-order bit of the destination
         if B == "B":
-            msb = MASK_WORD_MSB & operand
-            bits = 8
+            bit15 = operand & 0b1000000000000000
+            highbyte = operand & MASK_HIGH_BYTE
+            bit7 = operand & 0o0000000010000000
+            lowbyte = operand & MASK_LOW_BYTE
+            result = ((highbyte << 1) | (bit15 >> 7) | (lowbyte << 1) | (bit7 >> 7)) & MASK_WORD
+            carry = (bit15 >> 15) | (bit7 >> 7)
+            testresult = result & MASK_LOW_BYTE
         else:
-            msb = MASK_BYTE_MSB & operand
-            bits = 16
-        rotatebit = operand & msb
-        result = operand << 1 + rotatebit >> bits
-        result = self.byte_mask(B, result, operand)
-        N = self.psw.set_n(B, result)
-        Z = self.psw.set_z(B, result)
-        C = result & msb >> bits
+            bit15 = operand & 0b1000000000000000
+            result = ((operand << 1) | (bit15 >> 15)) & MASK_WORD
+            carry = bit15 >> 15
+            testresult = result
+
+        N = self.psw.set_n(B, testresult)
+        Z = self.psw.set_z(B, testresult)
+        C = carry & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result, ''
+        return result, f'ROL({bin(operand)})={bin(result)}'
 
     def ASR(self, operand, B):
         """00 62 DD ASR arithmetic shift right"""
@@ -312,17 +318,27 @@ class ss_ops:
         # (as set by the completion of the shift operation)
         # c: loaded from low-order bit of the destination
         if B == "B":
-            msb = MASK_WORD_MSB & operand
+            bit15 = operand & 0b1000000000000000
+            highbyte = operand & MASK_HIGH_BYTE | 0o400000
+            bit7 = operand & 0b0000000010000000
+            lowbyte = operand & MASK_LOW_BYTE | 0o400000
+            bit0 = (operand & 0b0000000010000000) >> 8 | operand & 0b0000000000000001
+            result = bit15 | (highbyte >> 1) & MASK_HIGH_BYTE | bit7 | (lowbyte >> 1) & MASK_LOW_BYTE
+            testresult = result & MASK_LOW_BYTE
         else:
-            msb = MASK_BYTE_MSB & operand
-        result = (operand >> 1) | msb
-        result = self.byte_mask(B, result, operand)
-        N = self.psw.set_n(B, result)
-        Z = self.psw.set_z(B, result)
-        C = result & 0o01
+            operand = operand | 0o400000  # set the high bit for python weirdness
+            print (f'operand:{bin(operand)}')
+            bit15 = operand & 0b1000000000000000
+            bit0 = operand & 0b0000000000000001
+            result = (operand >> 1) & MASK_WORD | bit15
+            testresult = result
+
+        N = self.psw.set_n(B, testresult)
+        Z = self.psw.set_z(B, testresult)
+        C = bit0 & 0o01
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result, ''
+        return result, '' #f'ASR {bin(operand)} -> {bin(result)}'
 
     def ASL(self, operand, B):
         """00 63 DD ASL arithmetic shift left"""
@@ -332,20 +348,23 @@ class ss_ops:
         # v: loaded with the exclusive OR of the n-bit and c-bit
         # (as set by the completion of the shift operation)
         # c: loaded with the high-order bit of the destination
-        result = operand << 1
-        result = self.byte_mask(B, result, operand)
         if B == "B":
-            msb = MASK_WORD_MSB & result
-            bits = 8
+            highbyte = operand & MASK_HIGH_BYTE
+            lowbyte = operand & MASK_LOW_BYTE
+            bit15 = (operand & 0o1000000000000000) | ((operand & 0o0000000010000000) << 8)
+            result = (highbyte << 1) & MASK_HIGH_BYTE (lowbyte << 1) & MASK_LOW_BYTE
+            testresult = result & MASK_LOW_BYTE
         else:
-            msb = MASK_BYTE_MSB & result
-            bits = 16
-        N = self.psw.set_n(B, result)
-        Z = self.psw.set_z(B, result)
-        C = result & msb >> bits
+            bit15 = operand & 0o1000000000000000
+            result = (operand << 1) & MASK_WORD  # take off that bit
+            testresult = result
+
+        N = self.psw.set_n(B, testresult)
+        Z = self.psw.set_z(B, testresult)
+        C = bit15 >> 15
         V = N ^ C
         self.psw.set_psw(n=N, z=Z, v=V, c=C)
-        return result, ''
+        return result, '' #f'ASL {bin(operand)} -> {bin(result)}'
 
     def SXT(self, operand, B):
         """00 67 DD Sign Extend"""
