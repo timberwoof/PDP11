@@ -89,7 +89,7 @@ class TestClass():
     def test_mode_1_S(self):
         print('test_mode_1 register deferred Source')
         # register contains address of operand
-        address = 0o2763
+        address = 0o2764
         a = 0o101
         b = 0o2136
 
@@ -109,7 +109,7 @@ class TestClass():
     def test_mode_1_D(self):
         print('test_mode_1 register deferred Destination')
         # register contains address of operand
-        address = 0o2763
+        address = 0o2764
         a = 0o101
         b = 0o2136
 
@@ -130,7 +130,7 @@ class TestClass():
     def test_mode_1_SD(self):
         print('test_mode_1 register deferred Source Destination')
         # register contains address of operand
-        addressA = 0o2763
+        addressA = 0o2762
         A = 0o101
         addressB = 0o1234
         B = 0o2136
@@ -156,7 +156,7 @@ class TestClass():
 
     def test_mode_2_S(self):
         print('test_mode_2 autoincrement source')
-        address = 0o2763
+        address = 0o2762
         a = 0o101
         b = 0o2136
 
@@ -182,7 +182,7 @@ class TestClass():
         print('test_mode_2 autoincrement destination')
         a = 0o101
         b = 0o2136
-        address = 0o2763
+        address = 0o2762
         self.reg.set(1, a)
         self.ram.write_word(address, b)
         self.reg.set(2, address)
@@ -204,7 +204,7 @@ class TestClass():
         print('test_mode_2 autoincrement source destination')
         a = 0o101
         b = 0o2136
-        source_address = 0o2763
+        source_address = 0o2762
         destination_address = 0o1312
         self.reg.set(1, source_address)
         self.ram.write_word(source_address, a)
@@ -229,7 +229,7 @@ class TestClass():
 
     def test_mode_3_S(self):
         print('test_mode_3 autoincrement deferred source')
-        address = 0o2763
+        address = 0o2762
         a = 0o101
         b = 0o2136
 
@@ -264,7 +264,7 @@ class TestClass():
 
     def test_mode_4(self):
         print('test_mode_4 autodecrement source')
-        address = 0o2763
+        address = 0o2762
         a = 0o101
         b = 0o2136
 
@@ -300,7 +300,7 @@ class TestClass():
     def test_mode_5(self):
         print('test_mode_5 autodecrement deferred source')
         operanda = 0o101
-        addressa = 0o2763
+        addressa = 0o2762
         pointera = 0o1172
         operandb = 0o2136
 
@@ -345,14 +345,14 @@ class TestClass():
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
-        instruction_address = 0o2763
+        instruction_address = 0o2762
         self.ram.write_word(instruction_address, instruction)
 
         # Value X, stored in a word following the instruction,
         X = 0o2050
         self.ram.write_word(instruction_address+2, X)
 
-        operanda = 0o101  # 65
+        operanda = 0o100  # 65
         self.reg.set(1, operanda)
 
         # is added to the resgiter.
@@ -395,14 +395,14 @@ class TestClass():
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
-        instruction_address = 0o2763
+        instruction_address = 0o2762
         self.ram.write_word(instruction_address, instruction)
 
         # Value X, stored in a word following the instruction,
         X = 0o2050
         self.ram.write_word(instruction_address+2, X)
 
-        operanda = 0o101  # 65
+        operanda = 0o100  # 65
         self.reg.set(1, operanda)
 
         # is added to the register.
@@ -509,7 +509,7 @@ class TestClass():
 
     def test_PC_mode_4(self):
         print('test_PC_mode_4')
-        address = 0o2763
+        address = 0o2762
         a = 0o101
         b = 0o2136
 
@@ -569,14 +569,14 @@ class TestClass():
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
-        instruction_address = 0o2763
+        instruction_address = 0o2762
         self.ram.write_word(instruction_address, instruction)
 
         # Value X, stored in a word following the instruction,
         X = 0o2050
         self.ram.write_word(instruction_address+2, X)
 
-        operanda = 0o101 # 65
+        operanda = 0o100 # 64
         self.reg.set(1, operanda)
 
         # is added to the resgiter.
