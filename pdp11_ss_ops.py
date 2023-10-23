@@ -1,4 +1,4 @@
-"""pdp11_single_operand_ops.py single oprand instructions"""
+"""pdp11_ss_ops.py single oprand instructions"""
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
@@ -6,8 +6,8 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
-class SingleOperandOps:
-    """Implements PDP11 single-operand instructions"""
+class ss_ops:
+    """Implements PDP11 single-operand ss instructions"""
     def __init__(self, reg, ram, psw, am, sw):
         print('initializing SingleOperandOps')
         self.reg = reg
@@ -397,7 +397,7 @@ class SingleOperandOps:
         # MMU instruction not in LSI11-03
         return operand, 'MTPD NOT IMPLEMENTED'
 
-    def is_single_operand(self, instruction):
+    def is_ss_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a single-operand instruction"""
         # 15  12 10  876 543 210
         #  * 000 101 *** *** ***
@@ -415,7 +415,7 @@ class SingleOperandOps:
         is_swab = instruction & 0o177700 == 0o000300
         return (bits_14_13_12 and bits_11_10_9) or is_swab or is_jmp
 
-    def do_single_operand(self, instruction):
+    def do_ss_op(self, instruction):
         """dispatch a single-operand opcode"""
         # parameter: opcode of form * 000 1** *** *** ***
         # single operands

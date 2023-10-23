@@ -3,8 +3,10 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_single_operand_ops import SingleOperandOps as sopr
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
+
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
@@ -20,8 +22,9 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    dopr = dopr(reg, ram, psw, am, sw)
-    sopr = sopr(reg, ram, psw, am, sw)
+
+    ss_ops = ss_ops(reg, ram, psw, am, sw)
+    ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
 
     R0 = 0
     R1 = 1
@@ -48,8 +51,8 @@ class TestClass():
     def ADD(self, modeS=0, regS=0, modeD=0, regD=1):
         return 0o060000 | self.SS(modeS, regS) | self.DD(modeD, regD)
     
-    def do_double_operand_SSDD_and_report(self, instruction):
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+    def do_ssdd_op_report(self, instruction):
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         print(assembly)
         
 
@@ -70,8 +73,8 @@ class TestClass():
         self.reg.set(1, a)
         self.reg.set(2, b)
         instruction = self.ADD(modeS=0, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.reg.get(2)
         assert sum == a + b
@@ -94,8 +97,8 @@ class TestClass():
         self.reg.set(1, address)
         self.reg.set(2, b)
         instruction = self.ADD(modeS=1, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.reg.get(2)
         assert sum == a + b
@@ -114,8 +117,8 @@ class TestClass():
         self.reg.set(2, address)
         self.reg.set(1, b)
         instruction = self.ADD(modeS=0, regS=1, modeD=1, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.ram.read_word(address)
         assert sum == a + b
@@ -137,8 +140,8 @@ class TestClass():
         self.ram.write_word(addressB, B)
         self.reg.set(2, addressB)
         instruction = self.ADD(modeS=1, regS=1, modeD=1, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.ram.read_word(addressB)
         assert sum == A + B
@@ -162,8 +165,8 @@ class TestClass():
         self.reg.set(2, b)
 
         instruction = self.ADD(modeS=2, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.reg.get(2)
         assert sum == a + b
@@ -186,8 +189,8 @@ class TestClass():
         expected_sum = a + b
 
         instruction = self.ADD(modeS=0, regS=1, modeD=2, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.ram.read_word(address)
         assert expected_sum == actual_sum
@@ -210,8 +213,8 @@ class TestClass():
         expected_sum = a + b
 
         instruction = self.ADD(modeS=2, regS=1, modeD=2, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.ram.read_word(destination_address)
         assert expected_sum == actual_sum
@@ -235,8 +238,8 @@ class TestClass():
         self.reg.set(2, b)
 
         instruction = self.ADD(modeS=2, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.reg.get(2)
         assert sum == a + b
@@ -271,8 +274,8 @@ class TestClass():
         expected_sum = a + b
 
         instruction = self.ADD(modeS=4, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -308,8 +311,8 @@ class TestClass():
         expected_sum = operanda + operandb
 
         instruction = self.ADD(modeS=5, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -339,7 +342,7 @@ class TestClass():
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
         print(f'opcode: {oct(instruction)}')
-        assert self.dopr.is_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
         instruction_address = 0o2763
@@ -363,7 +366,7 @@ class TestClass():
         expected_sum = operanda + operandb  # 1183
 
         self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
-        self.do_double_operand_SSDD_and_report(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -389,7 +392,7 @@ class TestClass():
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=7, regS=1, modeD=0, regD=2)
         print(f'opcode: {oct(instruction)}')
-        assert self.dopr.is_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
         instruction_address = 0o2763
@@ -415,7 +418,7 @@ class TestClass():
         expected_sum = operanda + operandb  # 1183
 
         self.reg.set_pc(instruction_address+2, 'test_mode_7')  # +2 because we just read the PC in the instruciton cycle
-        self.do_double_operand_SSDD_and_report(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -445,8 +448,8 @@ class TestClass():
         self.reg.set(1, a)
         self.reg.set(2, b)
         instruction = self.ADD(modeS=0, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         sum = self.reg.get(2)
         assert sum == a + b
@@ -460,7 +463,7 @@ class TestClass():
         # ADD #10,R0
         instruction = self.ADD(modeS=2, regS=7, modeD=0, regD=0)
         assert instruction == 0o062700
-        assert self.dopr.is_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
 
         address = 0o1020
         self.ram.write_word(address, instruction)
@@ -469,7 +472,7 @@ class TestClass():
         self.reg.set_pc(address, "test_PC_mode_2")
         print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         self.reg.set_pc(address+2, "test_PC_mode_2")
-        self.do_double_operand_SSDD_and_report(instruction)
+        self.do_ssdd_op_report(instruction)
         print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
 
         assert self.reg.get(0) == 0o000030
@@ -483,7 +486,7 @@ class TestClass():
         # ADD @#2000,R3 Absolute address of operand follows instruction
         instruction = self.ADD(modeS=3, regS=7, modeD=0, regD=3)
         assert instruction == 0o063703
-        assert self.dopr.is_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
         a = 0o00300
         b = 0o00500
         pc = 0o20
@@ -495,7 +498,7 @@ class TestClass():
         self.reg.set_pc(pc, "test_PC_mode_3")
         print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         self.reg.set_pc(pc+2, "test_PC_mode_3")
-        self.do_double_operand_SSDD_and_report(instruction)
+        self.do_ssdd_op_report(instruction)
         print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
 
         assert self.reg.get(3) == a + b
@@ -516,8 +519,8 @@ class TestClass():
         expected_sum = a + b
 
         instruction = self.ADD(modeS=4, regS=1, modeD=0, regD=2)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        self.do_double_operand_SSDD_and_report(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -532,7 +535,7 @@ class TestClass():
         print('test_PC_mode_5 relative')
         # INC A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
         instruction = 0o005267
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
         a = 0o000054
         pc = 0o1020
         address = 0o1100
@@ -545,7 +548,7 @@ class TestClass():
         #self.ram.dump(0o1020, 0o1100)
 
         self.reg.set_pc(pc+2, "test_PC_mode_5")
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1100)
@@ -563,7 +566,7 @@ class TestClass():
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
         print(f'opcode: {oct(instruction)}')
-        assert self.dopr.is_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
         instruction_address = 0o2763
@@ -587,7 +590,7 @@ class TestClass():
         expected_sum = operanda + operandb # 1183
 
         self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
-        self.do_double_operand_SSDD_and_report(instruction)
+        self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
         assert actual_sum == expected_sum
@@ -600,7 +603,7 @@ class TestClass():
         # OPR@X(PC)
         # CLR @A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
         instruction = 0o005077
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
         a = 0o000020
         pc = 0o1020
         pointer = 0o1044
@@ -615,7 +618,7 @@ class TestClass():
         #self.ram.dump(0o1020, 0o1060)
 
         self.reg.set_pc(pc + 2, "test_PC_mode_7")
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1060)

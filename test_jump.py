@@ -15,8 +15,9 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_single_operand_ops import SingleOperandOps as sopr
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
+
+from pdp11_ss_ops import ss_ops
+
 from stopwatches import StopWatches as sw
 from pdp11_boot import pdp11Boot
 from pdp11 import PDP11
@@ -35,8 +36,8 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    dopr = dopr(reg, ram, psw, am, sw)
-    sopr = sopr(reg, ram, psw, am, sw)
+
+    ss_ops = ss_ops(reg, ram, psw, am, sw)
 
     R0 = 0
     R1 = 1
@@ -73,9 +74,9 @@ class TestClass():
 
         self.reg.set_pc(pc, "test_jmp_mode_1")
         print(f'test_jmp_mode_0 instruction:{oct(instruction)} pc:{oct(pc)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
         # *** there's no real way to test this.
         # *** that means the CPU doesn't check this.
         PC = self.reg.get_pc()
@@ -94,9 +95,9 @@ class TestClass():
         self.ram.write_word(pc, instruction)
 
         print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
         print(f'test_jmp_mode_1 PC:{oct(PC)}')
@@ -117,9 +118,9 @@ class TestClass():
         self.ram.write_word(pc, instruction)
 
         print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
         print(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
@@ -138,9 +139,9 @@ class TestClass():
         self.ram.write_word(pc, instruction)
 
         print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
         print(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
@@ -166,9 +167,9 @@ class TestClass():
         self.reg.set_pc(pc+2, "test_jmp_mode_3")
 
         print(f'test_jmp_mode_3 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
         print(f'test_jmp_mode_3 PC:{oct(PC)}  target:{oct(target)}')
@@ -189,9 +190,9 @@ class TestClass():
         self.reg.set_pc(pc+2, "test_jump_mode_6")
 
         print(f'test_jump_mode_6 instruction:{oct(instruction)} relative_address:{oct(relative_address)}')
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
 
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
 
         assert self.reg.get_pc() == target
 
@@ -200,7 +201,7 @@ class TestClass():
         # Mode 7, Index Indirect, jumps to address contained in a word
         # addressed by adding a 16 bit word to the register specified - JMP @20(PC)
         instruction = 0o005077
-        assert self.sopr.is_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
         a = 0o000020
         pc = 0o1020
         pointer = 0o1044
@@ -211,7 +212,7 @@ class TestClass():
         self.ram.write_word(address, 0o100001)
         self.reg.set_pc(pc, "test_PC_mode_7")
         self.reg.set_pc(pc + 2, "test_PC_mode_7") # why?
-        self.sopr.do_single_operand(instruction)
+        self.ss_ops.do_ss_op(instruction)
         assert self.reg.get_pc() == 0o1024
         assert self.ram.read_word(address) == 0o0
         condition_codes = self.psw.nvzc_to_string()

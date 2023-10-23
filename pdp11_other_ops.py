@@ -8,7 +8,7 @@ MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
 
-class OtherOps:
+class other_ops:
     """Implements the remainder of PDP11 instructions"""
     def __init__(self, reg, ram, psw, am, sw):
         print('initializing otherOps')

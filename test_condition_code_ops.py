@@ -5,8 +5,8 @@
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
-from pdp11_hardware import AddressModes as am
-from pdp11_condition_code_ops import ConditionCodeOps as ccops
+from pdp11_cc_ops import cc_ops
+
 from stopwatches import StopWatches as sw
 
 class TestClass():
@@ -14,7 +14,7 @@ class TestClass():
     ram = Ram(reg)
     psw = PSW(ram)
     sw = sw()
-    ccops = ccops(psw, sw)
+    cc_ops = cc_ops(psw, sw)
 
     set_opcode = 0o000260
     clear_opcode = 0o000240
@@ -31,9 +31,9 @@ class TestClass():
         while test_code <= 0o17:
             self.psw.set_psw(psw=0)
             instruction = self.SEX(test_code)
-            assert self.ccops.is_condition_code_operation(instruction)
+            assert self.cc_ops.is_cc_op(instruction)
 
-            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly, report = self.cc_ops.do_cc_op(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
             print(assembly)
@@ -47,11 +47,11 @@ class TestClass():
         while test_code <= 0o17:
             self.psw.set_psw(psw=0o17)
             instruction = self.CLX(test_code)
-            assert self.ccops.is_condition_code_operation(instruction)
+            assert self.cc_ops.is_cc_op(instruction)
 
             expected = (self.psw.get_psw() & self.psw_bits) & ~test_code
 
-            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
+            run, operand1, operand2, assembly, report = self.cc_ops.do_cc_op(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
             print(assembly)

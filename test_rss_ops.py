@@ -3,7 +3,15 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
+
+from pdp11_br_ops import br_ops
+from pdp11_cc_ops import cc_ops
+from pdp11_noopr_ops import noopr_ops
+from pdp11_other_ops import other_ops
+from pdp11_rss_ops import rss_ops
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
@@ -19,7 +27,14 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    dopr = dopr(reg, ram, psw, am, sw)
+
+    br_ops = br_ops(reg, ram, psw, sw)
+    cc_ops = cc_ops(psw, sw)
+    noopr_ops = noopr_ops(reg, ram, psw, stack, sw)
+    other_ops = other_ops(reg, ram, psw, am, sw)
+    rss_ops = rss_ops(reg, ram, psw, am, sw)
+    ss_ops = ss_ops(reg, ram, psw, am, sw)
+    ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
 
     def SS(self, mode, register):
         return (mode << 3 | register) << 6
@@ -30,46 +45,6 @@ class TestClass():
     def op(self, opcode, modeS=0, regS=0, modeD=0, regD=1):
         return opcode | self.SS(modeS, regS) | self.DD(modeD, regD)
 
-    def test_byte_mask_w(self):
-        print('\ntest_byte_mask_w')
-        BW = 'W'
-        value = 0b1010101010101010
-        target = 0b0101010101010101
-        return_value = self.dopr.byte_mask(BW, value, target)
-        assert return_value == 0b1010101010101010
-
-    def test_byte_mask_b1(self):
-        print('\ntest_byte_mask_b1')
-        BW = 'B'
-        value = 0b1111111100000000
-        target = 0b0000000011111111
-        return_value = self.dopr.byte_mask(BW, value, target)
-        assert return_value == 0
-
-    def test_byte_mask_b2(self):
-        print('\ntest_byte_mask_b2')
-        BW = 'B'
-        value = 0b0000000011111111
-        target = 0b1111111100000000
-        return_value = self.dopr.byte_mask(BW, value, target)
-        assert return_value == 0b1111111111111111
-
-    def test_byte_mask_b3(self):
-        print('\ntest_byte_mask_b3')
-        BW = 'B'
-        value = 0b1010101010101010
-        target = 0b0101010101010101
-        return_value = self.dopr.byte_mask(BW, value, target)
-        assert return_value == 0b0101010110101010
-
-    def test_byte_mask_b4(self):
-        print('\ntest_byte_mask_b4')
-        BW = 'B'
-        value = 0b0000000000000000
-        target = 0b0101010101010101
-        return_value = self.dopr.byte_mask(BW, value, target)
-        assert return_value == 0b0101010100000000
-
     def test_BIC(self):
         print('\ntest_BIC')
         self.psw.set_psw(psw=0)
@@ -77,8 +52,8 @@ class TestClass():
         self.reg.set(2, 0b1111111111111111)
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'BIC R1,R2'
 
         r2 = self.reg.get(2)
@@ -96,8 +71,8 @@ class TestClass():
 
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'BICB R1,R2'
 
         r2 = self.reg.get(2)
@@ -115,8 +90,8 @@ class TestClass():
         self.reg.set(4, 0o001111)
 
         instruction = self.op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "BIC R3,R4"
 
         assert self.reg.get(3) == 0o001234
@@ -134,8 +109,8 @@ class TestClass():
         self.reg.set(4, 0o001111)
 
         instruction = self.op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "BICB R3,R4"
 
         assert self.reg.get(3) == 0o001234
@@ -150,8 +125,8 @@ class TestClass():
         self.reg.set(3,0o123456)
         self.reg.set(4,0o000000)
         instruction = self.op(opcode=0o010000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOV R3,R4"
 
         r3 = self.reg.get(3)
@@ -169,8 +144,8 @@ class TestClass():
         self.reg.set(3,0b1010011100101110)
         self.reg.set(4,0b0000000000000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -188,8 +163,8 @@ class TestClass():
         self.reg.set(3,0b1010011110101110)
         self.reg.set(4,0b0000000000000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -207,8 +182,8 @@ class TestClass():
         self.reg.set(3,0b0000000010101110)
         self.reg.set(4,0b1010011100000000)
         instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
 
         r3 = self.reg.get(3)
@@ -235,8 +210,8 @@ class TestClass():
 
         instruction = 0o112512
         self.reg.set_pc(0o165250)
-        assert self.dopr.is_double_operand_SSDD(instruction)
-        run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB (R5)+,@R2"
         assert self.reg.get(5) == 0o165321
         atr2  = self.ram.read_byte(self.reg.get(2))

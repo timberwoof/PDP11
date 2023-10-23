@@ -3,7 +3,15 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_single_operand_ops import SingleOperandOps as sopr
+
+from pdp11_br_ops import br_ops
+from pdp11_cc_ops import cc_ops
+from pdp11_noopr_ops import noopr_ops
+from pdp11_other_ops import other_ops
+from pdp11_rss_ops import rss_ops
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
@@ -19,7 +27,54 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    sopr = sopr(reg, ram, psw, am, sw)
+
+    br_ops = br_ops(reg, ram, psw, sw)
+    cc_ops = cc_ops(psw, sw)
+    noopr_ops = noopr_ops(reg, ram, psw, stack, sw)
+    other_ops = other_ops(reg, ram, psw, am, sw)
+    rss_ops = rss_ops(reg, ram, psw, am, sw)
+    ss_ops = ss_ops(reg, ram, psw, am, sw)
+    ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
+
+    def test_byte_mask_w(self):
+        print('\ntest_byte_mask_w')
+        BW = 'W'
+        value = 0b1010101010101010
+        target = 0b0101010101010101
+        return_value = self.ssdd_ops.byte_mask(BW, value, target)
+        assert return_value == 0b1010101010101010
+
+    def test_byte_mask_b1(self):
+        print('\ntest_byte_mask_b1')
+        BW = 'B'
+        value = 0b1111111100000000
+        target = 0b0000000011111111
+        return_value = self.ssdd_ops.byte_mask(BW, value, target)
+        assert return_value == 0
+
+    def test_byte_mask_b2(self):
+        print('\ntest_byte_mask_b2')
+        BW = 'B'
+        value = 0b0000000011111111
+        target = 0b1111111100000000
+        return_value = self.ssdd_ops.byte_mask(BW, value, target)
+        assert return_value == 0b1111111111111111
+
+    def test_byte_mask_b3(self):
+        print('\ntest_byte_mask_b3')
+        BW = 'B'
+        value = 0b1010101010101010
+        target = 0b0101010101010101
+        return_value = self.ssdd_ops.byte_mask(BW, value, target)
+        assert return_value == 0b0101010110101010
+
+    def test_byte_mask_b4(self):
+        print('\ntest_byte_mask_b4')
+        BW = 'B'
+        value = 0b0000000000000000
+        target = 0b0101010101010101
+        return_value = self.ssdd_ops.byte_mask(BW, value, target)
+        assert return_value == 0b0101010100000000
 
     def test_CLR(self):
         print('\ntest_CLR')
@@ -27,8 +82,8 @@ class TestClass():
         self.reg.set(1, 0o013333)
 
         instruction = 0o05001  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "CLR R1"
 
         r1 = self.reg.get(1)
@@ -45,8 +100,8 @@ class TestClass():
         self.reg.set(1, 0o013333)
 
         instruction = 0o005101 # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "COM R1"
 
         r1 = self.reg.get(1)
@@ -64,8 +119,8 @@ class TestClass():
         self.reg.set(1, 0o164444)
 
         instruction = 0o005101 # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "COM R1"
 
         r1 = self.reg.get(1)
@@ -80,8 +135,8 @@ class TestClass():
         self.reg.set(1, 0o000022)
 
         instruction = 0o105101 # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "COMB R1"
 
         r1 = self.reg.get(1)
@@ -96,8 +151,8 @@ class TestClass():
         self.reg.set(1, 0o013333)
 
         instruction = 0o05201  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "INC R1"
 
         r1 = self.reg.get(1)
@@ -112,8 +167,8 @@ class TestClass():
         self.reg.set(1, 0o000033)
 
         instruction = 0o105201  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "INCB R1"
 
         r1 = self.reg.get(1)
@@ -128,8 +183,8 @@ class TestClass():
         self.reg.set(1, 0o013333)
 
         instruction = 0o05301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -144,8 +199,8 @@ class TestClass():
         self.reg.set(1, 0o0001)
 
         instruction = 0o05301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -160,8 +215,8 @@ class TestClass():
         self.reg.set(1, 0)
 
         instruction = 0o05301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "DEC R1"
 
         r1 = self.reg.get(1)
@@ -176,8 +231,8 @@ class TestClass():
         self.reg.set(1, 0o000001)
 
         instruction = 0o105301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "DECB R1"
 
         r1 = self.reg.get(1)
@@ -193,8 +248,8 @@ class TestClass():
         self.reg.set(1, 0o077777)
 
         instruction = 0o000301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -210,8 +265,8 @@ class TestClass():
         self.reg.set(1, 0o177577)
 
         instruction = 0o000301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -228,8 +283,8 @@ class TestClass():
         self.reg.set(1, 0o000377)
 
         instruction = 0o000301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -247,8 +302,8 @@ class TestClass():
         self.reg.set(1, 0o177400)
 
         instruction = 0o000301  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "SWAB R1"
 
         r1 = self.reg.get(1)
@@ -263,8 +318,8 @@ class TestClass():
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1111111100000000)
         instruction = 0o006001  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ROR R1"
         r1 = self.reg.get(1)
         assert r1 == 0b0111111110000000
@@ -276,8 +331,8 @@ class TestClass():
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b0000000011111111)
         instruction = 0o006001  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ROR R1"
         r1 = self.reg.get(1)
         assert r1 == 0b1000000001111111
@@ -289,8 +344,8 @@ class TestClass():
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b0000111111110000)
         instruction = 0o106001  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "RORB R1"
         print (report)
         r1 = self.reg.get(1)
@@ -303,8 +358,8 @@ class TestClass():
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1111000000001111)
         instruction = 0o106001  # mode 0 R1
-        assert self.sopr.is_single_operand(instruction)
-        run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        assert self.ss_ops.is_ss_op(instruction)
+        run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "RORB R1"
         print (report)
         r1 = self.reg.get(1)

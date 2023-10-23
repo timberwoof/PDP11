@@ -4,9 +4,15 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_single_operand_ops import SingleOperandOps as sopr
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
-from pdp11_other_ops import OtherOps as other
+
+from pdp11_br_ops import br_ops
+from pdp11_cc_ops import cc_ops
+from pdp11_noopr_ops import noopr_ops
+from pdp11_other_ops import other_ops
+from pdp11_rss_ops import rss_ops
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from stopwatches import StopWatches as sw
 
 MASK_WORD = 0o177777
@@ -22,7 +28,14 @@ class TestClass():
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
     sw = sw()
-    other = other(reg, ram, psw, am, sw)
+
+    br_ops = br_ops(reg, ram, psw, sw)
+    cc_ops = cc_ops(psw, sw)
+    noopr_ops = noopr_ops(reg, ram, psw, stack, sw)
+    other_ops = other_ops(reg, ram, psw, am, sw)
+    rss_ops = rss_ops(reg, ram, psw, am, sw)
+    ss_ops = ss_ops(reg, ram, psw, am, sw)
+    ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
 
     def test_jsr_R5(self):
         # pdp11-40 4-58
@@ -68,7 +81,7 @@ class TestClass():
         print (f'opcode:{oct(opcode)}')
         self.ram.write_word(PC, opcode)
 
-        assert self.other.is_other_op(opcode)
+        assert self.other_ops.is_other_op(opcode)
         print ('is other opcode')
 
         reg7 = self.reg.get(R7)
@@ -78,7 +91,7 @@ class TestClass():
         self.reg.set(R7, PC+2)
         print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
-        self.other.other_opcode(opcode)
+        self.other_ops.other_opcode(opcode)
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)
@@ -120,7 +133,7 @@ class TestClass():
         print (f'opcode:{oct(opcode)}')
         self.ram.write_word(PC, opcode)
 
-        assert self.other.is_other_op(opcode)
+        assert self.other_ops.is_other_op(opcode)
         print ('is other opcode')
 
         reg7 = self.reg.get(R7)
@@ -130,7 +143,7 @@ class TestClass():
         self.reg.set(R7, PC+2)
         print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
-        self.other.other_opcode(opcode)
+        self.other_ops.other_opcode(opcode)
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)

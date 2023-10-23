@@ -1,6 +1,6 @@
-"""pdp11_no_operand_ops.py - no-operand instructions 00 00 00 through 00 00 06"""
+"""pdp11_noopr_ops.py - no-operand instructions 00 00 00 through 00 00 06"""
 
-class NoOperandOps:
+class noopr_ops:
     """Implements PDP11 no-operand instructions"""
     def __init__(self, reg, ram, psw, stack, sw):
         print('initializing NoOperandOps')
@@ -81,11 +81,11 @@ class NoOperandOps:
         self.psw.set_condition_codes('W', self.reg.get_sp(), "***")
         return True, ''
 
-    def is_no_operand(self, instruction):
+    def is_noopr_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a no-operand instruction"""
         return instruction in self.no_operand_instructions
 
-    def do_no_operand(self, instruction):
+    def do_noopr_op(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
         self.sw.start("no operand")

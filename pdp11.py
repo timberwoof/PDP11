@@ -6,12 +6,15 @@ from pdp11_hardware import Ram
 from pdp11_hardware import PSW
 from pdp11_hardware import Stack
 from pdp11_hardware import AddressModes as am
-from pdp11_no_operand_ops import NoOperandOps as nopr
-from pdp11_single_operand_ops import SingleOperandOps as sopr
-from pdp11_double_operand_ops import DoubleOperandOps as dopr
-from pdp11_branch_ops import BranchOps as br
-from pdp11_condition_code_ops import ConditionCodeOps as ccops
-from pdp11_other_ops import OtherOps as other
+
+from pdp11_br_ops import br_ops
+from pdp11_cc_ops import cc_ops
+from pdp11_noopr_ops import noopr_ops
+from pdp11_other_ops import other_ops
+from pdp11_rss_ops import rss_ops
+from pdp11_ss_ops import ss_ops
+from pdp11_ssdd_ops import ssdd_ops
+
 from pdp11_console import Console
 from pdp11_dl11 import DL11
 from pdp11_vt52 import VT52
@@ -65,12 +68,13 @@ class PDP11():
         self.am = am(self.reg, self.ram, self.psw)
 
         # operations
-        self.br = br(self.reg, self.ram, self.psw, self.sw)
-        self.nopr = nopr(self.reg, self.ram, self.psw, self.stack, self.sw)
-        self.sopr = sopr(self.reg, self.ram, self.psw, self.am, self.sw)
-        self.dopr = dopr(self.reg, self.ram, self.psw, self.am, self.sw)
-        self.other = other(self.reg, self.ram, self.psw, self.am, self.sw)
-        self.ccops = ccops(self.psw, self.sw)
+        self.br = br_ops(self.reg, self.ram, self.psw, self.sw)
+        self.noopr_ops = noopr_ops(self.reg, self.ram, self.psw, self.stack, self.sw)
+        self.ss_ops = ss_ops(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.ssdd_ops = ssdd_ops(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.rss_ops = rss_ops(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.other_ops = other_ops(self.reg, self.ram, self.psw, self.am, self.sw)
+        self.cc_ops = cc_ops(self.psw, self.sw)
 
         # i/o devices
         self.console = Console(self)
@@ -92,26 +96,26 @@ class PDP11():
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
-        if self.ccops.is_condition_code_operation(instruction):
-            run, operand1, operand2, assembly, report = self.ccops.do_condition_code_operation(instruction)
+        if self.cc_ops.is_cc_op(instruction):
+            run, operand1, operand2, assembly, report = self.cc_ops.do_cc_op(instruction)
 
-        elif self.br.is_branch(instruction):
-            run, operand1, operand2, assembly, report = self.br.do_branch(instruction)
+        elif self.br.is_br_op(instruction):
+            run, operand1, operand2, assembly, report = self.br.do_br_op(instruction)
 
-        elif self.nopr.is_no_operand(instruction):
-            run, operand1, operand2, assembly, report = self.nopr.do_no_operand(instruction)
+        elif self.noopr_ops.is_noopr_op(instruction):
+            run, operand1, operand2, assembly, report = self.noopr_ops.do_noopr_op(instruction)
 
-        elif self.sopr.is_single_operand(instruction):
-            run, operand1, operand2, assembly, report = self.sopr.do_single_operand(instruction)
+        elif self.ss_ops.is_ss_op(instruction):
+            run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
 
-        elif self.dopr.is_double_operand_RSS(instruction):
-            run, operand1, operand2, assembly, report = self.dopr.do_double_operand_RSS(instruction)
+        elif self.rss_ops.is_rss_op(instruction):
+            run, operand1, operand2, assembly, report = self.rss_ops.do_rss_op(instruction)
 
-        elif self.dopr.is_double_operand_SSDD(instruction):
-            run, operand1, operand2, assembly, report = self.dopr.do_double_operand_SSDD(instruction)
+        elif self.ssdd_ops.is_ssdd_op(instruction):
+            run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
 
         else:
-            run, operand1, operand2, assembly, report = self.other.other_opcode(instruction)
+            run, operand1, operand2, assembly, report = self.other_ops.other_ops_opcode(instruction)
 
         return run, operand1, operand2, assembly, report
 
