@@ -138,6 +138,32 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001"
 
+    def test_MOV_2(self):
+        print('\ntest_MOV_2')
+        # 010322 MOV R3,(R2)+
+        # from M9001_YA that broke
+        self.psw.set_psw(psw=0o777777)
+        self.reg.set(3,0o177777)
+        self.reg.set(2,0o000000)
+        instruction = self.op(opcode=0o010000, modeS=0, regS=3, modeD=2, regD=2)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        print('setup done; running op')
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == "MOV R3,(R2)+"
+        print('op done; checking results')
+
+        r3 = self.reg.get(3)
+        assert r3 == 0o177777
+
+        r2 = self.reg.get(2)
+        assert r2 == 0o02
+
+        target = self.ram.read_word(0o000000)
+        assert target == r3
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "1001"
+
     def test_MOVB_01(self):
         print('\ntest_MOVB_01')
         self.psw.set_psw(psw=0o777777)
@@ -217,3 +243,53 @@ class TestClass():
         atr2  = self.ram.read_byte(self.reg.get(2))
         print(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
+
+    def test_MUL(self):
+        print('test_MUL')
+        R = 1
+        a = 0o001212
+        b = 0o24
+
+        self.psw.set_psw(psw=0)
+        self.reg.set(R, a)
+        instruction = 0o070000 | R << 6 | b
+        print(oct(instruction))  # 0o0171312
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        product = self.reg.get(R)
+        print(f'product:{product}')
+        assert product == a * b
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"
+
+    def test_DIV(self):
+        R = 2  # must be even
+        a = 0o1536230
+        b = 0o75  # max 0o77
+        Rv1 = R + 1
+
+        print(f'test_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
+
+        self.psw.set_psw(psw=0)
+
+        # set up R and Rv1
+        self.reg.set(R, a >> 16)
+        self.reg.set(Rv1, a & MASK_WORD)
+
+        instruction = 0o071000 | R << 6 | b
+        print(f'test_DIV instruction:{oct(instruction)}')  # 0o0171312
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        quotient = self.reg.get(R)
+        remainder = self.reg.get(Rv1)
+        print(f'quotient:{oct(quotient)}')
+        print(f'remainder:{oct(remainder)}')
+        assert quotient == a // b
+        assert remainder == a % b
+
+        condition_codes = self.psw.nvzc_to_string()
+        assert condition_codes == "0000"
+

@@ -440,11 +440,11 @@ class ss_ops:
             assembly = f'{self.single_operand_instruction_names[opcode]} {assembly}'
             result, report = self.single_operand_instructions[opcode](source_value, BW)
         else:
-            source_value, out_register, out_address, operand, assembly = self.am.addressing_mode_get(BW, source)
+            source_value, out_register, out_address, operand, assembly, addressmode = self.am.addressing_mode_get(BW, source)
             assembly = f'{self.single_operand_instruction_names[opcode]} {assembly}'
             try:
                 result, report = self.single_operand_instructions[opcode](source_value, BW)
-                self.am.addressing_mode_set(BW, result, out_register, out_address)
+                self.am.addressing_mode_set(BW, addressmode, result, out_register, out_address)
             except KeyError:
                 assembly = ''
                 report = 'Error: single-operand opcode not found'

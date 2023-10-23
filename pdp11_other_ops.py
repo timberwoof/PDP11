@@ -52,7 +52,7 @@ class other_ops:
         run, jump_address, operand_word, assembly = self.am.addressing_mode_jmp(DD)
         self.stack.push(self.reg.get(R))
         self.reg.set(R, self.reg.get_pc())
-        self.reg.set_pc(self.ram.read_word(jump_address), "JSR")
+        self.reg.set_pc(jump_address, "JSR")
         return 'JSR', f'    {oct(self.reg.get_pc())} {oct(instruction)} JSR R{R} DD:{oct(DD)} address:{oct(jump_address)}'
 
     def MARK(self, instruction):
