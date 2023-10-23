@@ -27,7 +27,7 @@ class TestClass():
                 is_op = True
             elif pdp11.ssdd_ops.is_ssdd_op(opcode):
                 is_op = True
-            elif pdp11.other_ops.other_opcode(opcode):
+            elif pdp11.other_ops.do_other_op(opcode):
                 is_op = True
 
             if not is_op:

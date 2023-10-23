@@ -91,7 +91,7 @@ class TestClass():
         self.reg.set(R7, PC+2)
         print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
-        self.other_ops.other_opcode(opcode)
+        self.other_ops.do_other_op(opcode)
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)
@@ -143,7 +143,7 @@ class TestClass():
         self.reg.set(R7, PC+2)
         print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
-        self.other_ops.other_opcode(opcode)
+        self.other_ops.do_other_op(opcode)
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)

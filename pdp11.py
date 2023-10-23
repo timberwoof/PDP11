@@ -115,7 +115,7 @@ class PDP11():
             run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
 
         else:
-            run, operand1, operand2, assembly, report = self.other_ops.other_ops_opcode(instruction)
+            run, operand1, operand2, assembly, report = self.other_ops.do_other_op(instruction)
 
         return run, operand1, operand2, assembly, report
 
