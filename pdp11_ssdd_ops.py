@@ -181,9 +181,9 @@ class ssdd_ops:
         source = (instruction & 0o007700) >> 6
         dest = instruction & 0o000077
         # print(f'    source_value  = addressing_mode_get')
-        source_value, source_register, source_address, operand1, assembly1 = self.am.addressing_mode_get(bw, source)
+        source_value, source_register, source_address, operand1, assembly1, source_addressmode = self.am.addressing_mode_get(bw, source)
         # print(f'    dest_value = addressing_mode_get')
-        dest_value, dest_register, dest_address, operand2, assembly2 = self.am.addressing_mode_get(bw, dest)
+        dest_value, dest_register, dest_address, operand2, assembly2, dest_addressmode = self.am.addressing_mode_get(bw, dest)
         # print(f'    S:{oct(source_value)} R:{oct(source_register)} @:{oct(source_address)}  D:{oct(dest_value)} R:{oct(dest_register)} @:{oct(dest_address)}')
 
         run = True
@@ -197,7 +197,7 @@ class ssdd_ops:
             result = False
 
         # print(f'    addressing_mode_set')
-        self.am.addressing_mode_set(bw, result, dest_register, dest_address)
+        self.am.addressing_mode_set(bw, dest_addressmode, result, dest_register, dest_address)
         self.sw.stop("double operand ssdd")
 
         return run, operand1, operand2, assembly, report

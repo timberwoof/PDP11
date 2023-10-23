@@ -49,20 +49,6 @@ class TestClass():
         mode3 = 3
         mode6 = 6
 
-        # 00 4R DD: JSR jump to subroutine
-        # *** I do not know what paremeters are given to JSR
-        # *** I do not know the address mode that is used
-        # *** JSR is typically used
-        # M9301_YA:
-        # 165334 012701	TST7:	MOV	#JSRT, R1
-        # 165344 004311		JSR	R3, @R1  ; mode 1
-        # 165350 004361		JSR	R3, 4(R1) ; mode 6
-        # 165352 000004
-        # 165356 005723	JSRT:	TST	(R3)+ ; R1
-        # 165362 021605		CMP	@SP, R5 ; 4(R1)
-        # spcinv.mac:
-        # JSR PC,ADDRESS
-
         # from pdp11-40 4-59
         # arbitrary values for test:
         PC = 0o01000
@@ -100,7 +86,7 @@ class TestClass():
         print(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
         #assert actual == expected
-        assert reg7 == SBR
+        assert reg7 == PC + 2
         assert reg6 == SP - 2
         assert reg5 == PC + 2
         assert top == Data1

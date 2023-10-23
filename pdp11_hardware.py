@@ -645,7 +645,7 @@ class AddressModes:
             # print(f'    mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
         # print(f'    ; addressing_mode_get returns operand:{bin(operand)}')
-        return operand, register, address, operand_word, assembly
+        return operand, register, address, operand_word, assembly, addressmode
 
     # https://retrocomputing.stackexchange.com/questions/9248/pdp-11-jmp-and-jsr-how-was-the-target-specified
     # Mode 0 - illegal
@@ -761,23 +761,24 @@ class AddressModes:
         # print(f'    addressing_mode_jmp returns run:{run} jump_address:{oct(jump_address)} ')
         return run, jump_address, operand_word, assembly
 
-    def addressing_mode_set(self, b, result, register, address):
+    def addressing_mode_set(self, b, addressmode, result, register, address):
         """copy the result into the register or address specified
 
         Parameters:
             b: 'B' or ''
+            addressmode: address mode of destination
             result: word or byte
             register: if address is zero, put it in this register
             address: otherwise put it here
         """
         # print(f'    addressing_mode_set "{B}" result:{oct(result)} register:{register} address:{address}')
-        if address != 0:
+        if addressmode == 0:
+            self.reg.set(register, result)
+        else:
             if b == 'B':
                 self.ram.write_byte(address, result)
             else:
                 self.ram.write_word(address, result)
-        else:
-            self.reg.set(register, result)
 
     def address_mode_report(self):
         """
