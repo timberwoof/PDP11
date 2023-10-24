@@ -1,6 +1,7 @@
 """PDP11 Registers, RAM, PSW, Stack"""
 
 import sys
+import pdp11_util as u
 
 # masks for accessing words and bytes
 MASK_WORD = 0o177777
@@ -19,46 +20,19 @@ def fix_sign(word):
         result = word
     return result
 
-def add_word(a, b):
-    """add two-byte words with sign handling"""
-    # print(f'add_word({oct(a)}, {oct(b)})  MASK_WORD_MSB:{oct(MASK_WORD_MSB)}')
-    result = fix_sign(a) + fix_sign(b)
-    return result
-
 def address_offset(address, offset):
     """address plus sign-fixed offset"""
     result = address + fix_sign(offset)
     return result
 
 def formatted_offset(offset):
+    '''Format affset for disassembly'''
     formatted = offset
     # if the high bit is set, it's negative
     if offset & MASK_WORD_MSB == MASK_WORD_MSB:
         # mask it off and subtract what's left
         formatted = -(0o077777 - (offset & 0o077777)) * 2
     return f'{oct(formatted)}'
-
-def oct6(word):
-    """format an octal to be 6 digits wide:
-    0o2127 -> 0o002127"""
-    octal = oct(word)[2:]
-    paddingZeroes = '00000000'[0:6-len(octal)]
-    result = f'{paddingZeroes}{octal}'
-    return result
-
-def oct3(word):
-    """format an octal to be 6 digits wide:
-    0o2127 -> 0o002127"""
-    octal = oct(word)[2:]
-    paddingZeroes = '0000'[0:3-len(octal)]
-    result = f'{paddingZeroes}{octal}'
-    return result
-
-def pad20(self, string):
-    """pad a string to 20 charactcers"""
-    padding = '                    '[0:20-len(string)]
-    result = f'{string}{padding}'
-    return result
 
 class Registers:
     """PDP11 registers including PC and SP"""
@@ -122,8 +96,7 @@ class Registers:
         # If it is set then the offset is negative.
         offset = 2 * offset
         if offset > MASK_LOW_BYTE:  # if we overflowed with the sign bit
-            offset = offset | MASK_HIGH_BYTE  # this is now signed word
-            offset = fix_sign(offset)
+            offset = fix_sign(offset | MASK_HIGH_BYTE)
         newpc = self.__registers[self.__pc] + offset
         self.__registers[self.__pc] = newpc
         # print(f'    set_pc_2x_offset pc:{oct(waspc)} by {oct(offset)} to {oct(newpc)} called by {whocalled} ')
@@ -146,7 +119,7 @@ class Registers:
         index = 0
         report = ''
         for register in self.__registers:
-            report = f'{report} {oct6(register)}'  # f'R{index}:{oct(register)}  '
+            report = f'{report} {u.oct6(register)}'  # f'R{index}:{oct(register)}  '
             index = index + 1
         return report
 
@@ -220,7 +193,7 @@ class Ram:
             # print(f'    write_byte io({oct(address)}, {oct(data)})')
             self.iomap_writers[address](data)
         else:
-            # print(f'    ; write_byte({oct6(address)}, {oct3(data)})')
+            # print(f'    ; write_byte({u.oct6(address)}, {u.oct3(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
@@ -231,7 +204,7 @@ class Ram:
             # print(f'    read_byte io({oct(address)}) returns {oct(result)}')
         else:
             result = self.memory[address]
-            # print(f'    ; read byte {oct6(address)}) = {oct3(result)}')
+            # print(f'    ; read byte {u.oct6(address)}) = {u.oct3(result)}')
         return result
 
     def write_word(self, address, data):
@@ -255,7 +228,7 @@ class Ram:
             self.memory[address + 1] = hi
             self.memory[address] = lo
             # print(f'hi:{oct(memory[address])} lo:{oct(memory[address-1])}')
-            # print(f'    ; write_word({oct6(address)},{oct6(data)}) -> {oct3(self.memory[address + 1])} {oct3(self.memory[address])}')
+            # print(f'    ; write_word({u.oct6(address)},{u.oct6(data)}) -> {u.oct3(self.memory[address + 1])} {u.oct3(self.memory[address])}')
 
     def read_word(self, address):
         """Read a word of memory.
@@ -272,7 +245,7 @@ class Ram:
             hi = self.memory[address + 1]
             low = self.memory[address]
             result = (hi << 8) + low
-            # print(f'    ; read word {oct6(address)} = {oct6(result)}')
+            # print(f'    ; read word {u.oct6(address)} = {u.oct6(result)}')
         return result
 
     def read_word_from_pc(self):
@@ -308,14 +281,14 @@ class Ram:
 
         print_line = ""
         for row_address in range(start, stop, display_bytes):
-            print_line =   f'{oct6(row_address)} '
+            print_line =   f'{u.oct6(row_address)} '
             print_line = print_line + " "
             for word_address in range(row_address, row_address+display_bytes, 2):
-                print_line = print_line +  f'{oct6(self.read_word(word_address))} '
+                print_line = print_line +  f'{u.oct6(self.read_word(word_address))} '
                 #+" " self.read_word(word_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):
-                print_line = print_line + f'{oct3(self.read_byte(byte_address))} '
+                print_line = print_line + f'{u.oct3(self.read_byte(byte_address))} '
                 #+" " self.read_byte(byte_address)
             print_line = print_line + " "
             for byte_address in range(row_address, row_address+display_bytes):
@@ -563,7 +536,7 @@ class AddressModes:
         address = 0
         operand_word = ''
         if addressmode != 0 and register==7:
-            operand_word = oct6(self.ram.read_word(self.reg.get(7)))
+            operand_word = u.oct6(self.ram.read_word(self.reg.get(7)))
         assembly = ''
 
         # print(f'    addressing_mode_get("{B}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
@@ -630,7 +603,7 @@ class AddressModes:
             address = address_offset(self.reg.get(register), x)
             # print(f'    mode 6 X:{oct(x)} address:{oct(address)}')
             operand = ram_read(address)
-            operand_word = oct6(x)
+            operand_word = u.oct6(x)
             assembly = f'{formatted_offset(x)}(R{register})'
             # print(f'    mode 6 R{register}=@{oct(address)} = operand:{oct(operand)}')
         elif addressmode == 7:  # index deferred
@@ -640,7 +613,7 @@ class AddressModes:
             address = self.ram.read_word(pointer)
             # print(f'    mode 7 X:{oct(x)} pointer:{oct(pointer)} address:{oct(address)}')
             operand = ram_read(address)
-            operand_word = oct6(x)
+            operand_word = u.oct6(x)
             assembly = f'@{formatted_offset(x)}(R{register})'
             # print(f'    mode 7 R{register}=@{oct(address)} = operand:{oct(operand)}')
 
@@ -691,7 +664,7 @@ class AddressModes:
         address = 0
 
         # print(f'    addressing_mode_jmp mode:{oct(addressmode)} reg:{oct(register)}')
-        operand_word = '' #oct6(self.ram.read_word(self.reg.get(7)))
+        operand_word = '' #u.oct6(self.ram.read_word(self.reg.get(7)))
         assembly = ''
 
         run = True
@@ -741,7 +714,7 @@ class AddressModes:
             x = self.ram.read_word_from_pc()
             address = self.reg.get(register)
             jump_address = address_offset(address, x)
-            operand_word = oct6(x)
+            operand_word = u.oct6(x)
             assembly = f'{formatted_offset(x)}(R{register})'
             # print(f'    mode j6: JMP relative. Immediate value {oct(x)} plus value in register {oct(address)} gets jump_address {oct(jump_address)}.')
         elif addressmode == 7:
@@ -753,7 +726,7 @@ class AddressModes:
             address = self.ram.read_word(pointer)
             word = self.ram.read_word(address)
             jump_address = self.reg.get_pc() + word
-            operand_word = oct6(x)
+            operand_word = u.oct6(x)
             assembly = f'@{formatted_offset(x)}(R{register})'
             # print(f'    pointer:{oct(pointer)} address:{oct(address)} word:{oct(word)} jump_address:{oct(jump_address)}')
 

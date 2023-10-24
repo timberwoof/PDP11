@@ -1,6 +1,8 @@
 """PDP-11 Emulator"""
 import time
 
+import pdp11_util as u
+
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -39,20 +41,6 @@ from stopwatches import StopWatches as sw
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 # self.ram.dump(0o165000, 0o165000+32)
 
-def oct6(word):
-    """format an octal to be 6 digits wide:
-    0o2127 -> 0o002127"""
-    octal = oct(word)
-    paddingZeroes = '000000'[0:8 - len(octal)]
-    result = f'{octal[2:2]}{paddingZeroes}{octal[2:]}'
-    return result
-
-def pad(string, width):
-    """pad a string to width charactcers"""
-    padding = '                    '[0:width - len(string)]
-    result = f'{string}{padding}'
-    return result
-
 class PDP11():
     """Timber's PDP11 emulator"""
     def __init__(self):
@@ -80,7 +68,7 @@ class PDP11():
         self.console = Console(self)
         self.boot = boot(self.reg, self.ram)
         self.m9301 = M9301(self.reg, self.ram, self.boot)
-        self.rk11 = RK11(self.ram)
+        #self.rk11 = RK11(self.ram)
 
         # set up DL11
         # set up the serial interface addresses
@@ -126,11 +114,11 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        print(f'{oct6(pc)} {oct6(instruction)} {pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        print(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         if operand1 != '':
-            print(f'{oct6(pc+2)} {pad(operand1, 7)}')
+            print(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
         if operand2 != '':
-            print(f'{oct6(pc+4)} {pad(operand2, 7)}')
+            print(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
         if report != '':
             print(report)
         self.sw.stop("instruction cycle")
