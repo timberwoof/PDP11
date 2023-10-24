@@ -4,20 +4,23 @@ Introduction
 ============
 This document describes the timberwoof/PDP11 project.
 
-timberwoof/PDP11 is an attempt to write, independently of any existing code influencess,
-an emulator for the basic PDP/11 instruction set. The environment is Python 3. The initial
-test of the code is a hello world program and published PDP11 CPU test code.
+timberwoof/PDP11 is an attempt to write, 
+independently of any existing code influencess,
+an emulator for the basic PDP/11 instruction set. 
+The environment is Python 3. 
+Testing is done by running unit tests under Pytest
+and by running various published machine-code examples
+including the DEC boot rooms. 
 
 Modules
 =======
-- this section is out of date.
 pdp11.py
 -------
 Startup
 instruction dispatch
 processor loop
 
-pdp11Hardware
+pdp11_hardware.py
 -------------
 Contains various "hardware" classes.
 They have dependencies, so the class pdp11CPU references and initializes them all.
@@ -41,27 +44,32 @@ Implements built-in pdp11 stack operations and limit checks.
 
 addressModes implements the 8 standrad address modes of the PDP11 instruction set.
 
-pdp11Boot.py
+pdp11_boot.py
 ------------
 convenience library for loading programs from code or file into pdp-11 ram.
 Sets up the instruction dispatch tables
 Reads the (hard-coded for now) assembly file into ram.
 Starts the processor loop.
 
-Instructions
-------------
+Instruction Classes
+-------------------
 Instruction methods are grouped by type into these classes:
-pdp11BranchOps.py - implements branch instructions
-pdp11DoubleOperandOps.py - implements double-operand instructions
-pdp11NoOperandOps.py - implements no-operand instructions
-pdp11OtherOps.py - implements other instrucutions
-pdp11SingleOperandOps.py - implements single-operand instructions
+pdp11_br_ops.py - branch instructions
+pdp11_cc_ops.py - condition codes
+pdp11_noopr_ops.py - no-operand instructions
+pdp11_other_ops.py - other instrucutions
+pdp11_rss_ops.py - RSS double-operand instructions
+pdp11_ss_ops.py - SS single-operand instructions
+pdp11_ssdd_ops.py - SSDD double-operand instructions
+pdp11SingleOperandOps.py - single-operand instructions
 
 Peripherals
 -----------
-pdp11DL11 - serial terminal
-pdp11m9301 - boot rom and diagnostics
-pdp11rk11 - hard disk interface (stubbed out; not implemented)
+pdp11_console.py - PySimpleGui control switches and fun prpogram counter lights 
+pdp11_dl11.py - serial interface
+pdp11_m9301.py - DEC boot rom and diagnostics
+pdp11_rk11.py - hard disk interface (stubbed out; not implemented)
+pdp11_vt52.py - PySimpleGui terminal
 
 Pytest
 ======
@@ -78,66 +86,17 @@ Current State of the Project
 ============================
 Runs Hello World project.
 DL11 emulator is mostly running.
-    M9301-YA breaks becuase DL11 doesn't properly set ready bits.
 M9301 emulator is running.
-Runs much of test_M9301_YA.
+Runs much of test_M9301_YA. Console emulator is weird. 
 Pytest tests pass and must continue to run.
+GitHub project includes unit tests.
 
 To Do
 =====
-DL11 emulator needs its character-ready bits to work.
 Proper logging with settable log levels.
-    PyCharm and Logging don't get along nicely.
-    This will take some research to get this working right.
 Get a virtual disk running (RK11),
 Get a small OS running. mini-unix (no MMU needed)
 Get PacMan or Space Wars running
+PDP11 MMU
 FP-11
 Implement ODT https://gunkies.org/wiki/QBUS_CPU_ODT
-Get that assembler running.
-
-
-Notes
-=====
-RK02 1.22MB
-03 2.45MB
-05 2.45MB
-06 13.8MB
-07 27.6MB
-
-Mini-Unix
-http://www.tavi.co.uk/unixhistory/mini-unix.html
-magtape and RK05
-
-••• DL11 communications controller
-http://gunkies.org/wiki/DL11_asynchronous_serial_line_interface
-address 0777560, vector 060
-rcsr 0
-rbuf 2
-xcsr 4
-xbuf 6
-
-DC11 communications controller 774000
-http://gunkies.org/wiki/DC11_asynchronous_serial_line_interface
-dcrcsr 0
-dcrbuf 2
-dctcsr 4
-dctbuf 6
-
-DH11 communications controller
-RK05 images - munixrks.zip
-installation tape - munix-tap
-initialization files - munix-initfiles
-need devices
-tm0 - tape - munix.tap
-rk0 - first RK05 - system.dsk
-rk1 - source.dsk
-rk2 - doc.dsk
-
-RK05 emulator in python
-a library that talks to pdp11ram.py
-pdp11.py should be able to take as a parameter "setup.ini"
-and that needs to be able to set up the emulated
-tapes and drives and to slam stuff into memory
-wants an 11/20
-sim>quit should write simulated disk to disk file
