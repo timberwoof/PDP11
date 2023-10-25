@@ -7,6 +7,7 @@ This document describes the timberwoof/PDP11 project.
 timberwoof/PDP11 is an attempt to write, 
 independently of any existing code influencess,
 an emulator for the basic PDP/11 instruction set. 
+The target is a simple 16-bit PDP-11/03. 
 The environment is Python 3. 
 Testing is done by running unit tests under Pytest
 and by running various published machine-code examples
