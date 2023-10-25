@@ -145,4 +145,5 @@ class StopWatches():
         print("StopWatches Report end")
 
     def get_watch(self, instance_id):
+        '''get the specified watch options'''
         return self.stop_watch_dict[instance_id]

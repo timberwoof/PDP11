@@ -14,7 +14,8 @@ class cc_ops:
         self.psw_bits = 0o000017
 
     def is_cc_op(self, instruction):
-        return (0o0000240 <= instruction & instruction <= 0o0000277)
+        '''returns true if the unstruction is a condition-code instruction'''
+        return (0o0000240 <= instruction) & (instruction <= 0o0000277)
 
     def do_cc_op(self, instruction):
         """dispatch a condition code instruction"""

@@ -208,4 +208,4 @@ class rss_ops:
         print(f'    result:{oct(result)}')
         self.reg.set(register, result)
         self.sw.stop("rss")
-        return run, assembly, report
+        return run, "", "", assembly, report

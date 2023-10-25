@@ -34,13 +34,13 @@ class M9301:
         # (TM11, TC11, RK11, RP11, RK06, RJS, RJP, TJU, RX11, high-speed paper-tape reader)
 
         self.ram = ram
-        m9301_start_address = ram.top_of_memory - 0o4777  # *** Only supports 16-bit address for now.
+        #m9301_start_address = ram.top_of_memory - 0o4777  # *** Only supports 16-bit address for now.
 
         self.base_address = 0o173000
         self.switch_address = 0o173024
         self.switch_settings = 0o0
 
-        switch81_1 = True  # low rom enable ON = True for normal operation.
+        #switch81_1 = True  # low rom enable ON = True for normal operation.
         # ON: get PC and PSW from 0o173024 and 0o173026
         # OFF: get PC and PSW from 0o024 and 0o026,
         # Do not respond to address requests between 0o765000 and 0o765777
@@ -103,7 +103,7 @@ class M9301:
             self.switch_settings = switch81_3 + switch81_4 + switch81_5 + switch81_6 + \
                  switch81_7 + switch81_8 + switch81_9 + switch81_10 + self.base_address
             print(f'    switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
-            reg.set_pc(self.switch_settings, f"M9301 switch81_2 True")
+            reg.set_pc(self.switch_settings, 'M9301 switch81_2 True')
         else:
             reg.set_pc(0o24,"M9301 else switch81_2 False")
 
@@ -117,5 +117,6 @@ class M9301:
     # That's perfectly acceptable as this only does anything on startup.
 
     def read_dip_switches(self):
+        '''io device method returns the dip switch positions'''
         print(f'                                  ; read_dip_switches returns {oct(self.switch_settings)}')
         return self.switch_settings

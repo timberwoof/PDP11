@@ -9,8 +9,9 @@ class Console:
     """PDP11 Console"""
     def __init__(self, pdp11):
         """vt52(ram object, base address for this device)"""
-        print(f'initializing console')
+        print('initializing console')
         self.pdp11 = pdp11
+        self.window = 0
 
     def pc_to_blinky_lights(self):
         """create a display of the pdp11's program counter"""
@@ -42,6 +43,7 @@ class Console:
         print('console make_window done')
 
     def cycle(self, cpu_run):
+        '''one console window update cycle'''
         window_run = True
         pc_display = self.window['pc_display']
         pc_display.update(oct(self.pdp11.reg.get_pc()))

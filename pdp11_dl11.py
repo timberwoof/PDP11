@@ -133,4 +133,3 @@ class DL11:
                          'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
             result = low_ascii[byte]
         return result
-

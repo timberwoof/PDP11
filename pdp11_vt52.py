@@ -5,7 +5,7 @@ class VT52:
     """DEC VT52 terminal emulator"""
     def __init__(self, dl11):
         """vt52(pdp11, serial interface)"""
-        print(f'initializing vt52')
+        print('initializing vt52')
         self.dl11 = dl11
         # throttle window updates because they are very slow
         self.cycles_since_window = 0
@@ -28,9 +28,8 @@ class VT52:
         # autoscroll=True,
 
     def cycle(self):
+        '''One PySimpleGUI cycle'''
         # This is an attenpt to make the VT52 automatcaly send LF after CR.
-        # It doesn't seem to help.
-        # The console emulator isn't working
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:

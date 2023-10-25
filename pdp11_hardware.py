@@ -49,7 +49,6 @@ class Registers:
         :param register: integer 0-7
         :return: register contents"""
         result = self.__registers[register]
-        assert type(result) == type(1)
         # print(f'    ; get R{register} = {oct(result)}')
         return result
 
@@ -58,7 +57,6 @@ class Registers:
         :param register: integer 0-7
         :param value: integer
         """
-        assert type(value) == type(1)
         assert value <= MASK_WORD
         self.__registers[register] = value
         # print(f'    ; set R{register} = {oct(self.__registers[register])}')
