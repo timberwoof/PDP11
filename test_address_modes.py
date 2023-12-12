@@ -365,7 +365,7 @@ class TestClass():
 
         expected_sum = operanda + operandb  # 1183
 
-        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
+        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton window_cycle
         self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
@@ -417,7 +417,7 @@ class TestClass():
 
         expected_sum = operanda + operandb  # 1183
 
-        self.reg.set_pc(instruction_address+2, 'test_mode_7')  # +2 because we just read the PC in the instruciton cycle
+        self.reg.set_pc(instruction_address+2, 'test_mode_7')  # +2 because we just read the PC in the instruciton window_cycle
         self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)
@@ -589,7 +589,7 @@ class TestClass():
 
         expected_sum = operanda + operandb # 1183
 
-        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton cycle
+        self.reg.set_pc(instruction_address+2, 'test_mode_6')  # +2 because we just read the PC in the instruciton window_cycle
         self.do_ssdd_op_report(instruction)
 
         actual_sum = self.reg.get(2)

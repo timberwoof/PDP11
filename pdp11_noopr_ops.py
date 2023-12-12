@@ -87,7 +87,7 @@ class noopr_ops:
     def do_noopr_op(self, instruction):
         """dispatch a no-operand opcode"""
         # parameter: opcode of form * 000 0** *** *** ***
-        self.sw.start("no operand")
+        self.sw.start("noopr")
         try:
             assembly = f'{self.no_operand_instruction_names[instruction]}'
             result, report = self.no_operand_instructions[instruction]()
@@ -95,5 +95,5 @@ class noopr_ops:
             assembly = ''
             report = 'Error: no-operand opcode not found'
             result = False
-        self.sw.stop("no operand")
+        self.sw.stop("noopr")
         return result, '', '', assembly, report

@@ -7,11 +7,12 @@ CIRCLE_OUTLINE = '⚪'
 
 class Console:
     """PDP11 Console"""
-    def __init__(self, pdp11):
+    def __init__(self, pdp11, sw):
         """vt52(ram object, base address for this device)"""
         print('initializing console')
         self.pdp11 = pdp11
         self.window = 0
+        self.sw = sw
 
     def pc_to_blinky_lights(self):
         """create a display of the pdp11's program counter"""
@@ -30,6 +31,9 @@ class Console:
 
     # *********************
     # PySimpleGUI Interface
+    # console has Text, Text, Text, Button, Button, Button
+    # and takes 16000 microseconds to read
+
     def make_window(self):
         """create the DL11 console using PySimpleGUI"""
         print('console make_window begins')
@@ -43,13 +47,20 @@ class Console:
         print('console make_window done')
 
     def cycle(self, cpu_run):
-        '''one console window update cycle'''
+        '''one console window update window_cycle'''
+        self.sw.start('console')
         window_run = True
+
         pc_display = self.window['pc_display']
         pc_display.update(oct(self.pdp11.reg.get_pc()))
+
         pc_lights = self.window['pc_lights']
         pc_lights.update(self.pc_to_blinky_lights())
+
+        # mean duration 16000 microseconds:
+        self.sw.start('console read')
         event, values = self.window.read(timeout=0)
+        self.sw.stop('console read')
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
             window_run = False
@@ -65,6 +76,7 @@ class Console:
             cpu_run = False
             window_run = False
 
+        self.sw.stop('console')
         return window_run, cpu_run
 
     def close_window(self):

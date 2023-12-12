@@ -3,16 +3,49 @@ import PySimpleGUI as sg
 
 class VT52:
     """DEC VT52 terminal emulator"""
-    def __init__(self, dl11):
+    def __init__(self, dl11, sw, ui=False):
         """vt52(pdp11, serial interface)"""
         print('initializing vt52')
         self.dl11 = dl11
         # throttle window updates because they are very slow
         self.cycles_since_window = 0
         self.buffer = 0  # for holding LF after CR was sent
+        self.window = 0
+        self.sw = sw
+
+    # ************************************
+    # Cycle the VT52 with no GUI interface
+    def cycle(self):
+        '''One  cycle for VT52'''
+        # This is an attenpt to make the VT52 automatcaly send LF after CR.
+        # If there's a character in our buffer, send it to the DL11
+        if self.buffer != 0:
+            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
+                self.dl11.write_RBUF(self.buffer)
+                self.buffer = 0
+
+        # if there's a character in the dl11 transmit buffer,
+        # then eat it
+        if self.dl11.XCSR & self.dl11.XCSR_XMIT_RDY == 0:
+            newchar = self.dl11.read_XBUF()
+            # Sure, DL11 can send me nulls; I just won't show them.
+            if newchar != 0:
+                print(f'dl11 read_XBUF:{chr(newchar)}')
+                # *** this needs to print more intelligently
+                # to the user console
+
+        # There are no keyboard events yet.
+        # *** when logging ios set up,
+        # this will read from the user's console
+
+        return
+
 
     # *********************
     # PySimpleGUI Interface
+    # VT52 has a multiline and ain input_text
+    # These take ~ 1000 uS to read each cycle
+
     def make_window(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         print('vt52 make_window begins')
@@ -27,8 +60,9 @@ class VT52:
 
         # autoscroll=True,
 
-    def cycle(self):
-        '''One PySimpleGUI cycle'''
+    def window_cycle(self):
+        '''One PySimpleGUI window_cycle'''
+        self.sw.start('VT52')
         # This is an attenpt to make the VT52 automatcaly send LF after CR.
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:
@@ -44,7 +78,7 @@ class VT52:
             if newchar != 0:
                 sg.cprint(chr(newchar), end='')
 
-        # read the window
+        # 1000 microseconds
         event, values = self.window.read(timeout=0)
 
         # If the Enter key was hit
@@ -64,6 +98,7 @@ class VT52:
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
                 self.dl11.write_RBUF(ord(kbd[0:1]))
 
+        self.sw.stop('VT52')
         return
 
     def close_window(self):
