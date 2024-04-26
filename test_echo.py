@@ -24,7 +24,7 @@ class TestClass():
 
     def test_echo(self):
         print('test_echo pdp11CPU()')
-        pdp11 = PDP11()
+        pdp11 = PDP11(True)
         print('test_echo pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         print('test_echo load_machine_code()')
@@ -32,5 +32,5 @@ class TestClass():
         pdp11.reg.set_pc(echo_address, "load_machine_code")
         pdp11.ram.dump(echo_address, echo_address+0o10)
         run = pdp11Run(pdp11)
-        run.run_in_terminal()
+        run.run_in_VT52_emulator()
 

@@ -1,3 +1,4 @@
+import logging
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -53,14 +54,14 @@ class TestClass():
     
     def do_ssdd_op_report(self, instruction):
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        print(assembly)
+        logging.info(assembly)
         
 
     # *****************************************
     # Mode 0
 
     def test_mode_0_SD(self):
-        print('test_mode_0 register source destination')
+        logging.info('test_mode_0 register source destination')
         # registers contain operands
         # MOV R1,3
         # MOV R2,1
@@ -87,7 +88,7 @@ class TestClass():
     # Register contains address of the operand
 
     def test_mode_1_S(self):
-        print('test_mode_1 register deferred Source')
+        logging.info('test_mode_1 register deferred Source')
         # register contains address of operand
         address = 0o2764
         a = 0o101
@@ -107,7 +108,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_mode_1_D(self):
-        print('test_mode_1 register deferred Destination')
+        logging.info('test_mode_1 register deferred Destination')
         # register contains address of operand
         address = 0o2764
         a = 0o101
@@ -128,7 +129,7 @@ class TestClass():
 
 
     def test_mode_1_SD(self):
-        print('test_mode_1 register deferred Source Destination')
+        logging.info('test_mode_1 register deferred Source Destination')
         # register contains address of operand
         addressA = 0o2762
         A = 0o101
@@ -155,7 +156,7 @@ class TestClass():
     # then incremented
 
     def test_mode_2_S(self):
-        print('test_mode_2 autoincrement source')
+        logging.info('test_mode_2 autoincrement source')
         address = 0o2762
         a = 0o101
         b = 0o2136
@@ -179,7 +180,7 @@ class TestClass():
 
 
     def test_mode_2_D(self):
-        print('test_mode_2 autoincrement destination')
+        logging.info('test_mode_2 autoincrement destination')
         a = 0o101
         b = 0o2136
         address = 0o2762
@@ -201,7 +202,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_mode_2_SD(self):
-        print('test_mode_2 autoincrement source destination')
+        logging.info('test_mode_2 autoincrement source destination')
         a = 0o101
         b = 0o2136
         source_address = 0o2762
@@ -228,7 +229,7 @@ class TestClass():
     # then is incremented by 2
 
     def test_mode_3_S(self):
-        print('test_mode_3 autoincrement deferred source')
+        logging.info('test_mode_3 autoincrement deferred source')
         address = 0o2762
         a = 0o101
         b = 0o2136
@@ -252,10 +253,10 @@ class TestClass():
 
 
     #def test_mode_3_D(self):
-    #    print('test_mode_3 autoincrement deferred destination')
+    #    logging.info('test_mode_3 autoincrement deferred destination')
 
     #def test_mode_3_SD(self):
-    #    print('test_mode_3 autoincrement deferred source destination')
+    #    logging.info('test_mode_3 autoincrement deferred source destination')
 
     # *****************************************
     # Mode 4 Autodecrement -(Rn)
@@ -263,7 +264,7 @@ class TestClass():
     # then contains address of operand
 
     def test_mode_4(self):
-        print('test_mode_4 autodecrement source')
+        logging.info('test_mode_4 autodecrement source')
         address = 0o2762
         a = 0o101
         b = 0o2136
@@ -287,10 +288,10 @@ class TestClass():
         assert condition_codes == "0000"
 
     #def test_mode_4(self):
-    #    print('test_mode_4 autodecrement destination')
+    #    logging.info('test_mode_4 autodecrement destination')
 
     #def test_mode_4(self):
-    #    print('test_mode_4 autodecrement source destination')
+    #    logging.info('test_mode_4 autodecrement source destination')
 
     # *****************************************
     # Mode 5 Autodecrement Deferred
@@ -298,7 +299,7 @@ class TestClass():
     # then contains pointer to address of operand
 
     def test_mode_5(self):
-        print('test_mode_5 autodecrement deferred source')
+        logging.info('test_mode_5 autodecrement deferred source')
         operanda = 0o101
         addressa = 0o2762
         pointera = 0o1172
@@ -324,10 +325,10 @@ class TestClass():
 
 
     #def test_mode_5(self):
-    #    print('test_mode_5 autodecrement deferred destination')
+    #    logging.info('test_mode_5 autodecrement deferred destination')
 
     #def test_mode_5(self):
-    #    print('test_mode_5 autodecrement deferred source destination')
+    #    logging.info('test_mode_5 autodecrement deferred source destination')
 
     # *****************************************
     # Mode 6 Index X(Rn)
@@ -337,11 +338,11 @@ class TestClass():
     # Neither X nor the register are modified.
 
     def test_mode_6(self):
-        print('test_mode_6 index source')
+        logging.info('test_mode_6 index source')
 
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
-        print(f'opcode: {oct(instruction)}')
+        logging.info(f'opcode: {oct(instruction)}')
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
@@ -375,10 +376,10 @@ class TestClass():
         assert condition_codes == "0000"
 
     #def test_mode_6(self):
-    #    print('test_mode_6 index destination')
+    #    logging.info('test_mode_6 index destination')
 
     #def test_mode_6(self):
-    #    print('test_mode_6 index source destination')
+    #    logging.info('test_mode_6 index source destination')
 
     # *****************************************
     # Mode 7 index Deferred @X(Rn)
@@ -388,10 +389,10 @@ class TestClass():
     # Neither X nor the register are modified.
 
     def test_mode_7(self):
-        print('test_mode_7 index deferred source')
+        logging.info('test_mode_7 index deferred source')
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=7, regS=1, modeD=0, regD=2)
-        print(f'opcode: {oct(instruction)}')
+        logging.info(f'opcode: {oct(instruction)}')
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
@@ -427,10 +428,10 @@ class TestClass():
         assert condition_codes == "0000"
 
     #def test_mode_7(self):
-    #    print('test_mode_7 index deferred destination')
+    #    logging.info('test_mode_7 index deferred destination')
 
     #def test_mode_7(self):
-    #    print('test_mode_7 index deferred source destination')
+    #    logging.info('test_mode_7 index deferred source destination')
 
     # Program Counter and Address Modes
     # Four modes are useful for position-independent code.
@@ -438,7 +439,7 @@ class TestClass():
     # in sections 3.3 and 3.4, but the general register is R7, the program counter.
 
     def test_PC_mode_0(self):
-        print('test_PC_mode_0')
+        logging.info('test_PC_mode_0')
         # jump
 
         a = 3
@@ -458,7 +459,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_2(self):
-        print('test_PC_mode_2 immediate')
+        logging.info('test_PC_mode_2 immediate')
         # #get_n operand follows instruction
         # ADD #10,R0
         instruction = self.ADD(modeS=2, regS=7, modeD=0, regD=0)
@@ -470,10 +471,10 @@ class TestClass():
         self.ram.write_word(address+2, 0o000010)
         self.reg.set(0, 0o000020)
         self.reg.set_pc(address, "test_PC_mode_2")
-        print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.info(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         self.reg.set_pc(address+2, "test_PC_mode_2")
         self.do_ssdd_op_report(instruction)
-        print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.info(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
 
         assert self.reg.get(0) == 0o000030
         assert self.reg.get_pc() == 0o1024
@@ -482,7 +483,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_3(self):
-        print('test_PC_mode_3 absolute')
+        logging.info('test_PC_mode_3 absolute')
         # ADD @#2000,R3 Absolute address of operand follows instruction
         instruction = self.ADD(modeS=3, regS=7, modeD=0, regD=3)
         assert instruction == 0o063703
@@ -496,10 +497,10 @@ class TestClass():
         self.ram.write_word(address, 0o00300)
         self.reg.set(3, b)
         self.reg.set_pc(pc, "test_PC_mode_3")
-        print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.info(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         self.reg.set_pc(pc+2, "test_PC_mode_3")
         self.do_ssdd_op_report(instruction)
-        print(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.info(f'{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
 
         assert self.reg.get(3) == a + b
         assert self.reg.get_pc() == pc+4
@@ -508,7 +509,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_4(self):
-        print('test_PC_mode_4')
+        logging.info('test_PC_mode_4')
         address = 0o2762
         a = 0o101
         b = 0o2136
@@ -532,7 +533,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_5(self):
-        print('test_PC_mode_5 relative')
+        logging.info('test_PC_mode_5 relative')
         # INC A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
         instruction = 0o005267
         assert self.ss_ops.is_ss_op(instruction)
@@ -544,13 +545,13 @@ class TestClass():
         self.ram.write_word(address, 0o00000)
         self.reg.set_pc(pc, "test_PC_mode_5")
 
-        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        #logging.info(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1100)
 
         self.reg.set_pc(pc+2, "test_PC_mode_5")
         self.ss_ops.do_ss_op(instruction)
 
-        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        #logging.info(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1100)
 
         assert self.reg.get_pc() == 0o1024
@@ -560,12 +561,12 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_6(self):
-        print('test_PC_mode_6 Relative')
+        logging.info('test_PC_mode_6 Relative')
         # A - Relative Address (index vlaue) follows the instruction
 
         # build the instruction ADD X(R1),R2
         instruction = self.ADD(modeS=6, regS=1, modeD=0, regD=2)
-        print(f'opcode: {oct(instruction)}')
+        logging.info(f'opcode: {oct(instruction)}')
         assert self.ssdd_ops.is_ssdd_op(instruction)
 
         # store the instruction
@@ -599,7 +600,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_PC_mode_7(self):
-        print('test_mode_7 Relative Deferred')
+        logging.info('test_mode_7 Relative Deferred')
         # OPR@X(PC)
         # CLR @A. See p. 3-16 of LSI-11 PDP-11/03 Processor Handbook
         instruction = 0o005077
@@ -614,13 +615,13 @@ class TestClass():
         self.ram.write_word(address, 0o100001)
         self.reg.set_pc(pc, "test_PC_mode_7")
 
-        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        #logging.info(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1060)
 
         self.reg.set_pc(pc + 2, "test_PC_mode_7")
         self.ss_ops.do_ss_op(instruction)
 
-        #print(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
+        #logging.info(f'{self.reg.registers_to_string()} {self.psw.nvzc_to_string()}')
         #self.ram.dump(0o1020, 0o1060)
 
         assert self.reg.get_pc() == 0o1024

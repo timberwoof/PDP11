@@ -3,6 +3,8 @@
 # pip3 install --upgrade pip
 # pip install -U pytest
 
+import logging
+
 from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11_boot import pdp11Boot
@@ -43,14 +45,14 @@ hello_address = 0o2000
 class TestClass():
 
     def test_hello_world(self):
-        print('test_hello_world pdp11CPU()')
-        pdp11 = PDP11()
-        print('test_hello_world pdp11Boot()')
+        logging.info('test_hello_world pdp11CPU()')
+        pdp11 = PDP11(True)
+        logging.info('test_hello_world pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
-        print('test_hello_world load_machine_code()')
+        logging.info('test_hello_world load_machine_code()')
         boot.load_machine_code(hello_world, hello_address)
         pdp11.reg.set_pc(0o2000, "load_machine_code")
         pdp11.ram.dump(0o2000, 0o2064)
         run = pdp11Run(pdp11)
-        run.run_in_terminal()
+        run.run_in_VT52_emulator()
 

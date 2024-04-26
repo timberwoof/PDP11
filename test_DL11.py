@@ -2,6 +2,7 @@
 # test the pdp11_dl11.py module using pytest
 
 import random
+import logging
 from pdp11 import PDP11
 from pdp11 import pdp11Run
 from pdp11_dl11 import DL11
@@ -18,7 +19,7 @@ class TestClass():
         """whitebox testing of receive status and buffer.
         check status bits, stick a byte in. recheck status bits."""
         pdp11 = PDP11()
-        print('test_receive')
+        logging.info('test_receive')
 
         # verify that the receive status register says nothing's ready
         RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
@@ -38,13 +39,13 @@ class TestClass():
         # verify that the receiver is now empty
         RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
         assert RCSR & pdp11.dl11.RCSR_RCVR_DONE == 0o0
-        print('test_receive done')
+        logging.info('test_receive done')
 
     def test_transmit(self):
         """whitebox testing of transmit status and buffer
         check status bits, stick a byte in. rechech status bits."""
         pdp11 = PDP11()
-        print('test_transmit')
+        logging.info('test_transmit')
 
         # verify that the transmitter is ready to transmit
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
@@ -64,25 +65,25 @@ class TestClass():
         # verify  that  the transmit buffer is ready for another byte
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
         assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
-        print('test_transmit done')
+        logging.info('test_transmit done')
 
     def test_maintenance(self):
         """set maintenance bit and verify that bytes go in and bytes go out"""
         pdp11 = PDP11()
-        print('test_maintenance')
-        print(f'test_maintenance pdp11.dl11.XCSR_MAINT:{oct(pdp11.dl11.XCSR_MAINT)}')
+        logging.info('test_maintenance')
+        logging.info(f'test_maintenance pdp11.dl11.XCSR_MAINT:{oct(pdp11.dl11.XCSR_MAINT)}')
 
         # set the maintenance bit and verify it.
         # This means DL11 connects its X output to R input
         # get the state of the XCSR
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-        print(f'test_maintenance XCSR:{oct(XCSR)}')
+        logging.info(f'test_maintenance XCSR:{oct(XCSR)}')
         # set the maintenance bit true and leave the rest
         set_word = XCSR | pdp11.dl11.XCSR_MAINT
-        print(f'test_maintenance set XCSR:{oct(set_word)}')
+        logging.info(f'test_maintenance set XCSR:{oct(set_word)}')
         pdp11.ram.write_word(pdp11.dl11.XCSR_address, set_word)
         XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-        print(f'test_maintenance XCSR:{oct(XCSR)}')
+        logging.info(f'test_maintenance XCSR:{oct(XCSR)}')
         assert XCSR & pdp11.dl11.XCSR_MAINT == pdp11.dl11.XCSR_MAINT
 
         # verify that there's no byte to read
@@ -93,7 +94,7 @@ class TestClass():
         while i < 100:
             # verify that transmitter is ready
             XCSR = pdp11.ram.read_word(pdp11.dl11.XCSR_address)
-            print(f'XCSR:{oct(XCSR)}')  # maintenance mode should be set; ready should be set
+            logging.info(f'XCSR:{oct(XCSR)}')  # maintenance mode should be set; ready should be set
             assert XCSR & pdp11.dl11.XCSR_XMIT_RDY == pdp11.dl11.XCSR_XMIT_RDY
 
             # transmit a byte
@@ -105,7 +106,7 @@ class TestClass():
 
             # verify that a byte is ready to read
             RCSR = pdp11.ram.read_word(pdp11.dl11.RCSR_address)
-            print(f'RCSR:{oct(RCSR)}')  # maintenance mode should be set; ready should be set
+            logging.info(f'RCSR:{oct(RCSR)}')  # maintenance mode should be set; ready should be set
             assert RCSR & pdp11.dl11.RCSR_RCVR_DONE == pdp11.dl11.RCSR_RCVR_DONE
 
             # receive the byte
@@ -118,4 +119,4 @@ class TestClass():
 
             i = i + 1
 
-        print('test_maintenance done')
+        logging.info('test_maintenance done')

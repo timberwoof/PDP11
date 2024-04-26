@@ -1,6 +1,7 @@
 """python package for timing stuff"""
 import sys
 import time
+import logging
 
 class StopWatch():
     """One StopWatch object that tracks one method's duration."""
@@ -112,7 +113,7 @@ class StopWatches():
             this_stop_watch = self.stop_watch_dict[instance_id]
             this_stop_watch.stop_watch(stop_time)
         except KeyError:
-            print(f'WARN: StopWatches stop could not find id {instance_id}')
+            logging.info(f'WARN: StopWatches stop could not find id {instance_id}')
 
     def get_mean(self, instance_id):
         """Returns the mean value of the accumulated StopWatch.<br>
@@ -122,7 +123,7 @@ class StopWatches():
             this_stop_watch = self.stop_watch_dict[instance_id]
             return this_stop_watch.get_mean()
         except KeyError:
-            print(f'WARN: StopWatches get_mean could not find id {instance_id}')
+            logging.info(f'WARN: StopWatches get_mean could not find id {instance_id}')
             return -1
 
     def to_string(self, instance_id):
@@ -136,13 +137,13 @@ class StopWatches():
             return f'WARN: StopWatches to_string could not find id {instance_id}'
 
     def report(self):
-        """Print text for every StopWatch in the dictionary"""
-        print("StopWatches Report (times in microseconds)")
-        print('id                      min        mean         max         sum       count')
+        """log text for every StopWatch in the dictionary"""
+        logging.info("StopWatches Report (times in microseconds)")
+        logging.info('id                      min        mean         max         sum       count')
         for instance_id in self.stop_watch_dict:
             this_stop_watch = self.stop_watch_dict[instance_id]
-            print(this_stop_watch.to_string())
-        print("StopWatches Report end")
+            logging.info(this_stop_watch.to_string())
+        logging.info("StopWatches Report end")
 
     def get_watch(self, instance_id):
         '''get the specified watch options'''

@@ -1,3 +1,4 @@
+import logging
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -37,7 +38,7 @@ class TestClass():
     ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
 
     def test_byte_mask_w(self):
-        print('\ntest_byte_mask_w')
+        logging.info('\ntest_byte_mask_w')
         BW = 'W'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -45,7 +46,7 @@ class TestClass():
         assert return_value == 0b1010101010101010
 
     def test_byte_mask_b1(self):
-        print('\ntest_byte_mask_b1')
+        logging.info('\ntest_byte_mask_b1')
         BW = 'B'
         value = 0b1111111100000000
         target = 0b0000000011111111
@@ -53,7 +54,7 @@ class TestClass():
         assert return_value == 0
 
     def test_byte_mask_b2(self):
-        print('\ntest_byte_mask_b2')
+        logging.info('\ntest_byte_mask_b2')
         BW = 'B'
         value = 0b0000000011111111
         target = 0b1111111100000000
@@ -61,7 +62,7 @@ class TestClass():
         assert return_value == 0b1111111111111111
 
     def test_byte_mask_b3(self):
-        print('\ntest_byte_mask_b3')
+        logging.info('\ntest_byte_mask_b3')
         BW = 'B'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -69,7 +70,7 @@ class TestClass():
         assert return_value == 0b0101010110101010
 
     def test_byte_mask_b4(self):
-        print('\ntest_byte_mask_b4')
+        logging.info('\ntest_byte_mask_b4')
         BW = 'B'
         value = 0b0000000000000000
         target = 0b0101010101010101
@@ -77,7 +78,7 @@ class TestClass():
         assert return_value == 0b0101010100000000
 
     def test_CLR(self):
-        print('\ntest_CLR')
+        logging.info('\ntest_CLR')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o013333)
 
@@ -93,7 +94,7 @@ class TestClass():
         assert condition_codes == "0100"
 
     def test_COM_1(self):
-        print('\ntest_COM_1  complement')
+        logging.info('\ntest_COM_1  complement')
         # 0b0001011011011011
         # 0b1110100100100100
         self.psw.set_psw(psw=0)
@@ -105,14 +106,14 @@ class TestClass():
         assert assembly == "COM R1"
 
         r1 = self.reg.get(1)
-        print(f'R1:{oct(r1)}')
+        logging.info(f'R1:{oct(r1)}')
         assert r1 == 0o164444
 
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001"
 
     def test_COM_2(self):
-        print('\ntest_COM_2  complement')
+        logging.info('\ntest_COM_2  complement')
         # 0b1110100100100100
         # 0b0001011011011011
         self.psw.set_psw(psw=0)
@@ -130,7 +131,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_COMB_1(self):
-        print('\ntest_COMB_1  complement')
+        logging.info('\ntest_COMB_1  complement')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o000022)
 
@@ -146,7 +147,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_INC(self):
-        print('\ntest_INC')
+        logging.info('\ntest_INC')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o013333)
 
@@ -162,7 +163,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_INCB(self):
-        print('\ntest_INCB')
+        logging.info('\ntest_INCB')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o000033)
 
@@ -177,8 +178,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
-    def test_DEC1(self):
-        print('\ntest_DEC1')
+    def test_DEC_1(self):
+        logging.info('\ntest_DEC_1')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o013333)
 
@@ -193,8 +194,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
-    def test_DEC2(self):
-        print('\ntest_DEC2')
+    def test_DEC_2(self):
+        logging.info('\ntest_DEC_2')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o0001)
 
@@ -209,8 +210,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100"
 
-    def test_DEC3(self):
-        print('\ntest_DEC3')
+    def test_DEC_3(self):
+        logging.info('\ntest_DEC_3')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0)
 
@@ -225,8 +226,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1010" # 1000
 
-    def test_DECB1(self):
-        print('\ntest_DECB1')
+    def test_DEC_B1(self):
+        logging.info('\ntest_DEC_B1')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0o000001)
 
@@ -241,8 +242,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100" #0010
 
-    def test_SWAB1(self):
-        print('\ntest_SWAB1')
+    def test_SWAB_1(self):
+        logging.info('\ntest_SWAB_1')
         # from pdp11 book 0111111111111111 -> 1111111101111111
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0o077777)
@@ -258,8 +259,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
-    def test_SWAB2(self):
-        print('\ntest_SWAB2')
+    def test_SWAB_2(self):
+        logging.info('\ntest_SWAB_2')
         # reverse of pdp11 book 1111111101111111 -> 0111111111111111
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0o177577)
@@ -275,8 +276,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1000"
 
-    def test_SWAB3(self):
-        print('\ntest_SWAB3')
+    def test_SWAB_3(self):
+        logging.info('\ntest_SWAB_3')
         # BFI reverse bits 0000000011111111 -> 1111111100000000
         self.psw.set_psw(psw=0o0177777)
         # 0 000 000 011 111 111
@@ -294,8 +295,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0100" # NZVC
 
-    def test_SWAB4(self):
-        print('\ntest_SWAB4')
+    def test_SWAB_4(self):
+        logging.info('\ntest_SWAB_4')
         # BFI reverse bits back 1111111100000000 -> 0000000011111111
         self.psw.set_psw(psw=0o0177777)
         # 0 000 000 011 111 111
@@ -314,7 +315,7 @@ class TestClass():
         assert condition_codes == "1000" # NZVC
 
     def test_ROR_1(self):
-        print('\ntest_ROR_1')
+        logging.info('\ntest_ROR_1')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1111111100000000)
         instruction = 0o006001  # mode 0 R1
@@ -327,7 +328,7 @@ class TestClass():
         assert condition_codes == "0000" # NZVC
 
     def test_ROR_2(self):
-        print('\ntest_ROR_2')
+        logging.info('\ntest_ROR_2')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b0000000011111111)
         instruction = 0o006001  # mode 0 R1
@@ -340,35 +341,35 @@ class TestClass():
         assert condition_codes == "1001" # NZVC
 
     def test_RORB_1(self):
-        print('\ntest_RORB_1')
+        logging.info('\ntest_RORB_1')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b0000111111110000)
         instruction = 0o106001  # mode 0 R1
         assert self.ss_ops.is_ss_op(instruction)
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "RORB R1"
-        print (report)
+        logging.info (report)
         r1 = self.reg.get(1)
         assert r1 == 0b1000011101111000
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0011" # NZVC
 
     def test_RORB_2(self):
-        print('\ntest_RORB_2')
+        logging.info('\ntest_RORB_2')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1111000000001111)
         instruction = 0o106001  # mode 0 R1
         assert self.ss_ops.is_ss_op(instruction)
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "RORB R1"
-        print (report)
+        logging.info (report)
         r1 = self.reg.get(1)
         assert r1 == 0b0111100010000111
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001" # NZVC
 
     def test_ROL(self):
-        print('\ntest_ROL')
+        logging.info('\ntest_ROL')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1100110000110011)
         instruction = 0o006101  # mode 0 R1
@@ -376,13 +377,13 @@ class TestClass():
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ROL R1"
         r1 = self.reg.get(1)
-        print(f'r1:{bin(r1)}  {report}')
+        logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1001100001100111
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001" # NZVC
 
     def test_ROLB(self):
-        print('\ntest_ROLB')
+        logging.info('\ntest_ROLB')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1100110000110011)
         instruction = 0o106101  # mode 0 R1
@@ -390,13 +391,13 @@ class TestClass():
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ROLB R1"
         r1 = self.reg.get(1)
-        print(f'r1:{bin(r1)}  {report}')
+        logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1001100101100110
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0011" # NZVC  I think it shoud be 1010
 
     def test_ASR(self):
-        print('\ntest_ASR')
+        logging.info('\ntest_ASR')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1100110000110011)
         instruction = 0o006201  # mode 0 R1
@@ -404,13 +405,13 @@ class TestClass():
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ASR R1"
         r1 = self.reg.get(1)
-        print(f'r1:{bin(r1)}  {report}')
+        logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1110011000011001
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "1001" # NZVC
 
     def test_ASRB(self):
-        print('\ntest_ASRB')
+        logging.info('\ntest_ASRB')
         self.psw.set_psw(psw=0o0177777)
         self.reg.set(1, 0b1100110000110011)
         instruction = 0o106201  # mode 0 R1
@@ -418,7 +419,7 @@ class TestClass():
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ASRB R1"
         r1 = self.reg.get(1)
-        print(f'r1:{bin(r1)}  {report}')
+        logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1110011000011001
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0011" # NZVC  I think it shoud be 1010

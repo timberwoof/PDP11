@@ -1,6 +1,7 @@
 """test condition code operators"""
 
 # pdp11-40 ref p. 4-79
+import logging
 
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
@@ -36,7 +37,7 @@ class TestClass():
             run, operand1, operand2, assembly, report = self.cc_ops.do_cc_op(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
-            print(assembly)
+            logging.info(assembly)
             assert test_code == result_code
 
             test_code = test_code + 1
@@ -54,7 +55,7 @@ class TestClass():
             run, operand1, operand2, assembly, report = self.cc_ops.do_cc_op(instruction)
 
             result_code = self.psw.get_psw() & self.psw_bits
-            print(assembly)
+            logging.info(assembly)
             assert expected == result_code
 
             test_code = test_code + 1

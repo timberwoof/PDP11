@@ -1,4 +1,4 @@
-"""PDP 11 Console"""
+"""PDP 11 Console: Blinky Lights for PDP11 emulator"""
 import PySimpleGUI as sg
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
@@ -6,7 +6,7 @@ CIRCLE = '⚫'
 CIRCLE_OUTLINE = '⚪'
 
 class Console:
-    """PDP11 Console"""
+    """PDP11 Console: Blinky Lights for PDP11 emulator"""
     def __init__(self, pdp11, sw):
         """vt52(ram object, base address for this device)"""
         print('initializing console')

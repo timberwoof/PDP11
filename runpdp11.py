@@ -7,4 +7,4 @@ pdp11 = PDP11()
 run = pdp11Run(pdp11)
 
 # power on
-run.run_in_terminal()
+run.run_in_VT52_emulator()

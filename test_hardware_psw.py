@@ -3,6 +3,8 @@
 # pip3 install --upgrade pip
 # pip install -U pytest
 
+import logging
+
 from pdp11_hardware import Ram
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import PSW

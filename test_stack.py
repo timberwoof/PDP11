@@ -1,4 +1,5 @@
 """test_stack"""
+import logging
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -39,7 +40,7 @@ class TestClass():
 
     def test_jsr_R5(self):
         # pdp11-40 4-58
-        print ('test_jsr_R5')
+        logging.info ('test_jsr_R5')
 
         R7 = 7
         R6 = 6
@@ -64,18 +65,18 @@ class TestClass():
         self.ram.write_word(PC+2, SBR)
 
         opcode = 0o04000 | (R5 << 6) | (mode1 << 3) | R7
-        print (f'opcode:{oct(opcode)}')
+        logging.info (f'opcode:{oct(opcode)}')
         self.ram.write_word(PC, opcode)
 
         assert self.other_ops.is_other_op(opcode)
-        print ('is other opcode')
+        logging.info ('is other opcode')
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)
         reg5 = self.reg.get(R5)
         top = self.ram.read_word(reg6)
         self.reg.set(R7, PC+2)
-        print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+        logging.info(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
         self.other_ops.do_other_op(opcode)
 
@@ -83,7 +84,7 @@ class TestClass():
         reg6 = self.reg.get(R6)
         reg5 = self.reg.get(R5)
         top = self.ram.read_word(reg6)
-        print(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+        logging.info(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
         #assert actual == expected
         assert reg7 == PC + 2
@@ -92,7 +93,7 @@ class TestClass():
         assert top == Data1
 
     def test_rts(self):
-        print ('test_rts')
+        logging.info ('test_rts')
 
         R7 = 7
         R6 = 6
@@ -116,18 +117,18 @@ class TestClass():
         self.ram.write_word(SP+2, Data0)
 
         opcode = 0o000200 | R5
-        print (f'opcode:{oct(opcode)}')
+        logging.info (f'opcode:{oct(opcode)}')
         self.ram.write_word(PC, opcode)
 
         assert self.other_ops.is_other_op(opcode)
-        print ('is other opcode')
+        logging.info ('is other opcode')
 
         reg7 = self.reg.get(R7)
         reg6 = self.reg.get(R6)
         reg5 = self.reg.get(R5)
         top = self.ram.read_word(reg6)
         self.reg.set(R7, PC+2)
-        print(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+        logging.info(f'before R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
         self.other_ops.do_other_op(opcode)
 
@@ -135,7 +136,7 @@ class TestClass():
         reg6 = self.reg.get(R6)
         reg5 = self.reg.get(R5)
         top = self.ram.read_word(reg6)
-        print(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
+        logging.info(f'after R7:{oct(reg7)} R6:{oct(reg6)} R5:{oct(reg5)} top:{oct(top)} ')
 
         #assert actual == expected
         assert reg7 == PC
@@ -146,7 +147,7 @@ class TestClass():
 
 
     def test_mark(self):
-        print ('test_mark')
+        logging.info ('test_mark')
 
     def test_mtps(self):
-        print ('test_mtps')
+        logging.info ('test_mtps')

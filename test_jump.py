@@ -10,6 +10,8 @@
 # Instrucitons are word data, therefore on even addresses.
 # Fetch instruction from odd address causes"boundary error" condition.
 
+import logging
+
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -68,24 +70,24 @@ class TestClass():
     # https://en.wikipedia.org/wiki/PDP-11_architecture#Program_counter_addressing_modes
 
     def test_jmp_mode_0(self):
-        print('test_jmp_mode_0 register - illegal')
+        logging.info('test_jmp_mode_0 register - illegal')
         pc = 0o1020
         instruction = self.JMP(self.mode0, self.R0)
 
         self.reg.set_pc(pc, "test_jmp_mode_1")
-        print(f'test_jmp_mode_0 instruction:{oct(instruction)} pc:{oct(pc)}')
+        logging.info(f'test_jmp_mode_0 instruction:{oct(instruction)} pc:{oct(pc)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
         # *** there's no real way to test this.
         # *** that means the CPU doesn't check this.
         PC = self.reg.get_pc()
-        print (f'test_jmp_mode_0 PC:{oct(PC)}')
+        logging.info (f'test_jmp_mode_0 PC:{oct(PC)}')
         assert PC == 0o0
 
     def test_jmp_mode_1(self):
         # Register Indirect, jumps to wherever the register points - JMP (R1)
-        print('test_jmp_mode_1 immediate')
+        logging.info('test_jmp_mode_1 immediate')
         pc = 0o1000
         target = 0o2000
         instruction = self.JMP(self.mode1, self.R1)
@@ -94,19 +96,19 @@ class TestClass():
         self.reg.set (self.R1, target)
         self.ram.write_word(pc, instruction)
 
-        print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
+        logging.info(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
-        print(f'test_jmp_mode_1 PC:{oct(PC)}')
+        logging.info(f'test_jmp_mode_1 PC:{oct(PC)}')
         assert PC == target
 
 
 
     def test_jmp_mode_2_pc(self):
-        print('test_jmp_mode_2 immediate')
+        logging.info('test_jmp_mode_2 immediate')
         # mode j2: JMP immediate: R contains jump_address, then incremented.
         # (Not useful for JMP/JSR) - ADC #label
         pc = 0o1000
@@ -117,17 +119,17 @@ class TestClass():
         self.reg.set (self.R7, target)
         self.ram.write_word(pc, instruction)
 
-        print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
+        logging.info(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
-        print(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
+        logging.info(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
         assert PC == target
 
     def test_jmp_mode_2_r(self):
-        print('test_jmp_mode_2 immediate')
+        logging.info('test_jmp_mode_2 immediate')
         # mode j2: JMP immediate: R contains jump_address, then incremented.
         # (Not useful for JMP/JSR) - ADC #label
         pc = 0o1000
@@ -138,20 +140,20 @@ class TestClass():
         self.reg.set (self.R1, target)
         self.ram.write_word(pc, instruction)
 
-        print(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
+        logging.info(f'test_jmp_mode_2 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
-        print(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
+        logging.info(f'test_jmp_mode_2 PC:{oct(PC)}  target:{oct(target)}')
         assert PC == target
         assert self.reg.get(self.R1) == target + 2
 
 
     # This test is based on the write-up in the processor manual
     def test_jmp_mode_3(self):
-        print('test_jmp_mode_3 ')
+        logging.info('test_jmp_mode_3 ')
         # Mode 3, Autoincrement Indirect,
         # jumps to address contained in a word
         # addressed by the register
@@ -166,18 +168,18 @@ class TestClass():
         self.ram.write_word(pc+2, target)
         self.reg.set_pc(pc+2, "test_jmp_mode_3")
 
-        print(f'test_jmp_mode_3 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
+        logging.info(f'test_jmp_mode_3 instruction:{oct(instruction)} target:{oct(target)} pc:{oct(pc)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
 
         PC = self.reg.get_pc()
-        print(f'test_jmp_mode_3 PC:{oct(PC)}  target:{oct(target)}')
+        logging.info(f'test_jmp_mode_3 PC:{oct(PC)}  target:{oct(target)}')
         assert PC == target
 
 
     def test_jump_mode_6(self):
-        print('test_jump_mode_6 Relative')
+        logging.info('test_jump_mode_6 Relative')
         # Mode 6, Indexed, jumps to the result of
         # adding a 16 bit word to the register specified - JMP 20(PC)
         pc = 0o001000
@@ -189,7 +191,7 @@ class TestClass():
         self.ram.write_word(pc+2, relative_address)
         self.reg.set_pc(pc+2, "test_jump_mode_6")
 
-        print(f'test_jump_mode_6 instruction:{oct(instruction)} relative_address:{oct(relative_address)}')
+        logging.info(f'test_jump_mode_6 instruction:{oct(instruction)} relative_address:{oct(relative_address)}')
         assert self.ss_ops.is_ss_op(instruction)
 
         self.ss_ops.do_ss_op(instruction)
@@ -197,7 +199,7 @@ class TestClass():
         assert self.reg.get_pc() == target
 
     def test_jump_mode_7(self):
-        print('test_jump_mode_7 Relative Deferred')
+        logging.info('test_jump_mode_7 Relative Deferred')
         # Mode 7, Index Indirect, jumps to address contained in a word
         # addressed by adding a 16 bit word to the register specified - JMP @20(PC)
         instruction = 0o005077

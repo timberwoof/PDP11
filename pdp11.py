@@ -1,5 +1,6 @@
 """PDP-11 Emulator"""
 import time
+import logging
 
 import pdp11_util as u
 
@@ -45,7 +46,8 @@ class PDP11():
     """Timber's PDP11 emulator"""
     def __init__(self, ui=False):
         """instantiate toe PDP11 emulator components"""
-        print('pdp11CPU initializing')
+        self.setupLogging()
+        logging.info('pdp11CPU initializing')
         self.sw = sw()
 
         # hardware
@@ -80,11 +82,20 @@ class PDP11():
 
         if ui:
             self.console = Console(self, self.sw)
-        print('pdp11CPU initializing done')
+        logging.info('pdp11CPU initializing done')
+
+    def setupLogging(self):
+        logFormat = '%(asctime)s.%(msecs)03d000Z %(filename)s:%(funcName)s %(levelname)s : %(message)s'
+        dateFormat = '%Y-%m-%dT%H:%M:%S'
+        logPath = './pdp11.log'
+        logging.basicConfig(filename=logPath, level=logging.DEBUG, format=logFormat,
+                            datefmt=dateFormat, force=True)
+        logging.Formatter.converter = time.gmtime
+        logging.info(f"{logPath} begins")
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        # print(f'pdp11CPU dispatch_opcode {oct(instruction)}')
+        # logging.info(f'pdp11CPU dispatch_opcode {oct(instruction)}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -118,19 +129,19 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        print(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.info(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
         if operand1 != '':
-            print(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
+            logging.info(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
         if operand2 != '':
-            print(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
+            logging.info(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
         if report != '':
-            print(report)
+            logging.info(report)
         if pc == self.reg.get_pc():
-            print(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
+            logging.info(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
             result = False
 
         self.sw.stop("instruction cycle")
-        self.executed[instruction] = assembly
+        self.executed[instruction] = f'{instruction},{assembly}'
         return run
 
 
@@ -140,10 +151,10 @@ class pdp11Run():
         """instantiate the PDP11 CPU"""
         self.pdp11 = pdp11
 
-    def run(self, limit):
+    def run(self, limit=100000):
         """Run PDP11 emulator without terminal process"""
-        print('run: begin PDP11 emulator')
-        print(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
+        logging.info('run: begin PDP11 emulator')
+        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
 
         # start the processor loop
         cpu_run = True
@@ -155,11 +166,11 @@ class pdp11Run():
             instructions_done = instructions_done + 1
             self.pdp11.vt52.cycle()
             if instructions_done > limit:
-                print('run: instruction limit reached')
+                logging.info('run: instruction limit reached')
                 cpu_run = False
         self.pdp11.sw.stop("run")
 
-        print('run ends')
+        logging.info('run ends')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
 
@@ -169,16 +180,20 @@ class pdp11Run():
         cycles = cycle_stopwatch.get_sum()  # cycles
         processor_speed = cycles / run_time * 1000000  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
-        print(f"processor speed: {format_processor_speed} instructions per second")
+        logging.info(f"processor speed: {format_processor_speed} instructions per second")
+        logging.info('instructions executed:')
+        for item in self.pdp11.executed.keys():
+            logging.info(self.pdp11.executed[item])
+        logging.info('instructions executed report ends')
 
-    def run_in_terminal(self):
+    def run_in_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
-        print('run_in_terminal: begin PDP11 emulator')
+        logging.info('run_in_VT52_emulator: begin PDP11 emulator')
 
-        print(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
+        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
 
         # Create and run the terminal window in PySimpleGUI
-        print('run_in_terminal make windows')
+        logging.info('run_in_VT52_emulator make windows')
         console_window = self.pdp11.console.make_window()
         vt52_window = self.pdp11.vt52.make_window()
         cpu_run = False
@@ -193,7 +208,7 @@ class pdp11Run():
             self.pdp11.vt52.window_cycle()
         self.pdp11.sw.stop("run")
 
-        print('run_in_terminal ends')
+        logging.info('run_in_VT52_emulator ends')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
 
@@ -203,9 +218,9 @@ class pdp11Run():
         cycles = cycle_stopwatch.get_sum()  # cycles
         processor_speed = cycles / run_time * 1000000  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
-        print(f"processor speed: {format_processor_speed} instructions per second")
-        #print('instructions executed:')
+        logging.info(f"processor speed: {format_processor_speed} instructions per second")
+        #logging.info('instructions executed:')
         #for item in self.pdp11.executed.keys():
-        #    print(bin(item),self.pdp11.executed[item])
-        #print('instructions executed report ends')
+        #    logging.info(bin(item),self.pdp11.executed[item])
+        #logging.info('instructions executed report ends')
 

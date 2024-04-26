@@ -1,6 +1,6 @@
 """PDP11 DL11 communications console"""
 class DL11:
-    """DEC DL11 serial interface"""
+    """DEC DL11 serial interface emulator"""
     def __init__(self, ram, base_address):
         """dl11(ram object, base address for this device)"""
         print(f'initializing dl11({oct(base_address)})   {oct(ord("$"))}')

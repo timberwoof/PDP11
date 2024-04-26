@@ -1,3 +1,4 @@
+import logging
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -46,7 +47,7 @@ class TestClass():
         return opcode | self.SS(modeS, regS) | self.DD(modeD, regD)
 
     def test_byte_mask_w(self):
-        print('\ntest_byte_mask_w')
+        logging.info('\ntest_byte_mask_w')
         BW = 'W'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -54,7 +55,7 @@ class TestClass():
         assert return_value == 0b1010101010101010
 
     def test_byte_mask_b1(self):
-        print('\ntest_byte_mask_b1')
+        logging.info('\ntest_byte_mask_b1')
         BW = 'B'
         value = 0b1111111100000000
         target = 0b0000000011111111
@@ -62,7 +63,7 @@ class TestClass():
         assert return_value == 0
 
     def test_byte_mask_b2(self):
-        print('\ntest_byte_mask_b2')
+        logging.info('\ntest_byte_mask_b2')
         BW = 'B'
         value = 0b0000000011111111
         target = 0b1111111100000000
@@ -70,7 +71,7 @@ class TestClass():
         assert return_value == 0b1111111111111111
 
     def test_byte_mask_b3(self):
-        print('\ntest_byte_mask_b3')
+        logging.info('\ntest_byte_mask_b3')
         BW = 'B'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -78,15 +79,15 @@ class TestClass():
         assert return_value == 0b0101010110101010
 
     def test_byte_mask_b4(self):
-        print('\ntest_byte_mask_b4')
+        logging.info('\ntest_byte_mask_b4')
         BW = 'B'
         value = 0b0000000000000000
         target = 0b0101010101010101
         return_value = self.ssdd_ops.byte_mask(BW, value, target)
         assert return_value == 0b0101010100000000
 
-    def test_BIC(self):
-        print('\ntest_BIC')
+    def test_BIC_1(self):
+        logging.info('\ntest_BIC_1')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
@@ -102,8 +103,8 @@ class TestClass():
         condition_codes = self.psw.nvzc_to_string()
         assert condition_codes == "0000"
 
-    def test_BICB(self):
-        print('\ntest_BICB')
+    def test_BICB_1(self):
+        logging.info('\ntest_BICB_1')
         self.psw.set_psw(psw=0)
         # evil test shows that The high byte is unaffected.
         self.reg.set(1, 0b1010101010101010)
@@ -122,7 +123,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
-        print('\ntest_BIC_2')
+        logging.info('\ntest_BIC_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0o777777)
         # evil test puts word data into a byte test and expects byte result
@@ -141,7 +142,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
-        print('\ntest_BICB_2')
+        logging.info('\ntest_BICB_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0)
         # evil test puts word data into a byte test and expects byte result
@@ -160,7 +161,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
-        print('\ntest_MOV_0')
+        logging.info('\ntest_MOV_0')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0o123456)
         self.reg.set(4,0o000000)
@@ -179,7 +180,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
-        print('\ntest_MOVB_01')
+        logging.info('\ntest_MOVB_01')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011100101110)
         self.reg.set(4,0b0000000000000000)
@@ -198,7 +199,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
-        print('\ntest_MOVB_02')
+        logging.info('\ntest_MOVB_02')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011110101110)
         self.reg.set(4,0b0000000000000000)
@@ -217,7 +218,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
-        print('\ntest_MOVB_03')
+        logging.info('\ntest_MOVB_03')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b0000000010101110)
         self.reg.set(4,0b1010011100000000)
@@ -236,7 +237,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
-        print('\ntest_MOVB_04')
+        logging.info('\ntest_MOVB_04')
         # 165250 112512 MOVB (R5)+,@R2 from M9301-YA
         # MOVB (R5)+,@R2
         self.psw.set_psw(psw=0o777777)
@@ -255,5 +256,5 @@ class TestClass():
         assert assembly == "MOVB (R5)+,@R2"
         assert self.reg.get(5) == 0o165321
         atr2  = self.ram.read_byte(self.reg.get(2))
-        print(f'@R2={oct(atr2)} {bin(atr2)}')
+        logging.info(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
