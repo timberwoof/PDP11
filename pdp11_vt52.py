@@ -55,7 +55,7 @@ class VT52:
             newchar = self.dl11.read_XBUF()
             # Sure, DL11 can send me nulls; I just won't show them.
             if newchar != 0:
-                logging.debug(f'dl11 XBUF sent us {oct(newchar)} {newchar} "{chr(newchar)}"')
+                logging.debug(f'dl11 XBUF sent us {oct(newchar)} {newchar} "{self.dl11.safe_character(newchar)}"')
                 print(chr(newchar), end='')
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
@@ -72,6 +72,7 @@ class VT52:
         # If the Enter key was hit
         # then send CR LF to the serial interface
         if event == 'keyboard_Enter':
+            logging.debug(f'sending DL11 0o12 "CR"')
             self.window['keyboard'].Update('')
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
                 self.dl11.write_RBUF(0o15) # CR, not \n which is LF
@@ -84,7 +85,9 @@ class VT52:
         if kbd != '':
             self.window['keyboard'].Update('')
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                self.dl11.write_RBUF(ord(kbd[0:1]))
+                o = ord(kbd[0:1])
+                logging.debug(f'sending DL11 {o} "{self.dl11.safe_character(o)}"')
+                self.dl11.write_RBUF(o)
 
         self.sw.stop('VT52')
         return

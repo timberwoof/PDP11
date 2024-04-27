@@ -71,14 +71,14 @@ class DL11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        #logging.info(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        #logging.debug(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
-        #logging.info(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        #logging.debug(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
@@ -92,21 +92,21 @@ class DL11:
     # 0: break. when set sends continuous space (rw)
     def write_XCSR(self, byte):
         """write to transmitter status register"""
-        #logging.info(f'    dl11.write_XCSR({oct(byte)})')
+        ##logging.debug(f'    dl11.write_XCSR({oct(byte)})')
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
 
     def read_XCSR(self):
         """read from transitter status register"""
-        #logging.info(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
+        ##logging.debug(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
         return self.XCSR
 
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        #logging.info(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        #logging.debug(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -120,7 +120,7 @@ class DL11:
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        #logging.info(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        #logging.debug(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         return result
 
     def safe_character(self, byte):

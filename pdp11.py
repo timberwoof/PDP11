@@ -127,15 +127,16 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        logging.info(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
-        if operand1 != '':
-            logging.info(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
-        if operand2 != '':
-            logging.info(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
-        if report != '':
-            logging.info(report)
+        #logging.debug(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        #if operand1 != '':
+        #    logging.debug(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
+        #if operand2 != '':
+        #    logging.debug(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
+        #if report != '':
+        #    logging.debug(report)
+        logging.debug(f'{oct(pc)} {assembly}')
         if pc == self.reg.get_pc():
-            logging.info(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
+            logging.debug(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
             result = False
 
         self.sw.stop("instruction cycle")
