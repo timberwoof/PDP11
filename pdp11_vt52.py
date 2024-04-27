@@ -7,6 +7,7 @@ class VT52:
     def __init__(self, dl11, sw, ui=False):
         """vt52(pdp11, serial interface)"""
         logging.info('initializing vt52')
+        logging.info(f'PySimpleGUI version:{sg.__version__}') # PySimpleGUI version:5.0.4
         self.dl11 = dl11
         # throttle window updates because they are very slow
         self.cycles_since_window = 0
@@ -16,15 +17,21 @@ class VT52:
 
     # *********************
     # PySimpleGUI Interface
+    # https://pypi.org/project/PySimpleGUI/
     # VT52 has a multiline and ain input_text
     # These take ~ 1000 uS to read each cycle
 
     def make_window(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         logging.info('vt52 make_window begins')
-        layout = [[sg.Multiline(size=(80, 24), key='crt', write_only=True,
-                                reroute_cprint=True, font=('Courier', 18),
-                                text_color='green yellow', background_color='black')],
+        layout = [[sg.Multiline(size=(80, 24),
+                                key='crt',
+                                write_only=True,
+                                reroute_cprint=True,
+                                font=('Courier', 18),
+                                text_color='green yellow',
+                                background_color='black',
+                                no_scrollbar=True)],
                   [sg.InputText('', size=(80, 1), focus=True, key='keyboard')]
                   ]
         self.window = sg.Window('VT52', layout, font=('Arial', 18), finalize=True)
@@ -36,7 +43,6 @@ class VT52:
     def window_cycle(self):
         '''One PySimpleGUI window_cycle'''
         self.sw.start('VT52')
-        # This is an attenpt to make the VT52 automatcaly send LF after CR.
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:
             if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
@@ -49,8 +55,16 @@ class VT52:
             newchar = self.dl11.read_XBUF()
             # Sure, DL11 can send me nulls; I just won't show them.
             if newchar != 0:
+                logging.debug(f'dl11 XBUF sent us {oct(newchar)} {newchar} "{chr(newchar)}"')
                 print(chr(newchar), end='')
-                sg.cprint(chr(newchar), end='', sep='', autoscroll=False)
+                # deal specially with <o15><o12> <13><11> CR LF
+                # multiline rstrip=True therefore whitespace is stripped
+                # call update or cprint with key
+
+                # try to filter out linefeeds 11. Nope. Still breaks wrong
+                # try to filter out carriage return 13. Ddn't break wrong.
+                if newchar != 13:
+                    sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
 
         # 1000 microseconds
         event, values = self.window.read(timeout=0)
