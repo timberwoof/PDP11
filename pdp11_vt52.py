@@ -49,8 +49,8 @@ class VT52:
             newchar = self.dl11.read_XBUF()
             # Sure, DL11 can send me nulls; I just won't show them.
             if newchar != 0:
-                logging.info(chr(newchar))
-                sg.cprint(chr(newchar), end='')
+                print(chr(newchar), end='')
+                sg.cprint(chr(newchar), end='', sep='', autoscroll=False)
 
         # 1000 microseconds
         event, values = self.window.read(timeout=0)

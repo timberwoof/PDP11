@@ -1,5 +1,5 @@
 """pdp11_rss_ops.py double operand instructions"""
-
+import logging
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
@@ -9,7 +9,7 @@ MASK_HIGH_BYTE = 0o177400
 class rss_ops:
     """Implements PDP11 double-operand RSS instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        # print('initializing doubleOperandOps')
+        logging.info('initializing doubleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -50,7 +50,7 @@ class rss_ops:
 
         (R, R+1) < (R, R+1) * (src)"""
         # get_c: set if the result < -2^15 or result >= 2^15-1
-        # print(f'    MUL {register} * {source}')
+        # logging.info(f'    MUL {register} * {source}')
         a = self.reg.get(register)
         result = a * source  # results in a 32-bit number
         high_result = result >> 16
@@ -205,7 +205,7 @@ class rss_ops:
         run = True
         assembly = f'{self.double_operand_RSS_instruction_names[opcode]}'
         result, report = self.double_operand_RSS_instructions[opcode](register, source)
-        print(f'    result:{oct(result)}')
+        logging.info(f'    result:{oct(result)}')
         self.reg.set(register, result)
         self.sw.stop("rss")
         return run, "", "", assembly, report

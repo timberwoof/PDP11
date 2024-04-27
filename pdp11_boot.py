@@ -1,12 +1,12 @@
 """PDP11 bootstrap utilities"""
+import logging
 
 #from pdp11_hardware import Registers as reg
 #from pdp11_hardware import Ram
-
 class pdp11Boot:
     """load machine code file or assembly file with machine ccode into pdp11 ram"""
     def __init__(self, reg, ram):
-        print('initializing pdp11Boot')
+        logging.info('initializing pdp11Boot')
         self.reg = reg
         self.ram = ram
 
@@ -45,13 +45,13 @@ class pdp11Boot:
         :param base:
         :return:
         """
-        # print(f'load_machine_code({base})')
+        # logging.info(f'load_machine_code({base})')
         address = base
         for instruction in code:
-            # print()
-            # print(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
+            # logging.info()
+            # logging.info(f'bootaddress:{oct(address)}  instruction: {oct(instruction)}')
             self.ram.write_word(address, instruction)
-            # print(f'    {oct(address)}:{oct(self.ram.read_word(address))}')
+            # logging.info(f'    {oct(address)}:{oct(self.ram.read_word(address))}')
             address = address + 2
         self.reg.set_pc(base, "load_machine_code")
 
@@ -71,12 +71,12 @@ class pdp11Boot:
         :param file: path to file
         :return: address specified in the file
         """
-        # print(f'read_pdp11_assembly_file "{file}"')
+        # logging.info(f'read_pdp11_assembly_file "{file}"')
         base = 0
         with open(file, 'r', encoding="utf-8") as text:
             for line in text:
                 #if line.strip() != "":
-                #    print(line.strip())
+                #    logging.info(line.strip())
                 parts = line.split()
 
                 # if the line is empty, slip it
@@ -104,8 +104,8 @@ class pdp11Boot:
                 if part1.isnumeric():
                     value1 = self.octal_to_decimal(int(part1))
                     # log what we got. octal, octal, decimal, decimal
-                    # print(part0, part1, address, value1)
+                    # logging.info(part0, part1, address, value1)
                     self.ram.write_word(address, value1)
 
-        print(f'    read_pdp11_assembly_file "{file}" returns base address:{oct(base)}')
+        logging.info(f'read_pdp11_assembly_file "{file}" returns base address:{oct(base)}')
         return base

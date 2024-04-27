@@ -1,4 +1,5 @@
 """pdp11_cc_ops.py - no-operand instructions 00 00 00 through 00 00 06"""
+import logging
 
 class cc_ops:
     """Implements PDP11 condition code operators"""
@@ -6,7 +7,7 @@ class cc_ops:
     # The cvzn condition codes are mapped into bits 4-0 of these operations.
     # set and get are mapped onto bit 5 of these operations,
     def __init__(self, psw, sw):
-        print('initializing ConditionCodeOps')
+        logging.info('initializing ConditionCodeOps')
         self.psw = psw
         self.sw = sw
         self.set_opcode = 0o000260

@@ -1,9 +1,10 @@
 """pdp11_noopr_ops.py - no-operand instructions 00 00 00 through 00 00 06"""
+import logging
 
 class noopr_ops:
     """Implements PDP11 no-operand instructions"""
     def __init__(self, reg, ram, psw, stack, sw):
-        print('initializing NoOperandOps')
+        logging.info('initializing NoOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw

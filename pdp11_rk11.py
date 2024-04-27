@@ -1,4 +1,5 @@
 """PDP11 RK11 Interface"""
+import logging
 class RK11:
     """DEC RK11 disk drive interface"""
     # *** stubbed out. Inoperative.
