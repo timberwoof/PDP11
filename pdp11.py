@@ -3,7 +3,8 @@ import time
 import logging
 
 import pdp11_util as u
-
+from pdp11_logger import Logger
+from pdp11_config import Config
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -20,6 +21,7 @@ from pdp11_ssdd_ops import ssdd_ops
 
 from pdp11_console import Console
 from pdp11_dl11 import DL11
+from pdp11_terminal import Terminal
 from pdp11_vt52 import VT52
 from pdp11_boot import pdp11Boot as boot
 from pdp11_m9301 import M9301
@@ -45,14 +47,16 @@ from stopwatches import StopWatches as sw
 class PDP11():
     """Timber's PDP11 emulator"""
     def __init__(self, ui=False):
-        """instantiate toe PDP11 emulator components"""
-        self.setupLogging()
+        """instantiate the PDP11 emulator components"""
+        Logger()
         logging.info('pdp11CPU initializing')
         self.sw = sw()
 
+        config = Config()
+
         # hardware
         self.reg = reg()
-        self.ram = Ram(self.reg)
+        self.ram = Ram(self.reg, config.lookup('ram', 'bits'))
         self.psw = PSW(self.ram)
         self.stack = Stack(self.reg, self.ram, self.psw)
         self.am = am(self.reg, self.ram, self.psw)
@@ -78,20 +82,14 @@ class PDP11():
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
         self.dl11 = DL11(self.ram, 0o177560)
-        self.vt52 = VT52(self.dl11, self.sw, ui)
+        if (ui):
+            self.vt52 = VT52(self.dl11, self.sw, ui)
+        else:
+            self.terminal = Terminal(self.dl11, self.sw)
 
         if ui:
             self.console = Console(self, self.sw)
         logging.info('pdp11CPU initializing done')
-
-    def setupLogging(self):
-        logFormat = '%(asctime)s.%(msecs)03d000Z %(filename)s:%(funcName)s %(levelname)s : %(message)s'
-        dateFormat = '%Y-%m-%dT%H:%M:%S'
-        logPath = './pdp11.log'
-        logging.basicConfig(filename=logPath, level=logging.DEBUG, format=logFormat,
-                            datefmt=dateFormat, force=True)
-        logging.Formatter.converter = time.gmtime
-        logging.info(f"{logPath} begins")
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
@@ -164,7 +162,7 @@ class pdp11Run():
         while cpu_run:
             cpu_run = self.pdp11.instruction_cycle()
             instructions_done = instructions_done + 1
-            self.pdp11.vt52.cycle()
+            self.pdp11.terminal.cycle()
             if instructions_done > limit:
                 logging.info('run: instruction limit reached')
                 cpu_run = False
@@ -189,7 +187,6 @@ class pdp11Run():
     def run_in_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
         logging.info('run_in_VT52_emulator: begin PDP11 emulator')
-
         logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
 
         # Create and run the terminal window in PySimpleGUI

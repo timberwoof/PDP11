@@ -1,0 +1,12 @@
+{
+  "config" : {
+    "name" : "default"
+  },
+  "ram": {
+    "bits": 16
+  },
+  "console": {
+    "address": 0,
+    "device" : "VT52"
+  }
+}

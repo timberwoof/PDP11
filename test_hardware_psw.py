@@ -59,13 +59,13 @@ def subtract_word(psw, b1, b2):
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg)
+    ram = Ram(reg, 16)
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)
 
     def test_psw_address(self):
-        assert self.psw.psw_address == Ram.top_of_memory - 1
+        assert self.psw.psw_address == self.ram.top_of_memory - 1
 
     def test_psw_set(self):
         test_value = 0o123236

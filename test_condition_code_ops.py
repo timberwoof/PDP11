@@ -12,7 +12,7 @@ from stopwatches import StopWatches as sw
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg)
+    ram = Ram(reg, 16)
     psw = PSW(ram)
     sw = sw()
     cc_ops = cc_ops(psw, sw)

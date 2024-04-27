@@ -3,7 +3,7 @@ class RK11:
     """DEC RK11 disk drive interface"""
     # *** stubbed out. Inoperative.
     def __init__(self, ram):
-        print('initializing RK11')
+        logging.info('initializing RK11')
         self.ram = ram
         base_address = 0o177400
         self.RKDS_address = base_address
@@ -15,7 +15,7 @@ class RK11:
         self.RKMR_address = base_address + 0o14
         self.RKDB_address = base_address + 0o16
 
-        print('RK11 register_with_ram')
+        logging.info('RK11 register_with_ram')
         self.ram.register_io_writer(self.RKCS_address, self.write_RKCS)  # rw
         self.ram.register_io_writer(self.RKWC_address, self.write_RKWC)  # rw
         self.ram.register_io_writer(self.RKBA_address, self.write_RKBA)  # rw
@@ -38,75 +38,75 @@ class RK11:
         self.RKDA = 0
         self.RKMR = 0
         self.RKDB = 0
-        print('initializing RK11 done')
+        logging.info('initializing RK11 done')
 
     def write_RKCS(self, data):
-        print('RK11 write_RKCS')
+        logging.info('RK11 write_RKCS')
         self.RKCS = data
     def write_RKWC(self, data):
-        print('RK11 write_RKWC')
+        logging.info('RK11 write_RKWC')
         self.RKWC = data
     def write_RKBA(self, data):
-        print('RK11 write_RKBA')
+        logging.info('RK11 write_RKBA')
         self.RKBA = data
     def write_RKDA(self, data):
-        print('RK11 write_RKDA')
+        logging.info('RK11 write_RKDA')
         self.RKDA = data
     def write_RKMR(self, data):
-        print('RK11 write_RKMR')
+        logging.info('RK11 write_RKMR')
         self.RKMR = data
     def write_RKDB(self, data):
-        print('RK11 write_RKDB')
+        logging.info('RK11 write_RKDB')
         self.RKDB = data
 
     def read_RKDS(self):
-        print('RK11 read_RKDS')
+        logging.info('RK11 read_RKDS')
         return 0
     def read_RKER(self):
-        print('RK11 read_RKER')
+        logging.info('RK11 read_RKER')
         return 0
     def read_RKCS(self):
-        print('RK11 read_RKCS')
+        logging.info('RK11 read_RKCS')
         return self.RKCS
     def read_RKWC(self):
-        print('RK11 read_RKWC')
+        logging.info('RK11 read_RKWC')
         return self.RKWC
     def read_RKBA(self):
-        print('RK11 read_RKBA')
+        logging.info('RK11 read_RKBA')
         return self.RKBA
     def read_RKDA(self):
-        print('RK11 read_RKDA')
+        logging.info('RK11 read_RKDA')
         return self.RKDA
     def read_RKMR(self):
-        print('RK11 read_RKMR')
+        logging.info('RK11 read_RKMR')
         return self.RKMR
     def read_RKDB(self):
-        print('RK11 read_RKDB')
+        logging.info('RK11 read_RKDB')
         return self.RKDB
 
     def control_reset(self):
-        print('RK11 control reset')
+        logging.info('RK11 control reset')
 
     def drive_reset(self):
-        print('RK11 drive reset')
+        logging.info('RK11 drive reset')
 
     def write_lock(self):
-        print('RK11 write lock')
+        logging.info('RK11 write lock')
 
     def seek(self):
-        print('RK11 seek')
+        logging.info('RK11 seek')
 
     def write_check(self):
-        print('RK11 write check')
+        logging.info('RK11 write check')
 
     def write(self):
-        print('RK11 write')
+        logging.info('RK11 write')
 
     def read_check(self):
-        print('RK11 read check')
+        logging.info('RK11 read check')
 
     def read(self):
-        print('RK11 read')
+        logging.info('RK11 read')
 
 
 

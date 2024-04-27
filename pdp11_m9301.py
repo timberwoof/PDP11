@@ -1,8 +1,10 @@
 """PDP11 M9301 Boot Rom"""
+import logging
+
 class M9301:
     """Emulates PDP11 M9301 boot ROM card"""
     def __init__(self, reg, ram, boot):
-        print('initializing M9301')
+        logging.info('initializing M9301')
         # 7.3 Micrositch Settings. See p. 7-2 of
         # PDP11 M9301 bootstrap/terminator module maintenance and operator's manual
         # https://gunkies.org/wiki/M9301_ROM
@@ -102,7 +104,7 @@ class M9301:
             boot.read_pdp11_assembly_file('source/M9301-YA.txt')
             self.switch_settings = switch81_3 + switch81_4 + switch81_5 + switch81_6 + \
                  switch81_7 + switch81_8 + switch81_9 + switch81_10 + self.base_address
-            print(f'    switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
+            logging.info(f'    switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
             reg.set_pc(self.switch_settings, 'M9301 switch81_2 True')
         else:
             reg.set_pc(0o24,"M9301 else switch81_2 False")
@@ -111,12 +113,12 @@ class M9301:
 
         self.ram.register_io_reader(self.switch_address, self.read_dip_switches)
 
-        print(f'initializing M9301 done. PC:{oct(reg.get_pc())}')
+        logging.info(f'initializing M9301 done. PC:{oct(reg.get_pc())}')
 
     # Pylint complains that this has too few public methods.
     # That's perfectly acceptable as this only does anything on startup.
 
     def read_dip_switches(self):
         '''io device method returns the dip switch positions'''
-        print(f'                                  ; read_dip_switches returns {oct(self.switch_settings)}')
+        logging.info(f'                                  ; read_dip_switches returns {oct(self.switch_settings)}')
         return self.switch_settings

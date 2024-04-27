@@ -7,6 +7,7 @@ class TestClass():
 
     def not_test_M9301_YF(self):
         """The M9301-YF is designed specifically for PDP-ll/04 and PDP-ll/34 end user systems."""
+        # not a test becuse there's no wau yet to run without the UI emulator
         logging.info('test_M9301-YF')
         pdp11 = PDP11()
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
