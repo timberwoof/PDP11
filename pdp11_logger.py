@@ -7,6 +7,6 @@ class Logger():
         dateFormat = '%Y-%m-%dT%H:%M:%S'
         logPath = './pdp11.log'
         logging.basicConfig(filename=logPath, level=logging.DEBUG, format=logFormat,
-                            datefmt=dateFormat, force=True)
+                            datefmt=dateFormat, force=True, filemode='w')
         logging.Formatter.converter = time.gmtime
         logging.info(f"{logPath} begins")

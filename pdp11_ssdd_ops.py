@@ -1,5 +1,6 @@
 """pdp11_rss_ops.py double operand instructions"""
 import logging
+import pdp11_util as u
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
@@ -46,6 +47,15 @@ class ssdd_ops:
     # 01 SS DD through 06 SS DD
     # 11 SS DD through 16 SS DD
     # ****************************************************
+
+    def sign(self, a):
+        logging.info(f'a:{oct(a)}  MASK_WORD_MSB:{(oct(MASK_WORD_MSB))}')
+        masked = abs(a) & MASK_WORD_MSB
+        logging.info(f'masked:{oct(masked)}')
+        if masked == MASK_WORD_MSB:
+            return -1
+        else:
+            return 1
 
     def byte_mask(self, BW, value, target):
         """mask source and result like PDP11 does
@@ -135,16 +145,33 @@ class ssdd_ops:
         The ADD and SUB instructions use word addressing,
         and have no byte-oriented variations.
         """
+        logging.info(f'source:{oct(source)} dest:{oct(dest)}')
+        xsource = u.extendSign(source)
+        xdest = u.extendSign(dest)
         # SUB is the "byte" version of ADD
-        if BW == 'W':
-            result = source + dest
-        else:
-            result = abs(source + ~dest + 1)
+        if BW == 'W': # ADD
+            # extendSign to convert PDP11 word integers to Python integers
+            result = xsource + xdest
+        else: # SUB
+            result = xsource - xdest
+        result = result & MASK_WORD
+        logging.info(f'{oct(source)} + {oct(dest)} = {oct(result)}')
+
         self.psw.set_n('W', result)
         self.psw.set_z('W', result)
-        self.psw.set_v('W', result)
-        result = result & MASK_WORD
-        # need to detect overflow, truncate result
+
+        # v is set if both operands were of the same sign
+        # and the result is the opposite sign
+        sS = self.sign(source)
+        sD = self.sign(dest)
+        sR = self.sign(result)
+        logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
+        v = 0
+        if sS == sD:
+            if sS != sR:
+                v = 1
+        self.psw.set_psw(v=v)
+
         return result, ''
 
     def is_ssdd_op(self, instruction):

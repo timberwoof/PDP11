@@ -1,4 +1,6 @@
 import logging
+import pdp11_util as u
+from pdp11_logger import Logger
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -47,7 +49,8 @@ class TestClass():
         return opcode | self.SS(modeS, regS) | self.DD(modeD, regD)
 
     def test_byte_mask_w(self):
-        logging.info('\ntest_byte_mask_w')
+        Logger()
+        logging.info('test_byte_mask_w')
         BW = 'W'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -55,7 +58,7 @@ class TestClass():
         assert return_value == 0b1010101010101010
 
     def test_byte_mask_b1(self):
-        logging.info('\ntest_byte_mask_b1')
+        logging.info('test_byte_mask_b1')
         BW = 'B'
         value = 0b1111111100000000
         target = 0b0000000011111111
@@ -63,7 +66,7 @@ class TestClass():
         assert return_value == 0
 
     def test_byte_mask_b2(self):
-        logging.info('\ntest_byte_mask_b2')
+        logging.info('test_byte_mask_b2')
         BW = 'B'
         value = 0b0000000011111111
         target = 0b1111111100000000
@@ -71,7 +74,7 @@ class TestClass():
         assert return_value == 0b1111111111111111
 
     def test_byte_mask_b3(self):
-        logging.info('\ntest_byte_mask_b3')
+        logging.info('test_byte_mask_b3')
         BW = 'B'
         value = 0b1010101010101010
         target = 0b0101010101010101
@@ -79,7 +82,7 @@ class TestClass():
         assert return_value == 0b0101010110101010
 
     def test_byte_mask_b4(self):
-        logging.info('\ntest_byte_mask_b4')
+        logging.info('test_byte_mask_b4')
         BW = 'B'
         value = 0b0000000000000000
         target = 0b0101010101010101
@@ -87,7 +90,7 @@ class TestClass():
         assert return_value == 0b0101010100000000
 
     def test_BIC_1(self):
-        logging.info('\ntest_BIC_1')
+        logging.info('test_BIC_1')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
@@ -104,7 +107,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BICB_1(self):
-        logging.info('\ntest_BICB_1')
+        logging.info('test_BICB_1')
         self.psw.set_psw(psw=0)
         # evil test shows that The high byte is unaffected.
         self.reg.set(1, 0b1010101010101010)
@@ -123,7 +126,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
-        logging.info('\ntest_BIC_2')
+        logging.info('test_BIC_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0o777777)
         # evil test puts word data into a byte test and expects byte result
@@ -142,7 +145,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
-        logging.info('\ntest_BICB_2')
+        logging.info('test_BICB_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0)
         # evil test puts word data into a byte test and expects byte result
@@ -161,7 +164,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
-        logging.info('\ntest_MOV_0')
+        logging.info('test_MOV_0')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0o123456)
         self.reg.set(4,0o000000)
@@ -180,7 +183,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
-        logging.info('\ntest_MOVB_01')
+        logging.info('test_MOVB_01')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011100101110)
         self.reg.set(4,0b0000000000000000)
@@ -199,7 +202,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
-        logging.info('\ntest_MOVB_02')
+        logging.info('test_MOVB_02')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011110101110)
         self.reg.set(4,0b0000000000000000)
@@ -218,7 +221,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
-        logging.info('\ntest_MOVB_03')
+        logging.info('test_MOVB_03')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b0000000010101110)
         self.reg.set(4,0b1010011100000000)
@@ -237,7 +240,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
-        logging.info('\ntest_MOVB_04')
+        logging.info('test_MOVB_04')
         # 165250 112512 MOVB (R5)+,@R2 from M9301-YA
         # MOVB (R5)+,@R2
         self.psw.set_psw(psw=0o777777)
@@ -260,11 +263,12 @@ class TestClass():
         assert atr2 == 0o377
 
     def test_ADD_PP2P(self):
-        logging.info('\ntest_ADD_PP2P')
+        logging.info('test_ADD_PP2P')
         # positive and positive, positive result
         self.psw.set_psw(psw=0)
         self.reg.set(2, 486)
         self.reg.set(4, 692)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -277,11 +281,12 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_ADD_PP2N(self):
-        logging.info('\ntest_ADD_PP2N')
+        logging.info('test_ADD_PP2N')
         # positive and positive, positive result
         self.psw.set_psw(psw=0)
         self.reg.set(2, 60000)
         self.reg.set(4, 60000)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -294,11 +299,12 @@ class TestClass():
         assert condition_codes == "1000"
 
     def test_ADD_NP2P(self):
-        logging.info('\ntest_ADD_NP2P')
+        logging.info('test_ADD_NP2P')
         # negative and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, -286)
+        self.reg.set(2, u.twosCompletentNegative(286))
         self.reg.set(4, 384)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -311,11 +317,12 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_ADD_NP2Z(self):
-        logging.info('\ntest_ADD_NP2Z')
+        logging.info('test_ADD_NP2Z')
         # negative and positive, zero result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, -286)
+        self.reg.set(2, u.twosCompletentNegative(286))
         self.reg.set(4, 286)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -328,11 +335,12 @@ class TestClass():
         assert condition_codes == "0100"
 
     def test_ADD_NP2N(self):
-        logging.info('\ntest_ADD_NP2N')
+        logging.info('test_ADD_NP2N')
         # negative and positive, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, -286)
+        self.reg.set(2, u.twosCompletentNegative(286))
         self.reg.set(4, 3)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -345,44 +353,55 @@ class TestClass():
         assert condition_codes == "1000"
 
     def test_ADD_NN2N(self):
-        logging.info('\ntest_ADD_NN2N')
+        logging.info('test_ADD_NN2N')
         # negative and negative, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, -286)
-        self.reg.set(4, -286)
+        self.reg.set(2, u.twosCompletentNegative(286))
+        self.reg.set(4, u.twosCompletentNegative(286))
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'ADD R2,R4'
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
 
         r4 = self.reg.get(4)
-        assert r4 == 64964 # -572
+        logging.info(f'-572:{oct(-572)}')
+        assert r4 == u.twosCompletentNegative(572)
 
         condition_codes = self.psw.nzvc_to_string()
+        logging.info(f'condition_codes:{condition_codes}')
         assert condition_codes == "1000"
 
     def test_ADD_NN2V(self):
-        logging.info('\ntest_ADD_NN2V')
+        logging.info('test_ADD_NN2V')
         # negative and negative, negative result
+        # Rule: Internal representation is limited to 2 bytes.
         self.psw.set_psw(psw=0)
-        self.reg.set(2, -60000)
-        self.reg.set(4, -60000)
+        logging.info(f'MASK_WORD:{MASK_WORD}') # 65535
+        bignegative = -36000 # more than half
+        logging.info(f'bignegative:{oct(bignegative)}')
+        self.reg.set(2, bignegative)
+        self.reg.set(4, bignegative)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'ADD R2,R4'
-
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         r4 = self.reg.get(4)
-        assert r4 == 11072 # -572
+        assert r4 == 0o177000
 
         condition_codes = self.psw.nzvc_to_string()
-        assert condition_codes == "0000" #"0010" needs V code properly set
+        logging.info(f'condition_codes:{condition_codes}')
+        assert condition_codes == "0010" # nzvc
 
     def test_SUB_PP2Z(self):
-        logging.info('\ntest_SUB_PP2Z')
-        self.psw.set_psw(psw=0o777777)
+        logging.info('test_SUB_PP2Z')
+        self.psw.set_psw(psw=0)
         self.reg.set(2, 0o000500)
         self.reg.set(4, 0o000500)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)

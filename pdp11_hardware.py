@@ -443,7 +443,7 @@ class PSW:
         if b == 'B':
             if value > MASK_LOW_BYTE:
                 v = 1
-        else:
+        elif b == 'W':
             if value > MASK_WORD:
                 v = 1
         self.set_psw(v)
