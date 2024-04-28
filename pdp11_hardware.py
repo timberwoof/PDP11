@@ -306,10 +306,6 @@ class Ram:
 
 class PSW:
     """PDP11 Processor Status Word"""
-
-    #  f'nvzc_to_string: {self.psw.get_n()}{self.psw.get_z()}{self.psw.get_v()}{self.psw.get_c()}'
-    # PSW memory location needs to be registered like an io device
-
     def __init__(self, ram):
         """initialize PDP11 PSW"""
         logging.info('initializing pdp11_hardware psw')
@@ -343,7 +339,7 @@ class PSW:
         self.priority_mask = 0o000340
         self.trap_mask = 0o000020
 
-        # condition codes
+        # NZVC condition codes
         self.n_mask = 0o000010  # Negative
         self.z_mask = 0o000004  # Zero
         self.v_mask = 0o000002  # Overflow
@@ -374,29 +370,29 @@ class PSW:
         #logging.debug(f'set_psw self.psw:{self.psw}')
         if psw > -1:
             self.psw = psw
-            #logging.debug(f'set_psw PSW self.psw:{self.psw}')
+            logging.debug(f'set_psw PSW self.psw:{self.psw}')
         if mode > -1:
             oldmode = self.psw & self.mode_mask
             self.psw = (self.psw & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
-            #logging.debug(f'set_psw mode self.psw:{self.psw}')
+            logging.debug(f'set_psw mode self.psw:{self.psw}')
         if priority > -1:
             self.psw = (self.psw & ~self.priority_mask) | (priority << 5)
-            #logging.debug(f'set_psw priority self.psw:{self.psw}')
+            logging.debug(f'set_psw priority self.psw:{self.psw}')
         if trap > -1:
             self.psw = (self.psw & ~self.trap_mask) | (trap << 4)
-            #logging.debug(f'set_psw trap self.psw:{self.psw}')
+            logging.debug(f'set_psw trap self.psw:{self.psw}')
         if n > -1:
             self.psw = (self.psw & ~self.n_mask) | (n << 3)
-            #logging.debug(f'set_psw get_n self.psw:{self.psw}')
+            logging.debug(f'set_psw get_n self.psw:{self.psw}')
         if z > -1:
             self.psw = (self.psw & ~self.z_mask) | (z << 2)
-            #logging.debug(f'set_psw get_z self.psw:{self.psw}')
+            logging.debug(f'set_psw get_z self.psw:{self.psw}')
         if v > -1:
             self.psw = (self.psw & ~self.v_mask) | (v << 1)
-            #logging.debug(f'set_psw get_v self.psw:{self.psw}')
+            logging.debug(f'set_psw get_v self.psw:{self.psw}')
         if c > -1:
             self.psw = (self.psw & ~self.c_mask) | c
-            #logging.debug(f'set_psw get_c self.psw:{self.psw}')
+            logging.debug(f'set_psw get_c self.psw:{self.psw}')
 
     def set_nzvc(self, value):
         """set condition codes (last four bits of psw)"""
@@ -443,15 +439,14 @@ class PSW:
         :param b: "B" or "" for Byte or Word
         :param value: value to test
         """
+        v = 0
         if b == 'B':
-            v_mask = MASK_WORD_MSB << 1
+            if value > MASK_LOW_BYTE:
+                v = 1
         else:
-            v_mask = MASK_BYTE_MSB << 1
-        if (value & v_mask) == v_mask:
-            v = 1
-        else:
-            v = 0
-        self.set_psw(v=v)
+            if value > MASK_WORD:
+                v = 1
+        self.set_psw(v)
         return v
 
     def get_n(self):
@@ -470,7 +465,7 @@ class PSW:
         """carry status bit of PSW"""
         return self.psw & self.c_mask
 
-    def nvzc_to_string(self):
+    def nzvc_to_string(self):
         """stringify these psw bits"""
         return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
 

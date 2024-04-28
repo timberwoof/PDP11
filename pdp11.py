@@ -93,7 +93,7 @@ class PDP11():
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        # logging.info(f'pdp11CPU dispatch_opcode {oct(instruction)}')
+        logging.info(f'pdp11CPU dispatch_opcode {oct(instruction)} PSW:{oct(self.psw.get_psw())}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -127,7 +127,7 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        #logging.debug(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nvzc_to_string()}')
+        logging.debug(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.nzvc_to_string()}')
         #if operand1 != '':
         #    logging.debug(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
         #if operand2 != '':
@@ -153,7 +153,7 @@ class pdp11Run():
     def run(self, limit=100000):
         """Run PDP11 emulator without terminal process"""
         logging.info('run: begin PDP11 emulator')
-        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
+        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nzvc_to_string()}')
 
         # start the processor loop
         cpu_run = True
@@ -188,7 +188,7 @@ class pdp11Run():
     def run_in_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
         logging.info('run_in_VT52_emulator: begin PDP11 emulator')
-        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nvzc_to_string()}')
+        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.nzvc_to_string()}')
 
         # Create and run the terminal window in PySimpleGUI
         logging.info('run_in_VT52_emulator make windows')

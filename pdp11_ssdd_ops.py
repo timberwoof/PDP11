@@ -58,7 +58,7 @@ class ssdd_ops:
             # Only make the operation affect the low byte
             # The target high byte remains unnafected
             return_value = (value & MASK_LOW_BYTE) | (target & MASK_HIGH_BYTE)
-            #print(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
+            #logging.debug(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
         else:
             return_value = value
         return return_value
@@ -68,7 +68,7 @@ class ssdd_ops:
 
         (dst) < (src)"""
         #result = source
-        #print(f'                                  ; MOV {bin(source)},{bin(dest)}')
+        #logging.debug(f'                                  ; MOV {bin(source)},{bin(dest)}')
         result = self.byte_mask(BW, source, dest)
         self.psw.set_n(BW, source)
         self.psw.set_z(BW, source)
@@ -83,7 +83,7 @@ class ssdd_ops:
         # but don't change the destination
         #result = source - dest
         result = self.byte_mask(BW, source - dest, dest)
-        #print(f'    ; CMP source:{source} dest:{dest} result:{result}')
+        #logging.debug(f'    ; CMP{BW} source:{source} dest:{dest} result:{result}')
         self.psw.set_n(BW, result)
         self.psw.set_z(BW, result)
         self.psw.set_v(BW, result)
@@ -140,9 +140,10 @@ class ssdd_ops:
             result = source + dest
         else:
             result = abs(source + ~dest + 1)
-        self.psw.set_n(BW, result)
-        self.psw.set_z(BW, result)
-        self.psw.set_v(BW, result)
+        self.psw.set_n('W', result)
+        self.psw.set_z('W', result)
+        self.psw.set_v('W', result)
+        result = result & MASK_WORD
         # need to detect overflow, truncate result
         return result, ''
 
@@ -191,7 +192,7 @@ class ssdd_ops:
         try:
             result, report = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
             assembly = f'{self.double_operand_SSDD_instruction_names[name_opcode]} {assembly1},{assembly2}'
-            #logging.debug(f'    result:{oct(result)}   nvzc_to_string:{self.psw.nvzc_to_string()}  PC:{oct(self.reg.get_pc())}')
+            #logging.debug(f'    result:{oct(result)}   NVZC:{self.psw.nzvc_to_string()}  PC:{oct(self.reg.get_pc())}')
         except KeyError:
             assembly = 'Error: double operand opcode not found'
             result = False

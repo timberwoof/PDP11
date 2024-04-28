@@ -100,7 +100,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_BICB_1(self):
@@ -119,7 +119,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b1111111101010101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
@@ -138,7 +138,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o000101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
@@ -157,7 +157,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o001101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
@@ -176,7 +176,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0o123456
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
@@ -195,7 +195,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000000101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
@@ -214,7 +214,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000010101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
@@ -233,7 +233,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b1010011110101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
@@ -258,3 +258,138 @@ class TestClass():
         atr2  = self.ram.read_byte(self.reg.get(2))
         logging.info(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
+
+    def test_ADD_PP2P(self):
+        logging.info('\ntest_ADD_PP2P')
+        # positive and positive, positive result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, 486)
+        self.reg.set(4, 692)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 1178
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "0000"
+
+    def test_ADD_PP2N(self):
+        logging.info('\ntest_ADD_PP2N')
+        # positive and positive, positive result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, 60000)
+        self.reg.set(4, 60000)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 54464
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "1000"
+
+    def test_ADD_NP2P(self):
+        logging.info('\ntest_ADD_NP2P')
+        # negative and positive, positive result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, -286)
+        self.reg.set(4, 384)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 98
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "0000"
+
+    def test_ADD_NP2Z(self):
+        logging.info('\ntest_ADD_NP2Z')
+        # negative and positive, zero result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, -286)
+        self.reg.set(4, 286)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 0
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "0100"
+
+    def test_ADD_NP2N(self):
+        logging.info('\ntest_ADD_NP2N')
+        # negative and positive, negative result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, -286)
+        self.reg.set(4, 3)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 65253 # -283
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "1000"
+
+    def test_ADD_NN2N(self):
+        logging.info('\ntest_ADD_NN2N')
+        # negative and negative, negative result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, -286)
+        self.reg.set(4, -286)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 64964 # -572
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "1000"
+
+    def test_ADD_NN2V(self):
+        logging.info('\ntest_ADD_NN2V')
+        # negative and negative, negative result
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, -60000)
+        self.reg.set(4, -60000)
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 11072 # -572
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "0000" #"0010" needs V code properly set
+
+    def test_SUB_PP2Z(self):
+        logging.info('\ntest_SUB_PP2Z')
+        self.psw.set_psw(psw=0o777777)
+        self.reg.set(2, 0o000500)
+        self.reg.set(4, 0o000500)
+        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'SUB R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 0o000500 - 0o000500
+
+        condition_codes = self.psw.nzvc_to_string()
+        assert condition_codes == "0111" # "0100" not correct

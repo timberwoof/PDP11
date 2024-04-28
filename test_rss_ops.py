@@ -60,7 +60,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_BICB(self):
@@ -79,7 +79,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b1111111101010101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
@@ -98,7 +98,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o000101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
@@ -117,7 +117,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o001101
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
@@ -136,7 +136,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0o123456
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOV_2(self):
@@ -162,7 +162,7 @@ class TestClass():
         target = self.ram.read_word(0o000000)
         assert target == r3
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
@@ -181,7 +181,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000000101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
@@ -200,7 +200,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000010101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
@@ -219,7 +219,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b1010011110101110
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
@@ -262,7 +262,7 @@ class TestClass():
         logging.info(f'product:{product}')
         assert product == a * b
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
     def test_DIV(self):
@@ -291,6 +291,6 @@ class TestClass():
         assert quotient == a // b
         assert remainder == a % b
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.nzvc_to_string()
         assert condition_codes == "0000"
 
