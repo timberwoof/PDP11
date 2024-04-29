@@ -49,10 +49,7 @@ class ssdd_ops:
     # ****************************************************
 
     def sign(self, a):
-        logging.info(f'a:{oct(a)}  MASK_WORD_MSB:{(oct(MASK_WORD_MSB))}')
-        masked = abs(a) & MASK_WORD_MSB
-        logging.info(f'masked:{oct(masked)}')
-        if masked == MASK_WORD_MSB:
+        if abs(a) & MASK_WORD_MSB == MASK_WORD_MSB:
             return -1
         else:
             return 1
@@ -147,39 +144,48 @@ class ssdd_ops:
         """
         # N set if result < 0, else cleared
         # Z set if result = 0, else cleared
-        # V set if there was overflow.
-        # If both operands had same sign and
-        # result had opposite sign, else cleared
+        # for ADD DEC says "set if there was arithmetic overflow as a result of the operation;
+        # that is both operands were of the same sign
+        # and the result was of the opposite sign;
+        # cleared otherwise"
+        # for SUB DEC says "set if there was arithmetic overflow as a result of the operation,
+        # that is if operands were of opposite signs
+        # and the sign of the source was the same as the sign of the result;
+        # cleared otherwise"
+        # But this is wrong. It doesn't account for 0 operand
         # C set if there was a carry from MSB, else cleared
 
         logging.info(f'source:{oct(source)} dest:{oct(dest)}')
         py_source = u.pythonifyPDP11Word(source)
         py_dest = u.pythonifyPDP11Word(dest)
-        # SUB is the "byte" version of ADD
-        if BW == 'W': # ADD
-            # extendSign to convert PDP11 word integers to Python integers
-            result = u.PDP11ifyPythonInt(py_source + py_dest)
-            logging.info(f'py_source:{oct(py_source)} + py_dest:{oct(py_dest)} = result:{oct(result)}')
-        else: # SUB
-            result = u.PDP11ifyPythonInt(py_source - py_dest)
-            logging.info(f'py_source:{oct(py_source)} - py_dest:{oct(py_dest)} = result:{oct(result)}')
-
-        self.psw.set_n('W', result)
-        self.psw.set_z('W', result)
-
-        # v is set if both operands were of the same sign
-        # and the result is the opposite sign
         sS = self.sign(source)
         sD = self.sign(dest)
-        sR = self.sign(result)
-        logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
         v = 0
-        if sS == sD:
-            if sS != sR:
-                v = 1
-        self.psw.set_psw(v=v, c = v)
 
-        return result, ''
+        # SUB is the "byte" version of ADD
+        if BW == 'W': # ADD
+            pdp11_result = u.PDP11ifyPythonInt(py_source + py_dest)
+            logging.info(f'py_source:{py_source} + py_dest:{py_dest} = pdp11_result:{oct(pdp11_result)}')
+            sR = self.sign(pdp11_result)
+            logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
+            if source != 0 and dest != 0 and sS == sD:
+                if sS != sR:
+                    v = 1
+        else: # SUB DST - SRC
+            py_result = py_dest - py_source
+            pdp11_result = u.PDP11ifyPythonInt(py_result)
+            logging.info(f'py_dest:{py_dest} - py_source:{py_source} = py_result:{py_result} pdp11_result:{oct(pdp11_result)}')
+            sR = self.sign(pdp11_result)
+            logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
+            if source != 0 and dest != 0 and sS != sD:
+                if sS == sR:
+                    v = 1
+
+        self.psw.set_n('W', pdp11_result)
+        self.psw.set_z('W', pdp11_result)
+        self.psw.set_psw(v=v, c=v)
+
+        return pdp11_result, ''
 
     def is_ssdd_op(self, instruction):
         """Using instruction bit pattern, determine whether it's a souble operand instruction"""

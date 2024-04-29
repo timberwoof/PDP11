@@ -420,7 +420,7 @@ class TestClass():
         assert self.reg.get(4) == 0o202
 
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0011" # nzvc gves 0111
+        assert condition_codes == "0011" 
 
     def test_verify_negatives(self):
         logging.info('test_verify_negatives')
@@ -440,226 +440,204 @@ class TestClass():
 
     def test_SUB_Assembly(self):
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
-        self.reg.set(4, n)
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        self.reg.set(6, N) # dest
+        self.reg.set(4, n) # source
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         logging.info('assembly:'+assembly)
-        assert assembly == 'SUB R2,R4'
+        assert assembly == 'SUB R4,R6'
 
-    def test_SUB_zp_N(self): #1
+    def test_SUB_zp_N(self): #1 zero minus small positive
         logging.info('test_SUB_zp_N')
-        # positive and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, z)
-        self.reg.set(4, p)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        self.reg.set(6, z) # dest
+        self.reg.set(4, p) # source
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(z - p)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(z - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
-    def test_SUB_Pp_P(self): #2
+    def test_SUB_Pp_P(self): #2 big positive minus small positive
         logging.info('test_SUB_Pp_P')
-        # positive and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, P)
+        self.reg.set(6, P)
         self.reg.set(4, p)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(P - p)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(P - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_SUB_PP_Z(self): #
         logging.info('test_SUB_PP_Z')
-        # positive and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, P)
+        self.reg.set(6, P)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == 0
+        assert self.reg.get(6) == 0
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100"
 
     def test_SUB_pP_N(self): #4
         logging.info('test_SUB_pP_N')
-        # positive and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, p)
+        self.reg.set(6, p)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(p - P)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(p - P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
     def test_SUB_Nz_N(self): #5
         logging.info('test_SUB_Nz_N')
-        # negative and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, z)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
-    def test_SUB_Np_N(self): #6
-        logging.info('test_SUB_Np_N')
-        # negative and positive, positive result
+    def test_SUB_Np_VC(self): #6
+        logging.info('test_SUB_Np_VC')
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, p)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N - p)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N - p)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "1000"
+        assert condition_codes == "0011"
 
-    def test_SUB_NP_N(self): #7
-        logging.info('test_SUB_NP_N')
-        # negative and positive, positive result
+    def test_SUB_NP_V(self): #7
+        logging.info('test_SUB_NP_V')
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N - P)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N - P)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "1000"
+        assert condition_codes == "0011"
 
     def not_test_SUB_Np_N(self): #8
         logging.info('not_test_SUB_Np_N')
-        # negative and positive, zero result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, n)
-        self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        self.reg.set(6, N)
+        self.reg.set(4, p)
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N - p)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
     def test_SUB_zP_N(self): #9
         logging.info('test_SUB_zP_N')
-        # negative and positive, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, z)
+        self.reg.set(6, z)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(-P)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(-P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
     def test_SUB_Nn_N(self): #10
         logging.info('test_SUB_Nn_N')
-        # negative and positive, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, n)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N - n)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N - n)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
     def test_SUB_NN_Z(self): #11
         logging.info('test_SUB_NN_Z')
-        # negative and negative, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, N)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == 0
+        assert self.reg.get(6) == 0
         condition_codes = self.psw.get_nzvc()
         logging.info(f'condition_codes:{condition_codes}')
         assert condition_codes == "0100"
 
     def test_SUB_nN_P(self): #12
         logging.info('test_SUB_nN_P')
-        # negative and negative, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, n)
+        self.reg.set(6, n)
         self.reg.set(4, N)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(n - N)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(n - N)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"  # nzvc gves 0111
+        assert condition_codes == "0000"  
 
     def test_SUB_Zn_P(self): #13
         logging.info('test_SUB_Nn_P')
-        # negative and negative, negative result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, z)
+        self.reg.set(6, z)
         self.reg.set(4, n)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(-n)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(-n)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"  # nzvc gves 0111
-
-    def test_SUB_nP_P(self): #14
-        logging.info('test_SUB_nP_P')
-        # negative and negative, negative result
+        assert condition_codes == "0000"
+        
+    def test_SUB_nP_V(self): #14
+        logging.info('test_SUB_nP_V')
         self.psw.set_psw(psw=0)
-        self.reg.set(2, n)
+        self.reg.set(6, n)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(n - P)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(n - P)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"  # nzvc gves 0111
+        assert condition_codes == "0011" 
 
-    def test_SUB_NP_P(self): #15
-        logging.info('test_SUB_NP_P')
-        # negative and negative, negative result
+    def test_SUB_NP_V(self): #15
+        logging.info('test_SUB_NP_V')
         self.psw.set_psw(psw=0)
-        self.reg.set(2, N)
+        self.reg.set(6, N)
         self.reg.set(4, P)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(N - P)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(N - P)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"  # nzvc gves 0111
+        assert condition_codes == "0011"
 
-    def test_SUB_Pn_P(self): #16
-        logging.info('test_SUB_Pn_P')
-        # negative and negative, negative result
+    def test_SUB_Pn_V(self): #16
+        logging.info('test_SUB_Pn_V')
         self.psw.set_psw(psw=0)
-        self.reg.set(2, P)
+        self.reg.set(6, P)
         self.reg.set(4, N)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        instruction = self.op(opcode=0o160000, modeS=0, regS=2, modeD=0, regD=4)  # mode 0 R1
+        logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
+        instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
-        assert self.reg.get(4) == u.PDP11ifyPythonInt(P - N)
+        assert self.reg.get(6) == u.PDP11ifyPythonInt(P - N)
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"  # nzvc gves 0111
+        assert condition_codes == "1011"
 
