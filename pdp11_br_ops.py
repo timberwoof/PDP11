@@ -155,7 +155,7 @@ class br_ops:
         return True
 
     def BCC(self, offset):
-        """10 30 XXX branch if higher or same, BHIS is the sme as BCC"""
+        """10 30 XXX branch if Carry Clear, BHIS is the sme as BCC"""
         if self.psw.get_c() == 0:
             self.reg.set_pc_2x_offset(offset, 'BCC')
         return True

@@ -153,7 +153,7 @@ class ssdd_ops:
         # and the sign of the source was the same as the sign of the result;
         # cleared otherwise"
         # But this is wrong. It doesn't account for 0 operand
-        # C set if there was a carry from MSB, else cleared
+        # C: set if there was a carry from the most significant bit of the result; cleared otherwise
 
         logging.info(f'source:{oct(source)} dest:{oct(dest)}')
         py_source = u.pythonifyPDP11Word(source)
@@ -161,16 +161,22 @@ class ssdd_ops:
         sS = self.sign(source)
         sD = self.sign(dest)
         v = 0
+        c = 0
 
         # SUB is the "byte" version of ADD
         if BW == 'W': # ADD
-            pdp11_result = u.PDP11ifyPythonInt(py_source + py_dest)
+            py_result = py_source + py_dest
+            pdp11_result = u.PDP11ifyPythonInt(py_result)
             logging.info(f'py_source:{py_source} + py_dest:{py_dest} = pdp11_result:{oct(pdp11_result)}')
             sR = self.sign(pdp11_result)
             logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
             if source != 0 and dest != 0 and sS == sD:
                 if sS != sR:
                     v = 1
+                    c = 1
+            if ((source | dest) & MASK_WORD_MSB == MASK_WORD_MSB) and (pdp11_result & MASK_WORD_MSB == 0):
+                logging.info('carry')
+                c = 1
         else: # SUB DST - SRC
             py_result = py_dest - py_source
             pdp11_result = u.PDP11ifyPythonInt(py_result)
@@ -180,10 +186,11 @@ class ssdd_ops:
             if source != 0 and dest != 0 and sS != sD:
                 if sS == sR:
                     v = 1
+                    c = 1
 
         self.psw.set_n('W', pdp11_result)
         self.psw.set_z('W', pdp11_result)
-        self.psw.set_psw(v=v, c=v)
+        self.psw.set_psw(v=v, c=c)
 
         return pdp11_result, ''
 

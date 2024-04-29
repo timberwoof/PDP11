@@ -327,8 +327,8 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1011"
 
-    def test_ADD_NP_P(self):
-        logging.info('test_ADD_NP_P')
+    def test_ADD_NP_PC(self):
+        logging.info('test_ADD_NP_PC')
         # negative and positive, positive result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosComplementNegative(286))
@@ -343,10 +343,10 @@ class TestClass():
         assert self.reg.get(4) == 98
 
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0000"
+        assert condition_codes == "0001"
 
-    def test_ADD_NP_Z(self):
-        logging.info('test_ADD_NP_Z')
+    def test_ADD_NP_ZC(self):
+        logging.info('test_ADD_NP_ZC')
         # negative and positive, zero result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosComplementNegative(286))
@@ -361,7 +361,7 @@ class TestClass():
         assert self.reg.get(4) == 0
 
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0100"
+        assert condition_codes == "0101"
 
     def test_ADD_NP_N(self):
         logging.info('test_ADD_NP_N')
@@ -418,9 +418,23 @@ class TestClass():
         logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         r4 = self.reg.get(4)
         assert self.reg.get(4) == 0o202
-
         condition_codes = self.psw.get_nzvc()
-        assert condition_codes == "0011" 
+        assert condition_codes == "0011"
+
+    def test_10_70(self):
+        logging.info('test_10_70')
+        # from a sutuation in M9301-YA
+        self.psw.set_psw(psw=0)
+        self.reg.set(2, 0o177771)
+        self.reg.set(4, 0o10)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
+        r4 = self.reg.get(4)
+        assert self.reg.get(4) == 0o01
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0001"
 
     def test_verify_negatives(self):
         logging.info('test_verify_negatives')

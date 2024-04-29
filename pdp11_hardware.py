@@ -370,29 +370,29 @@ class PSW:
         #logging.debug(f'set_psw self.psw:{self.psw}')
         if psw > -1:
             self.psw = psw
-            logging.debug(f'set_psw PSW self.psw:{self.psw}')
+            #logging.debug(f'set_psw PSW self.psw:{self.psw}')
         if mode > -1:
             oldmode = self.psw & self.mode_mask
             self.psw = (self.psw & ~self.c_mode_mask) | (mode << 14) | (oldmode >> 2)
-            logging.debug(f'set_psw mode self.psw:{self.psw}')
+            #logging.debug(f'set_psw mode self.psw:{self.psw}')
         if priority > -1:
             self.psw = (self.psw & ~self.priority_mask) | (priority << 5)
-            logging.debug(f'set_psw priority self.psw:{self.psw}')
+            #logging.debug(f'set_psw priority self.psw:{self.psw}')
         if trap > -1:
             self.psw = (self.psw & ~self.trap_mask) | (trap << 4)
-            logging.debug(f'set_psw trap self.psw:{self.psw}')
+            #logging.debug(f'set_psw trap self.psw:{self.psw}')
         if n > -1:
             self.psw = (self.psw & ~self.n_mask) | (n << 3)
-            logging.debug(f'set_psw get_n self.psw:{self.psw}')
+            #logging.debug(f'set_psw get_n self.psw:{self.psw}')
         if z > -1:
             self.psw = (self.psw & ~self.z_mask) | (z << 2)
-            logging.debug(f'set_psw get_z self.psw:{self.psw}')
+            #logging.debug(f'set_psw get_z self.psw:{self.psw}')
         if v > -1:
             self.psw = (self.psw & ~self.v_mask) | (v << 1)
-            logging.debug(f'set_psw get_v self.psw:{self.psw}')
+            #logging.debug(f'set_psw get_v self.psw:{self.psw}')
         if c > -1:
             self.psw = (self.psw & ~self.c_mask) | c
-            logging.debug(f'set_psw get_c self.psw:{self.psw}')
+            #logging.debug(f'set_psw get_c self.psw:{self.psw}')
 
     def set_nzvc(self, value):
         """set condition codes (last four bits of psw)"""
