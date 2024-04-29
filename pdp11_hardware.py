@@ -465,8 +465,8 @@ class PSW:
         """carry status bit of PSW"""
         return self.psw & self.c_mask
 
-    def nzvc_to_string(self):
-        """stringify these psw bits"""
+    def get_nzvc(self):
+        """return string containing NZVC bits"""
         return f'{self.get_n()}{self.get_z()}{self.get_v()}{self.get_c()}'
 
 class Stack:

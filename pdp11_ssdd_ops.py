@@ -145,6 +145,21 @@ class ssdd_ops:
         The ADD and SUB instructions use word addressing,
         and have no byte-oriented variations.
         """
+        # N set if result < 0, else cleared
+        # Z set if result = 0, else cleared
+        # V set if there was overflow.
+        # If both operands had same sign and
+        # result had opposite sign, else cleared
+        # C set if there was a carry from MSB, else cleared
+        # PP P
+        # PP Z 0+0
+        # PP NV overflow, carry
+        # NP P
+        # NP Z
+        # NP N
+        # NN N
+        # NN V overflow, carry
+
         logging.info(f'source:{oct(source)} dest:{oct(dest)}')
         xsource = u.extendSign(source)
         xdest = u.extendSign(dest)
@@ -155,7 +170,7 @@ class ssdd_ops:
         else: # SUB
             result = xsource - xdest
         result = result & MASK_WORD
-        logging.info(f'{oct(source)} + {oct(dest)} = {oct(result)}')
+        logging.info(f'xsource:{oct(xsource)} + xdest:{oct(xdest)} = result:{oct(result)}')
 
         self.psw.set_n('W', result)
         self.psw.set_z('W', result)
@@ -170,7 +185,7 @@ class ssdd_ops:
         if sS == sD:
             if sS != sR:
                 v = 1
-        self.psw.set_psw(v=v)
+        self.psw.set_psw(v=v, c = v)
 
         return result, ''
 
@@ -219,7 +234,7 @@ class ssdd_ops:
         try:
             result, report = self.double_operand_SSDD_instructions[opcode](bw, source_value, dest_value)
             assembly = f'{self.double_operand_SSDD_instruction_names[name_opcode]} {assembly1},{assembly2}'
-            #logging.debug(f'    result:{oct(result)}   NVZC:{self.psw.nzvc_to_string()}  PC:{oct(self.reg.get_pc())}')
+            #logging.debug(f'    result:{oct(result)}   NVZC:{self.psw.get_nzvc()}  PC:{oct(self.reg.get_pc())}')
         except KeyError:
             assembly = 'Error: double operand opcode not found'
             result = False

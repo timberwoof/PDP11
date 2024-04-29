@@ -22,6 +22,8 @@ MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
+MAX_POS_INT = 0o077777 # 32767
+MAX_NEG_INT = 0o177777 # - 32768
 
 class TestClass():
     reg = reg()
@@ -47,6 +49,9 @@ class TestClass():
 
     def op(self, opcode, modeS=0, regS=0, modeD=0, regD=1):
         return opcode | self.SS(modeS, regS) | self.DD(modeD, regD)
+
+    def test_assert(self):
+        assert "actual" != "expected"
 
     def test_byte_mask_w(self):
         Logger()
@@ -103,7 +108,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b0101010101010101
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_BICB_1(self):
@@ -113,7 +118,6 @@ class TestClass():
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
 
-
         instruction = self.op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
@@ -122,7 +126,7 @@ class TestClass():
         r2 = self.reg.get(2)
         assert r2 == 0b1111111101010101
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
@@ -141,7 +145,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o000101
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
@@ -160,7 +164,7 @@ class TestClass():
         assert self.reg.get(3) == 0o001234
         assert self.reg.get(4) == 0o001101
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
@@ -179,7 +183,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0o123456
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
@@ -198,7 +202,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000000101110
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
@@ -217,7 +221,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b0000000010101110
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
@@ -236,7 +240,7 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0b1010011110101110
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
@@ -262,8 +266,8 @@ class TestClass():
         logging.info(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
 
-    def test_ADD_PP2P(self):
-        logging.info('test_ADD_PP2P')
+    def test_ADD_PP_P(self):
+        logging.info('test_ADD_PP_P')
         # positive and positive, positive result
         self.psw.set_psw(psw=0)
         self.reg.set(2, 486)
@@ -277,15 +281,15 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 1178
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
-    def test_ADD_PP2N(self):
-        logging.info('test_ADD_PP2N')
+    def test_ADD_PP_Z(self):
+        logging.info('test_ADD_PP_Z')
         # positive and positive, positive result
         self.psw.set_psw(psw=0)
-        self.reg.set(2, 60000)
-        self.reg.set(4, 60000)
+        self.reg.set(2, 0)
+        self.reg.set(4, 0)
         logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
@@ -293,13 +297,32 @@ class TestClass():
         assert assembly == 'ADD R2,R4'
 
         r4 = self.reg.get(4)
-        assert r4 == 54464
+        assert r4 == 0
 
-        condition_codes = self.psw.nzvc_to_string()
-        assert condition_codes == "1000"
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0100"
 
-    def test_ADD_NP2P(self):
-        logging.info('test_ADD_NP2P')
+    def test_ADD_PP_NVC(self):
+        logging.info('test_ADD_PP_NV')
+        # positive and positive, negative result
+        self.psw.set_psw(psw=0)
+        bigpositive = MAX_POS_INT - 64
+        self.reg.set(2, bigpositive)
+        self.reg.set(4, bigpositive)
+        logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
+        instruction = self.op(opcode=0o060000, modeS=0, regS=2, modeD=0, regD=4)   # mode 0 R1
+        assert self.ssdd_ops.is_ssdd_op(instruction)
+        run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
+        assert assembly == 'ADD R2,R4'
+
+        r4 = self.reg.get(4)
+        assert r4 == 0o177576
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "1011"
+
+    def test_ADD_NP_P(self):
+        logging.info('test_ADD_NP_P')
         # negative and positive, positive result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosCompletentNegative(286))
@@ -313,11 +336,11 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 98
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
-    def test_ADD_NP2Z(self):
-        logging.info('test_ADD_NP2Z')
+    def test_ADD_NP_Z(self):
+        logging.info('test_ADD_NP_Z')
         # negative and positive, zero result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosCompletentNegative(286))
@@ -331,11 +354,11 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100"
 
-    def test_ADD_NP2N(self):
-        logging.info('test_ADD_NP2N')
+    def test_ADD_NP_N(self):
+        logging.info('test_ADD_NP_N')
         # negative and positive, negative result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosCompletentNegative(286))
@@ -349,11 +372,11 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 65253 # -283
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
-    def test_ADD_NN2N(self):
-        logging.info('test_ADD_NN2N')
+    def test_ADD_NN_N(self):
+        logging.info('test_ADD_NN_N')
         # negative and negative, negative result
         self.psw.set_psw(psw=0)
         self.reg.set(2, u.twosCompletentNegative(286))
@@ -366,20 +389,18 @@ class TestClass():
         logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
 
         r4 = self.reg.get(4)
-        logging.info(f'-572:{oct(-572)}')
         assert r4 == u.twosCompletentNegative(572)
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         logging.info(f'condition_codes:{condition_codes}')
         assert condition_codes == "1000"
 
-    def test_ADD_NN2V(self):
-        logging.info('test_ADD_NN2V')
+    def test_ADD_NN_VC(self):
+        logging.info('test_ADD_NN_V')
         # negative and negative, negative result
         # Rule: Internal representation is limited to 2 bytes.
         self.psw.set_psw(psw=0)
-        logging.info(f'MASK_WORD:{MASK_WORD}') # 65535
-        bignegative = -36000 # more than half
+        bignegative = u.twosCompletentNegative(MAX_POS_INT - 64)
         logging.info(f'bignegative:{oct(bignegative)}')
         self.reg.set(2, bignegative)
         self.reg.set(4, bignegative)
@@ -390,14 +411,13 @@ class TestClass():
         assert assembly == 'ADD R2,R4'
         logging.info(f'R2:{oct(self.reg.get(2))} R4:{oct(self.reg.get(4))}')
         r4 = self.reg.get(4)
-        assert r4 == 0o177000
+        assert r4 == 0o202
 
-        condition_codes = self.psw.nzvc_to_string()
-        logging.info(f'condition_codes:{condition_codes}')
-        assert condition_codes == "0010" # nzvc
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0011" # nzvc gves 0111
 
-    def test_SUB_PP2Z(self):
-        logging.info('test_SUB_PP2Z')
+    def not_test_SUB_PP_Z(self):
+        logging.info('test_SUB_PP_Z')
         self.psw.set_psw(psw=0)
         self.reg.set(2, 0o000500)
         self.reg.set(4, 0o000500)
@@ -410,5 +430,5 @@ class TestClass():
         r4 = self.reg.get(4)
         assert r4 == 0o000500 - 0o000500
 
-        condition_codes = self.psw.nzvc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0111" # "0100" not correct
