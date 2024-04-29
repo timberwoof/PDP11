@@ -90,7 +90,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o0
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100"
 
     def test_COM_1(self):
@@ -109,7 +109,7 @@ class TestClass():
         logging.info(f'R1:{oct(r1)}')
         assert r1 == 0o164444
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001"
 
     def test_COM_2(self):
@@ -127,7 +127,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o013333
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0001"
 
     def test_COMB_1(self):
@@ -143,7 +143,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o355
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001"
 
     def test_INC(self):
@@ -159,7 +159,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o013334
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_INCB(self):
@@ -175,7 +175,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o000034
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_DEC_1(self):
@@ -191,7 +191,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o013332
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_DEC_2(self):
@@ -207,7 +207,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100"
 
     def test_DEC_3(self):
@@ -223,8 +223,8 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o177777
 
-        condition_codes = self.psw.nvzc_to_string()
-        assert condition_codes == "1010" # 1000
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "1000" # decrement doesn't set overflow
 
     def test_DEC_B1(self):
         logging.info('\ntest_DEC_B1')
@@ -239,7 +239,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o000000
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100" #0010
 
     def test_SWAB_1(self):
@@ -256,7 +256,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o177577
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
     def test_SWAB_2(self):
@@ -273,7 +273,7 @@ class TestClass():
         r1 = self.reg.get(1)
         assert r1 == 0o077777
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
     def test_SWAB_3(self):
@@ -292,7 +292,7 @@ class TestClass():
         # 1 111 111 100 000 000
         assert r1 == 0o177400
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0100" # NZVC
 
     def test_SWAB_4(self):
@@ -311,7 +311,7 @@ class TestClass():
         # 1 111 111 100 000 000
         assert r1 == 0o000377
 
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000" # NZVC
 
     def test_ROR_1(self):
@@ -324,7 +324,7 @@ class TestClass():
         assert assembly == "ROR R1"
         r1 = self.reg.get(1)
         assert r1 == 0b0111111110000000
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000" # NZVC
 
     def test_ROR_2(self):
@@ -337,7 +337,7 @@ class TestClass():
         assert assembly == "ROR R1"
         r1 = self.reg.get(1)
         assert r1 == 0b1000000001111111
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001" # NZVC
 
     def test_RORB_1(self):
@@ -351,7 +351,7 @@ class TestClass():
         logging.info (report)
         r1 = self.reg.get(1)
         assert r1 == 0b1000011101111000
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011" # NZVC
 
     def test_RORB_2(self):
@@ -365,7 +365,7 @@ class TestClass():
         logging.info (report)
         r1 = self.reg.get(1)
         assert r1 == 0b0111100010000111
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001" # NZVC
 
     def test_ROL(self):
@@ -379,7 +379,7 @@ class TestClass():
         r1 = self.reg.get(1)
         logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1001100001100111
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001" # NZVC
 
     def test_ROLB(self):
@@ -393,7 +393,7 @@ class TestClass():
         r1 = self.reg.get(1)
         logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1001100101100110
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011" # NZVC  I think it shoud be 1010
 
     def test_ASR(self):
@@ -407,7 +407,7 @@ class TestClass():
         r1 = self.reg.get(1)
         logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1110011000011001
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001" # NZVC
 
     def test_ASRB(self):
@@ -421,5 +421,5 @@ class TestClass():
         r1 = self.reg.get(1)
         logging.info(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1110011000011001
-        condition_codes = self.psw.nvzc_to_string()
+        condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011" # NZVC  I think it shoud be 1010

@@ -1,5 +1,5 @@
 """pdp11_ss_ops.py single oprand instructions"""
-
+import logging
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
@@ -9,7 +9,7 @@ MASK_HIGH_BYTE = 0o177400
 class ss_ops:
     """Implements PDP11 single-operand ss instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        print('initializing SingleOperandOps')
+        logging.info('initializing SingleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
@@ -146,7 +146,7 @@ class ss_ops:
             # Only make the operation affect the low byte
             # The target high byte remains unnafected
             return_value = (value & MASK_LOW_BYTE) | (target & MASK_HIGH_BYTE)
-            #print(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
+            #logging.info(f'                                  ; byte_mask(value:{bin(value)}, target:{bin(target)}) returns {bin(return_value)}')
         else:
             return_value = value
         return return_value
@@ -162,7 +162,7 @@ class ss_ops:
 
     def JMP(self, operand, B):
         """00 01 DD JMP jump 4-56"""
-        # print(f'JMP calling set_pc({oct(operand)})')
+        # logging.info(f'JMP calling set_pc({oct(operand)})')
         self.reg.set_pc(operand, 'JMP')
         return operand, ''
 
@@ -327,7 +327,7 @@ class ss_ops:
             testresult = result & MASK_LOW_BYTE
         else:
             operand = operand | 0o400000  # set the high bit for python weirdness
-            print (f'operand:{bin(operand)}')
+            logging.info(f'operand:{bin(operand)}')
             bit15 = operand & 0b1000000000000000
             bit0 = operand & 0b0000000000000001
             result = (operand >> 1) & MASK_WORD | bit15

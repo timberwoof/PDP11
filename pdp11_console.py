@@ -1,4 +1,5 @@
 """PDP 11 Console: Blinky Lights for PDP11 emulator"""
+import logging
 import PySimpleGUI as sg
 
 # https://stackoverflow.com/questions/16938647/python-code-for-serial-data-to-print-on-window
@@ -9,7 +10,7 @@ class Console:
     """PDP11 Console: Blinky Lights for PDP11 emulator"""
     def __init__(self, pdp11, sw):
         """vt52(ram object, base address for this device)"""
-        print('initializing console')
+        logging.info('initializing console')
         self.pdp11 = pdp11
         self.window = 0
         self.sw = sw
@@ -36,7 +37,7 @@ class Console:
 
     def make_window(self):
         """create the DL11 console using PySimpleGUI"""
-        print('console make_window begins')
+        logging.info('console make_window begins')
         pc_display = oct(self.pdp11.reg.get_pc())
         pc_lights = self.pc_to_blinky_lights()
         layout = [[sg.Text(pc_display, key='pc_display'), sg.Text(pc_lights, key='pc_lights')],
@@ -44,7 +45,7 @@ class Console:
                   ]
         self.window = sg.Window('PDP-11 Console', layout, location=(50,50),
                                 font=('Arial', 18), finalize=True)
-        print('console make_window done')
+        logging.info('console make_window done')
 
     def cycle(self, cpu_run):
         '''one console window update window_cycle'''

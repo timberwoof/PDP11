@@ -1,5 +1,5 @@
 """pdp11other - other instructions"""
-
+import logging
 from pdp11_hardware import Stack
 
 # masks for accessing words and bytes
@@ -11,7 +11,7 @@ MASK_BYTE_MSB = 0o000200
 class other_ops:
     """Implements the remainder of PDP11 instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        print('initializing otherOps')
+        logging.info('initializing otherOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw

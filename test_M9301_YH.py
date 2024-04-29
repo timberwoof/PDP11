@@ -7,6 +7,7 @@ class TestClass():
 
     def not_test_M9301_YH(self):
         """The M9301-YH is designed specifically for PDP-ll/04 and PDP-ll/34 end user systems."""
+        # not a test becuse there's no wau yet to run without the UI emulator
         # *** this needs a much bigger memory space. This will fail.
         logging.info('test_M9301-YH')
         pdp11 = PDP11()
