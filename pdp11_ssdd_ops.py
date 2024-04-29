@@ -151,26 +151,18 @@ class ssdd_ops:
         # If both operands had same sign and
         # result had opposite sign, else cleared
         # C set if there was a carry from MSB, else cleared
-        # PP P
-        # PP Z 0+0
-        # PP NV overflow, carry
-        # NP P
-        # NP Z
-        # NP N
-        # NN N
-        # NN V overflow, carry
 
         logging.info(f'source:{oct(source)} dest:{oct(dest)}')
-        xsource = u.extendSign(source)
-        xdest = u.extendSign(dest)
+        py_source = u.pythonifyPDP11Word(source)
+        py_dest = u.pythonifyPDP11Word(dest)
         # SUB is the "byte" version of ADD
         if BW == 'W': # ADD
             # extendSign to convert PDP11 word integers to Python integers
-            result = xsource + xdest
+            result = u.PDP11ifyPythonInt(py_source + py_dest)
+            logging.info(f'py_source:{oct(py_source)} + py_dest:{oct(py_dest)} = result:{oct(result)}')
         else: # SUB
-            result = xsource - xdest
-        result = result & MASK_WORD
-        logging.info(f'xsource:{oct(xsource)} + xdest:{oct(xdest)} = result:{oct(result)}')
+            result = u.PDP11ifyPythonInt(py_source - py_dest)
+            logging.info(f'py_source:{oct(py_source)} - py_dest:{oct(py_dest)} = result:{oct(result)}')
 
         self.psw.set_n('W', result)
         self.psw.set_z('W', result)

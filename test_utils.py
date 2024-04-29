@@ -20,7 +20,7 @@ class TestClass():
         assert u.pad("arf", 6) == "arf   "
 
     def test_2cn(self):
-        assert u.twosCompletentNegative(0) == 0
-        assert u.twosCompletentNegative(1) == 65535
-        assert u.twosCompletentNegative(2) == 65534
-        assert u.twosCompletentNegative(586) == 64950
+        assert u.twosComplementNegative(0) == 0
+        assert u.twosComplementNegative(1) == 65535
+        assert u.twosComplementNegative(2) == 65534
+        assert u.twosComplementNegative(586) == 64950
