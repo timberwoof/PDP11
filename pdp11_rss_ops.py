@@ -1,5 +1,6 @@
 """pdp11_rss_ops.py double operand instructions"""
 import logging
+import pdp11_util as u
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
 MASK_BYTE_MSB = 0o000200
@@ -45,25 +46,42 @@ class rss_ops:
     # An exception is the multiply instruction; Reg may be odd,
     # but if it is, the high 16 bits of the result are not stored.
 
-    def MUL(self, register, source):
+    def MUL(self, rDest, source):
         """07 0R SS MUL 4-31
 
         (R, R+1) < (R, R+1) * (src)"""
         # get_c: set if the result < -2^15 or result >= 2^15-1
         # logging.info(f'    MUL {register} * {source}')
-        a = self.reg.get(register)
-        result = a * source  # results in a 32-bit number
-        high_result = result >> 16
-        low_result = result & MASK_WORD
+        # The contents of the destination register and source taken as two's complement integers
+        # are multiplied and stored in the destination register and the succeeding register (if R is even).
+        # If R is odd only the low order product is stored. Assembler syntax is : MUL S,R.
+        dest = self.reg.get(rDest)
+
+        py_source = u.pythonifyPDP11Word(source)
+        py_dest = u.pythonifyPDP11Word(dest)
+        print (f'MUL(r:{oct(dest)}, SS:{oct(source)})')
+        print (f'MUL(r:{py_dest},SS:{py_source})')
+        py_product = py_source * py_dest
+        result = py_product
+        print (f'MUL result:{result} = {oct(result)}')
+
+        low_result = u.pythonifyPDP11Word(result & MASK_WORD)
+        print (f'MUL low_result:{low_result} = {oct(low_result)}')
+
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         self.psw.set_psw(v=0)
         self.psw.set_psw(c=0)  # **** this needs to be handled
-        if register % 2 == 0:
-            self.reg.set(register+1, high_result)
+
+        # if rDest is even, store the high value in the +1 register
+        if rDest % 2 == 0:
+            high_result = result >> 16
+            print(f'MUL high register:{oct(rDest + 1)} low register:{oct(rDest)}')
+            print(f'MUL high_result:{oct(high_result)} low_result:{oct(low_result)}')
+            self.reg.set(rDest + 1, high_result)
         return low_result, ''
 
-    def DIV(self, register, source):
+    def DIV(self, rDest, source):
         """07 1R SS DIV 4-32
 
         (R, R+1) < (R, R+1) / (src)"""
@@ -82,20 +100,21 @@ class rss_ops:
             self.psw.set_psw(v=v, c=c)
             return 0, 'DIV Divide by Zero'
 
-        R = self.reg.get(register)
-        Rv1 = self.reg.get(register + 1)
+        R = self.reg.get(rDest)
+        Rv1 = self.reg.get(rDest + 1)
+        # this is why we have to pass in the R number and not the contents
 
         numerator = (R << 16) + Rv1
         quotient = numerator // source
         remainder = numerator % source
-        self.reg.set(register, quotient)
-        self.reg.set(register + 1, remainder)
+        self.reg.set(rDest, quotient)
+        self.reg.set(rDest + 1, remainder)
         self.psw.set_n('', quotient)
         self.psw.set_z('', quotient)
         self.psw.set_psw(v=0, c=0)
         return quotient, ''
 
-    def ASH(self, register, source):
+    def ASH(self, rDest, source):
         """07 2R SS ASH arithmetic shift 4-33
 
         R < R >> NN """
@@ -109,13 +128,14 @@ class rss_ops:
         # get_z: set if result ..0; cleared otherwise
         # get_v: set if sign of register changed during shift; cleared other- wise
         # get_c: loaded from last bit shifted out of register
-        register_sign = register & 0o100000
+        R = self.reg.get(rDest)
+        register_sign = rDest & 0o100000
         shifts = source & 0o037
         shift_sign = source & 0o040
         if shift_sign == 0:
-            result = self.reg.get(register) << shifts
+            result = self.reg.get(rDest) << shifts
         else:
-            result = self.reg.get(register) >> (shifts + 1)
+            result = self.reg.get(rDest) >> (shifts + 1)
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         result_sign = result & 0o100000
@@ -127,7 +147,7 @@ class rss_ops:
         self.psw.set_psw(v=v, c=0)
         return result, ''
 
-    def ASHC(self, register, source):
+    def ASHC(self, rDest, source):
         """07 3R SS ASHC arithmetic shift combined 4-34
 
         (R, R+1) < (R, R+1) >> get_n"""
@@ -151,12 +171,12 @@ class rss_ops:
         #    loaded with low order bit when right shift
         #    (loaded with the last bit shifted out of the 32-bit operand)
 
-        result = self.reg.get(register) >> source
+        result = self.reg.get(rDest) >> source
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         return result, ''
 
-    def XOR(self, register, source):
+    def XOR(self, rDest, source):
         """07 4R DD XOR 4-35
 
         (dst) < R ^ (dst)"""
@@ -167,16 +187,16 @@ class rss_ops:
         # get_z set if result = 0: cleared otherwise
         # get_v: cleared
         # get_c: unaffected
-        result = self.reg.get(register) ^ source
+        result = self.reg.get(rDest) ^ source
         self.psw.set_n('', result)
         self.psw.set_z('', result)
         return result, ''
 
-    def SOB(self, register, source):
+    def SOB(self, rDest, source):
         """07 7R NN SOB sutract one and branch 4-63
 
         R < R -1, then maybe branch"""
-        result = self.reg.get(register) * source
+        result = self.reg.get(rDest) * source
         return result, 'SOB unimplemented'
 
     def is_rss_op(self, instruction):
@@ -193,10 +213,10 @@ class rss_ops:
     def do_rss_op(self, instruction):
         """dispatch an RSS opcode"""
         # parameter: opcode of form 0 111 *** *** *** ***
-        # register source or destination
+        # register source
         # 15-9 opcode
         # 8-6 reg
-        # 5-0 src or dst
+        # 5-0 src
         self.sw.start("rss")
         opcode = instruction & 0o077000
         register = (instruction & 0o000700) >> 6
@@ -204,7 +224,9 @@ class rss_ops:
 
         run = True
         assembly = f'{self.double_operand_RSS_instruction_names[opcode]}'
-        result, report = self.double_operand_RSS_instructions[opcode](register, source)
+        destination_value, destination_register, destination_address, operand1, assembly1, destination_addressmode = self.am.addressing_mode_get(
+            'B', source)
+        result, report = self.double_operand_RSS_instructions[opcode](register, destination_value)
         logging.info(f'    result:{oct(result)}')
         self.reg.set(register, result)
         self.sw.stop("rss")

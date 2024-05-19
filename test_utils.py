@@ -19,8 +19,33 @@ class TestClass():
     def test_pad(self):
         assert u.pad("arf", 6) == "arf   "
 
-    def test_2cn(self):
+    def test_twosComplementNegative(self):
         assert u.twosComplementNegative(0) == 0
         assert u.twosComplementNegative(1) == 65535
         assert u.twosComplementNegative(2) == 65534
         assert u.twosComplementNegative(586) == 64950
+
+#PDP11ifyPythonInteger(source)
+#extendSign(source):
+
+    def test_pythonifyPDP11Word(self):
+        assert u.pythonifyPDP11Word(0) == 0
+        assert u.pythonifyPDP11Word(1) == 1
+        assert u.pythonifyPDP11Word(65535) == -1
+        assert u.pythonifyPDP11Word(65534) == -2
+        assert u.pythonifyPDP11Word(64950) == -586
+
+    def test_pythonifyPDP11Byte(self):
+        print('\ntest_pythonifyPDP11Byte')
+        assert u.pythonifyPDP11Byte(0) == 0
+        assert u.pythonifyPDP11Byte(1) == 1
+        assert u.pythonifyPDP11Byte(255) == -1
+        assert u.pythonifyPDP11Byte(254) == -2
+        assert u.pythonifyPDP11Byte(127) == 0o177
+
+    def test_PDP11ifyPythonInt(self):
+        assert u.PDP11ifyPythonInteger(0) == 0
+        assert u.PDP11ifyPythonInteger(1) == 1
+        assert u.PDP11ifyPythonInteger(-1) == 65535
+        assert u.PDP11ifyPythonInteger(-2) == 65534
+        assert u.PDP11ifyPythonInteger(-586) == 64950

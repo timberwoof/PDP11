@@ -4,6 +4,7 @@ import logging
 MASK_WORD = 0o177777
 MASK_BYTE = 0o000377
 MASK_WORD_MSB = 0o100000
+MASK_BYTE_MSB = 0o000200
 
 def oct3(word):
     """format an octal to be 6 digits wide:
@@ -45,14 +46,26 @@ def pythonifyPDP11Word(source):
     logging.info(f'pythonifyPDP11Word({oct(source)}) returns {result}')
     return result
 
-def PDP11ifyPythonInt(source):
+def pythonifyPDP11Byte(source):
+    """convert PDP11 byte which may be 2's complement negative to pythonish integer"""
+    # If it's a PDP11 positive, just return that
+    # If it's a PDP11 negative, then
+    #    extend the bits, subtract 1, invert
+    result = source & MASK_BYTE
+    if (MASK_BYTE_MSB & source) == MASK_BYTE_MSB:
+        print(f'MASK_BYTE_MSB & source: {oct(MASK_BYTE_MSB & source)}')
+        result = -~((source | ~MASK_BYTE) - 1)
+    print(f'pythonifyPDP11Byte({oct(source)}) returns {result}')
+    return result
+
+def PDP11ifyPythonInteger(source):
     """convert a positive or negative Pyton integer to PDP-11 word"""
     result = 0
     if source >= 0:
         result = source & MASK_WORD
     else:
         result = twosComplementNegative(-source)
-    logging.info(f'PDP11ifyPythonInt({oct(source)}) returns {oct(result)}')
+    logging.info(f'PDP11ifyPythonInteger({oct(source)}) returns {oct(result)}')
     return result
 
 def extendSign(source):

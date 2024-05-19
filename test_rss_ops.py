@@ -1,4 +1,5 @@
 import logging
+import pdp11_util as u
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -21,6 +22,12 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
+P = 0o764 # 500
+p = 0o265 # 181
+z = 0 # 0o0
+n = u.twosComplementNegative(p)
+N = u.twosComplementNegative(P)
+
 class TestClass():
     reg = reg()
     ram = Ram(reg)
@@ -37,22 +44,26 @@ class TestClass():
     ss_ops = ss_ops(reg, ram, psw, am, sw)
     ssdd_ops = ssdd_ops(reg, ram, psw, am, sw)
 
-    def SS(self, mode, register):
+    def SS_part(self, mode, register):
         return (mode << 3 | register) << 6
 
-    def DD(self, mode, register):
+    def DD_part(self, mode, register):
         return (mode << 3 | register)
 
-    def op(self, opcode, modeS=0, regS=0, modeD=0, regD=1):
-        return opcode | self.SS(modeS, regS) | self.DD(modeD, regD)
+    def make_ssdd_op(self, opcode, modeS=0, regS=0, modeD=0, regD=1):
+        return opcode | self.SS_part(modeS, regS) | self.DD_part(modeD, regD)
+
+    def make_rss_op(self, opcode, regD=0, modeS=0, regS=0):
+        # documentation calls second parameter SS which here uses DD_part to make
+        return opcode | regD << 6 | self.DD_part(modeS, regS)
 
     def test_BIC(self):
-        logging.info('\ntest_BIC')
+        print('\ntest_BIC')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
 
-        instruction = self.op(opcode=0o040000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o040000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'BIC R1,R2'
@@ -64,14 +75,14 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BICB(self):
-        logging.info('\ntest_BICB')
+        print('\ntest_BICB')
         self.psw.set_psw(psw=0)
         # evil test shows that The high byte is unaffected.
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
 
 
-        instruction = self.op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o140000, modeS=0, regS=1, modeD=0, regD=2)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == 'BICB R1,R2'
@@ -83,14 +94,14 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
-        logging.info('\ntest_BIC_2')
+        print('\ntest_BIC_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0o777777)
         # evil test puts word data into a byte test and expects byte result
         self.reg.set(3, 0o001234)
         self.reg.set(4, 0o001111)
 
-        instruction = self.op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
+        instruction = self.make_ssdd_op(opcode=0o040000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "BIC R3,R4"
@@ -102,14 +113,14 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
-        logging.info('\ntest_BICB_2')
+        print('\ntest_BICB_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0)
         # evil test puts word data into a byte test and expects byte result
         self.reg.set(3, 0o001234)
         self.reg.set(4, 0o001111)
 
-        instruction = self.op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
+        instruction = self.make_ssdd_op(opcode=0o140000, modeS=0, regS=3, modeD=0, regD=4)
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "BICB R3,R4"
@@ -121,11 +132,11 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
-        logging.info('\ntest_MOV_0')
+        print('\ntest_MOV_0')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0o123456)
         self.reg.set(4,0o000000)
-        instruction = self.op(opcode=0o010000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o010000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOV R3,R4"
@@ -140,18 +151,18 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOV_2(self):
-        logging.info('\ntest_MOV_2')
+        print('\ntest_MOV_2')
         # 010322 MOV R3,(R2)+
         # from M9001_YA that broke
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0o177777)
         self.reg.set(2,0o000000)
-        instruction = self.op(opcode=0o010000, modeS=0, regS=3, modeD=2, regD=2)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o010000, modeS=0, regS=3, modeD=2, regD=2)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
-        logging.info('setup done; running op')
+        print('setup done; running make_ssdd_op')
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOV R3,(R2)+"
-        logging.info('op done; checking results')
+        print('make_ssdd_op done; checking results')
 
         r3 = self.reg.get(3)
         assert r3 == 0o177777
@@ -166,11 +177,11 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
-        logging.info('\ntest_MOVB_01')
+        print('\ntest_MOVB_01')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011100101110)
         self.reg.set(4,0b0000000000000000)
-        instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
@@ -185,11 +196,11 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
-        logging.info('\ntest_MOVB_02')
+        print('\ntest_MOVB_02')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011110101110)
         self.reg.set(4,0b0000000000000000)
-        instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
@@ -204,11 +215,11 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
-        logging.info('\ntest_MOVB_03')
+        print('\ntest_MOVB_03')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b0000000010101110)
         self.reg.set(4,0b1010011100000000)
-        instruction = self.op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
+        instruction = self.make_ssdd_op(opcode=0o110000, modeS=0, regS=3, modeD=0, regD=4)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOVB R3,R4"
@@ -223,7 +234,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
-        logging.info('\ntest_MOVB_04')
+        print('\ntest_MOVB_04')
         # 165250 112512 MOVB (R5)+,@R2 from M9301-YA
         # MOVB (R5)+,@R2
         self.psw.set_psw(psw=0o777777)
@@ -242,25 +253,110 @@ class TestClass():
         assert assembly == "MOVB (R5)+,@R2"
         assert self.reg.get(5) == 0o165321
         atr2  = self.ram.read_byte(self.reg.get(2))
-        logging.info(f'@R2={oct(atr2)} {bin(atr2)}')
+        print(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
 
-    def test_MUL(self):
-        logging.info('test_MUL')
-        R = 1
-        a = 0o001212
-        b = 0o24
+    def test_MUL_pp(self):
+        a = p
+        b = p
+        RD = 1
+        RS = 2
 
+        print(f'\ntest_MUL_pp {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
         self.psw.set_psw(psw=0)
-        self.reg.set(R, a)
-        instruction = 0o070000 | R << 6 | b
-        logging.info(oct(instruction))  # 0o0171312
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
         assert self.rss_ops.is_rss_op(instruction)
         self.rss_ops.do_rss_op(instruction)
 
-        product = self.reg.get(R)
-        logging.info(f'product:{product}')
+        product = self.reg.get(RD)
+        print(f'product:{oct(product)}')
         assert product == a * b
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0000"
+
+    def test_MUL_np(self):
+        RD = 1
+        RS = 2
+        a = n
+        b = p
+
+        print(f'\ntest_MUL_np {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        expected = u.pythonifyPDP11Word(a) * u.pythonifyPDP11Word(b)
+        print(f'product expected:{oct(expected)}')
+
+        actual = self.reg.get(RD)
+        print(f'product actual:{oct(actual)}')
+        assert actual == expected
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "1000"
+
+    def test_MUL_pn(self):
+        RD = 1
+        RS = 2
+        a = p
+        b = n
+
+        print(f'\ntest_MUL_pn {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        expected = u.pythonifyPDP11Word(a) * u.pythonifyPDP11Word(b)
+        print(f'product expected:{oct(expected)}')
+
+        actual = self.reg.get(RD)
+        print(f'product actual:{oct(actual)}')
+        assert actual == expected
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "1000"
+
+    def test_MUL_nn(self):
+        RD = 1
+        RS = 2
+        a = n
+        b = n
+
+        print(f'\ntest_MUL_nn {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        expected = u.pythonifyPDP11Word(a) * u.pythonifyPDP11Word(b)
+        print(f'product expected:{oct(expected)}')
+
+        actual = self.reg.get(RD)
+        print(f'product actual:{oct(actual)}')
+        assert actual == expected
 
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
@@ -271,7 +367,7 @@ class TestClass():
         b = 0o75  # max 0o77
         Rv1 = R + 1
 
-        logging.info(f'test_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
+        print(f'\ntest_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
 
         self.psw.set_psw(psw=0)
 
@@ -280,14 +376,14 @@ class TestClass():
         self.reg.set(Rv1, a & MASK_WORD)
 
         instruction = 0o071000 | R << 6 | b
-        logging.info(f'test_DIV instruction:{oct(instruction)}')  # 0o0171312
+        print(f'test_DIV instruction:{oct(instruction)}')  #
         assert self.rss_ops.is_rss_op(instruction)
         self.rss_ops.do_rss_op(instruction)
 
         quotient = self.reg.get(R)
         remainder = self.reg.get(Rv1)
-        logging.info(f'quotient:{oct(quotient)}')
-        logging.info(f'remainder:{oct(remainder)}')
+        print(f'quotient:{oct(quotient)}')
+        print(f'remainder:{oct(remainder)}')
         assert quotient == a // b
         assert remainder == a % b
 

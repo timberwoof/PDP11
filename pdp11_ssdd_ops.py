@@ -166,7 +166,7 @@ class ssdd_ops:
         # SUB is the "byte" version of ADD
         if BW == 'W': # ADD
             py_result = py_source + py_dest
-            pdp11_result = u.PDP11ifyPythonInt(py_result)
+            pdp11_result = u.PDP11ifyPythonInteger(py_result)
             logging.info(f'py_source:{py_source} + py_dest:{py_dest} = pdp11_result:{oct(pdp11_result)}')
             sR = self.sign(pdp11_result)
             logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
@@ -179,7 +179,7 @@ class ssdd_ops:
                 c = 1
         else: # SUB DST - SRC
             py_result = py_dest - py_source
-            pdp11_result = u.PDP11ifyPythonInt(py_result)
+            pdp11_result = u.PDP11ifyPythonInteger(py_result)
             logging.info(f'py_dest:{py_dest} - py_source:{py_source} = py_result:{py_result} pdp11_result:{oct(pdp11_result)}')
             sR = self.sign(pdp11_result)
             logging.info(f'sS:{sS} sD:{sD} sR:{sR}')
