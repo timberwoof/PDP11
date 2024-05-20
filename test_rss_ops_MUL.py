@@ -76,8 +76,8 @@ bigNeg = u.twosComplementNegativeLong(bigPos)
 division_testcases = [
     ("Pp", bigPos, smlPos, 2, 4, '0000'),
     ("Pn", bigPos, smlNeg, 2, 4, '1000'),
-    ("Np", bigNeg, smlPos, 2, 4, '0000'),
-    ("Np", bigNeg, smlNeg, 2, 4, '1000'),
+    ("Np", bigNeg, smlPos, 2, 4, '1000'),
+    ("Nn", bigNeg, smlNeg, 2, 4, '0000'),
 ]
 
 
@@ -112,8 +112,7 @@ class TestClass():
 
     @pytest.mark.parametrize('name, s, d, RS, RD, CC', multiplication_testcases)
     def test_MUL(self, name, s, d, RS, RD, CC):
-        #print(f'\ntest_MUL case name: {name}')
-        #print(f'test_MUL assembly: MUL R{RS},R{RD} ; {oct(d)} * {oct(s)} = {u.pythonifyPDP11Word(d)} * {u.pythonifyPDP11Word(s)}')
+        print(f'\ntest_MUL assembly: MUL R{RS},R{RD} ; {oct(d)} * {oct(s)} = {u.pythonifyPDP11Word(d)} * {u.pythonifyPDP11Word(s)}')
         instruction = 0o070000
         self.psw.set_psw(psw=0)
         self.reg.set(RD, d)
@@ -138,6 +137,19 @@ class TestClass():
         #print(f'test_MUL   actual nzvc: {condition_codes}');
         assert condition_codes == CC
 
+    def test_constants(self):
+        print(f'\ntest_constants')
+        print(f'P: {P} = {oct(P)}')
+        print(f'p: {p} = {oct(p)}')
+        print(f'z: {z} = {oct(z)}')
+        print(f'n: {u.pythonifyPDP11Word(n)} = {oct(n)}')
+        print(f'N: {u.pythonifyPDP11Word(N)} = {oct(N)}')
+
+        print(f'bigPos: {u.pythonifyPDP11Long(bigPos)} = {oct(bigPos)}')
+        print(f'smlPos: {smlPos} = {oct(smlPos)}')
+        print(f'smlNeg: {smlNeg} = {oct(smlNeg)}')
+        print(f'bigNeg: {u.pythonifyPDP11Long(bigNeg)} = {oct(bigNeg)}')
+
     @pytest.mark.parametrize('name, numerator, denominator, RS, RD, CC', division_testcases)
     def test_DIV(self, name, numerator, denominator, RS, RD, CC):
         #DIV: (R, R+1) < (R, R+1) / (src)
@@ -147,38 +159,47 @@ class TestClass():
         # R must be even.
         #
         # We reuse parameters and results from MUL
-        pnumerator = u.pythonifyPDP11Long(numerator)
-        pdenominator = u.pythonifyPDP11Word(denominator)
-        print(f'\ntest_DIV assembly: DIV R{RS},R{RD} ; {oct(numerator)} / {oct(denominator)} = {pnumerator} / {pdenominator}')
-        if denominator == 0:
-            expected_quotient = 0
-            expected_remainder = 0
+        py_numerator = u.pythonifyPDP11Long(numerator)
+        py_denominator = u.pythonifyPDP11Word(denominator)
+        print(f'\ntest_DIV assembly: DIV R{RS},R{RD} ; {oct(numerator)} / {oct(denominator)} = {py_numerator} / {py_denominator}')
+        if py_denominator == 0:
+            py_expected_quotient = 0
+            py_expected_remainder = 0
         else:
-            expected_quotient = pnumerator // pdenominator # *** this is complicateder than that because of rounding
-            expected_remainder = pnumerator % pdenominator
-        print(f'test_DIV expected_quotient:{oct(expected_quotient)} = {u.pythonifyPDP11Word(expected_quotient)}')
-        print(f'test_DIV expected_remainder:{oct(expected_remainder)} = {u.pythonifyPDP11Word(expected_remainder)}')
+            py_expected_quotient = py_numerator // py_denominator
+            py_expected_remainder = py_numerator % py_denominator
 
+        # Fix for error in the way Python does remainder
+        if py_numerator < 0 or py_denominator < 0:
+            py_expected_quotient = py_expected_quotient + 1
+            py_expected_remainder = py_numerator -(py_denominator * py_expected_quotient)
+        #print(f'test_DIV py_expected_quotient:{oct(py_expected_quotient)} = {py_expected_quotient}')
+        #print(f'test_DIV py_expected_remainder:{oct(py_expected_remainder)} = {py_expected_remainder}')
+
+        # set up the environment
         Rvl = RD + 1
         self.reg.set(RD, numerator >> 16)            # high-order word
         self.reg.set(Rvl, numerator & MASK_WORD)    # low-order word
         self.reg.set(RS, denominator)
 
+        # set up the instruction
         instruction = 0o071000
         self.psw.set_psw(psw=0)
         instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
-        print(f'test_DIV instruction: {oct(instruction)}')  # 070RSS
+        #print(f'test_DIV instruction: {oct(instruction)}')  # 070RSS
         assert self.rss_ops.is_rss_op(instruction)
 
+        # run the instruction
         self.rss_ops.do_rss_op(instruction)
 
-        actual_quotient = self.reg.get(RD)
-        actual_remainder = self.reg.get(Rvl)
-        print(f'test_DIV actual_quotient:{oct(actual_quotient)} = {u.pythonifyPDP11Word(actual_quotient)}')
-        print(f'test_DIV actual_remainder:{oct(actual_remainder)} = {u.pythonifyPDP11Word(actual_remainder)}')
+        # get the results
+        py_actual_quotient = u.pythonifyPDP11Word(self.reg.get(RD))
+        py_actual_remainder = u.pythonifyPDP11Word(self.reg.get(Rvl))
+        #print(f'test_DIV py_actual_quotient:{oct(py_actual_quotient)} = {py_actual_quotient}')
+        #print(f'test_DIV py_actual_remainder:{oct(py_actual_remainder)} = {py_actual_remainder}')
 
-        assert actual_quotient == expected_quotient
-        assert actual_remainder == expected_remainder
+        assert py_actual_quotient == py_expected_quotient
+        assert py_actual_remainder == py_expected_remainder
 
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == CC

@@ -89,47 +89,56 @@ class rss_ops:
         else:
             return u.PDP11WordifyPythonInteger(result), ''
 
-    def DIV(self, rDest, source):
+    def DIV(self, rDest, denominator):
         """07 1R SS DIV 4-32
 
         (R, R+1) < (R, R+1) / (src)"""
         # The 32-bit two's complement integer in R and Rvl is divided by the source operand.
-        # The quotient is left in R; the remainder in Rvl.
-        # Division will be performed so that the remainder is of the same sign as the dividend.
+        # The pyquotient is left in R; the pyremainder in Rvl.
+        # Division will be performed so that the pyremainder is of the same sign as the dividend.
         # R must be even.
-        # get_n: set if quotient <0; cleared otherwise
-        # get_z: set if quotient =0; cleared otherwise
-        # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
+        # get_n: set if pyquotient <0; cleared otherwise
+        # get_z: set if pyquotient =0; cleared otherwise
+        # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the pyquotient would exceed 15 bits.)
         # get_c: set if divide 0 attempted; cleared otherwise
         if rDest % 2 == 1:
             # check for even R1
-            print('DIV R was not even')
+            #print('DIV R was not even')
             return 0, 'DIV R was not even'
 
         R = self.reg.get(rDest)         # high-order word
         Rvl = self.reg.get(rDest + 1)   # low-order word
         # this is why we have to pass in the R number and not the contents
-        print(f'DIV R:{oct(R)} Rvl:{oct(Rvl)}')
-        numerator = (R << 16) | Rvl
-        print(f'DIV numerator:{numerator}  denominator:{source}')
+        #print(f'DIV R:{oct(R)} Rvl:{oct(Rvl)} src:{oct(denominator)}' )
+        pynumerator = u.pythonifyPDP11Long((R << 16) | Rvl)
+        pydenominator = u.pythonifyPDP11Word(denominator)
+        #print(f'DIV pynumerator:{oct(pynumerator)} = {pynumerator}  pydenominator:{oct(pydenominator)} = {pydenominator}')
 
-        if numerator == 0:
+        if pynumerator == 0:
             # *** divide by zero needs to trap
             v = 0
             c = 0
             self.psw.set_psw(v=v, c=c)
-            print('DIV divide by zero')
+            #print('DIV divide by zero')
             return 0, 'DIV Divide by Zero'
 
-        quotient = numerator // source
-        remainder = numerator % source
-        print(f'DIV quotient:{quotient} remainder:{remainder}')
-        self.reg.set(rDest, quotient)
-        self.reg.set(rDest + 1, remainder)
-        self.psw.set_n('', quotient)
-        self.psw.set_z('', quotient)
+        pyquotient = pynumerator // pydenominator
+        pyremainder = pynumerator % pydenominator
+
+        # Fix for error in the way Python does remainder
+        if pynumerator < 0 or pydenominator < 0:
+            pyquotient = pyquotient + 1
+            pyremainder = pynumerator - (pydenominator * pyquotient)
+        #print(f'DIV pyquotient:{pyquotient} pyremainder:{pyremainder}')
+
+        pdp11quotient = u.PDP11WordifyPythonInteger(pyquotient)
+
+        self.reg.set(rDest, pdp11quotient)
+        self.reg.set(rDest + 1, u.PDP11WordifyPythonInteger(pyremainder))
+        self.psw.set_n('', pdp11quotient)
+        self.psw.set_z('', pdp11quotient)
         self.psw.set_psw(v=0, c=0)
-        return quotient, ''
+        return pdp11quotient, ''
 
     def ASH(self, rDest, source):
         """07 2R SS ASH arithmetic shift 4-33

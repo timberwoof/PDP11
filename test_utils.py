@@ -49,3 +49,7 @@ class TestClass():
         assert u.PDP11WordifyPythonInteger(-1) == 65535
         assert u.PDP11WordifyPythonInteger(-2) == 65534
         assert u.PDP11WordifyPythonInteger(-586) == 64950
+
+    def test_pythonifyPDP11Long(self):
+        assert u.pythonifyPDP11Long(0o42400042) == 9044002
+        assert u.pythonifyPDP11Long(0o37735377736) == -9044002

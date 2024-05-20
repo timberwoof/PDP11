@@ -40,7 +40,7 @@ def twosComplementNegative(source):
 def twosComplementNegativeLong(source):
     """Convert positive word to 2's completemt negative word"""
     # invert bits and add 1 (then mask_word for PDP11ness)
-    result = (~source + 1) & MASK_LONG_WORD
+    result = (~source + 1) & MASK_LONG
     logging.debug(f'twosComplementNegativeLong({oct(source)}) returns {oct(result)}')
     return result
 
@@ -73,9 +73,9 @@ def pythonifyPDP11Long(source):
     # If it's a PDP11 negative, then
     #    extend the bits, subtract 1, invert
     result = source
-    if (MASK_LONG_WORD_MSB & source) == MASK_LONG_WORD:
-        result = -~((source | ~MASK_LONG_WORD) - 1)
-    logging.debug(f'pythonifyPDP11Longd({oct(source)}) returns {result}')
+    if (MASK_LONG_MSB & source) == MASK_LONG_MSB:
+        result = -~((source | ~MASK_LONG) - 1)
+    logging.debug(f'pythonifyPDP11Long({oct(source)} = {source}) returns {oct(result)} = {result}')
     return result
 
 def PDP11WordifyPythonInteger(source):
@@ -92,7 +92,7 @@ def PDP11LongifyPythonInteger(source):
     """convert a positive or negative Pyton integer to PDP-11 Long Word"""
     result = 0
     if source >= 0:
-        result = source & MASK_LONG_WORD
+        result = source & MASK_LONG
     else:
         result = twosComplementNegativeLong(-source)
     logging.debug(f'PDP11LongifyPythonInteger({source}) returns {oct(result)}')
