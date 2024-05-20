@@ -21,9 +21,9 @@ from pdp11_hardware import AddressModes as am
 from pdp11_ss_ops import ss_ops
 
 from stopwatches import StopWatches as sw
-from pdp11_boot import pdp11Boot
-from pdp11 import PDP11
-from pdp11 import pdp11Run
+#from pdp11_boot import pdp11Boot
+#from pdp11 import PDP11
+#from pdp11 import pdp11Run
 
 MASK_WORD = 0o177777
 MASK_WORD_MSB = 0o100000
