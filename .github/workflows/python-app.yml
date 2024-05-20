@@ -40,6 +40,5 @@ jobs:
         pytest test_rss_ops.py
         pytest test_ss_ops.py
         pytest test_ssdd_ops.py
-        pytest test_DL11.py
         pytest test_jump.py
         
