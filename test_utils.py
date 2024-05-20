@@ -25,7 +25,7 @@ class TestClass():
         assert u.twosComplementNegative(2) == 65534
         assert u.twosComplementNegative(586) == 64950
 
-#PDP11ifyPythonInteger(source)
+#PDP11WordifyPythonInteger(source)
 #extendSign(source):
 
     def test_pythonifyPDP11Word(self):
@@ -44,8 +44,8 @@ class TestClass():
         assert u.pythonifyPDP11Byte(127) == 0o177
 
     def test_PDP11ifyPythonInt(self):
-        assert u.PDP11ifyPythonInteger(0) == 0
-        assert u.PDP11ifyPythonInteger(1) == 1
-        assert u.PDP11ifyPythonInteger(-1) == 65535
-        assert u.PDP11ifyPythonInteger(-2) == 65534
-        assert u.PDP11ifyPythonInteger(-586) == 64950
+        assert u.PDP11WordifyPythonInteger(0) == 0
+        assert u.PDP11WordifyPythonInteger(1) == 1
+        assert u.PDP11WordifyPythonInteger(-1) == 65535
+        assert u.PDP11WordifyPythonInteger(-2) == 65534
+        assert u.PDP11WordifyPythonInteger(-586) == 64950

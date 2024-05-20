@@ -1,9 +1,11 @@
 '''pdp 11 emulator utilities'''
 import logging
 
-MASK_WORD = 0o177777
-MASK_BYTE = 0o000377
+MASK_LONG_WORD     = 0o37777777777 # 32 bits
+MASK_LONG_WORD_MSB = 0o20000000000
+MASK_WORD     = 0o177777 # 16 bits
 MASK_WORD_MSB = 0o100000
+MASK_BYTE     = 0o000377 # 8 bits
 MASK_BYTE_MSB = 0o000200
 
 def oct3(word):
@@ -32,40 +34,68 @@ def twosComplementNegative(source):
     """Convert positive word to 2's completemt negative word"""
     # invert bits and add 1 (then mask_word for PDP11ness)
     result = (~source + 1) & MASK_WORD
-    logging.info(f'twosComplementNegative({oct(source)}) returns {oct(result)}')
+    logging.debug(f'twosComplementNegative({oct(source)}) returns {oct(result)}')
+    return result
+
+def twosComplementNegativeLong(source):
+    """Convert positive word to 2's completemt negative word"""
+    # invert bits and add 1 (then mask_word for PDP11ness)
+    result = (~source + 1) & MASK_LONG_WORD
+    logging.debug(f'twosComplementNegativeLong({oct(source)}) returns {oct(result)}')
+    return result
+
+def pythonifyPDP11Byte(source):
+    """convert PDP11 byte integer which may be 2's complement negative to pythonish integer"""
+    # If it's a PDP11 positive, just return that
+    # If it's a PDP11 negative, then
+    #    extend the bits, subtract 1, invert
+    result = source & MASK_BYTE
+    if (MASK_BYTE_MSB & source) == MASK_BYTE_MSB:
+        logging.debug(f'MASK_BYTE_MSB & source: {oct(MASK_BYTE_MSB & source)}')
+        result = -~((source | ~MASK_BYTE) - 1)
+    logging.debug(f'pythonifyPDP11Byte({oct(source)}) returns {result}')
     return result
 
 def pythonifyPDP11Word(source):
-    """convert PDP11 integer which may be 2's complement negative to pythonish integer"""
+    """convert PDP11 word integer which may be 2's complement negative to pythonish integer"""
     # If it's a PDP11 positive, just return that
     # If it's a PDP11 negative, then
     #    extend the bits, subtract 1, invert
     result = source
     if (MASK_WORD_MSB & source) == MASK_WORD_MSB:
         result = -~((source | ~MASK_WORD) - 1)
-    logging.info(f'pythonifyPDP11Word({oct(source)}) returns {result}')
+    logging.debug(f'pythonifyPDP11Word({oct(source)}) returns {result}')
     return result
 
-def pythonifyPDP11Byte(source):
-    """convert PDP11 byte which may be 2's complement negative to pythonish integer"""
+def pythonifyPDP11Long(source):
+    """convert PDP11 longword integer which may be 2's complement negative to pythonish integer"""
     # If it's a PDP11 positive, just return that
     # If it's a PDP11 negative, then
     #    extend the bits, subtract 1, invert
-    result = source & MASK_BYTE
-    if (MASK_BYTE_MSB & source) == MASK_BYTE_MSB:
-        print(f'MASK_BYTE_MSB & source: {oct(MASK_BYTE_MSB & source)}')
-        result = -~((source | ~MASK_BYTE) - 1)
-    print(f'pythonifyPDP11Byte({oct(source)}) returns {result}')
+    result = source
+    if (MASK_LONG_WORD_MSB & source) == MASK_LONG_WORD:
+        result = -~((source | ~MASK_LONG_WORD) - 1)
+    logging.debug(f'pythonifyPDP11Longd({oct(source)}) returns {result}')
     return result
 
-def PDP11ifyPythonInteger(source):
+def PDP11WordifyPythonInteger(source):
     """convert a positive or negative Pyton integer to PDP-11 word"""
     result = 0
     if source >= 0:
         result = source & MASK_WORD
     else:
         result = twosComplementNegative(-source)
-    print(f'PDP11ifyPythonInteger({source}) returns {oct(result)}')
+    logging.debug(f'PDP11WordifyPythonInteger({source}) returns {oct(result)}')
+    return result
+
+def PDP11LongifyPythonInteger(source):
+    """convert a positive or negative Pyton integer to PDP-11 Long Word"""
+    result = 0
+    if source >= 0:
+        result = source & MASK_LONG_WORD
+    else:
+        result = twosComplementNegativeLong(-source)
+    logging.debug(f'PDP11LongifyPythonInteger({source}) returns {oct(result)}')
     return result
 
 def extendSign(source):

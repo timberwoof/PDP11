@@ -64,26 +64,30 @@ class rss_ops:
 
         py_source = u.pythonifyPDP11Word(source)
         py_dest = u.pythonifyPDP11Word(dest)
-        print (f'MUL(r:{oct(dest)}, SS:{oct(source)})')
-        print (f'MUL(r:{py_dest},SS:{py_source})')
+        #print (f'MUL(r:{oct(dest)}, SS:{oct(source)}) = (r:{py_dest}, SS:{py_source})')
         result = u.pythonifyPDP11Word(py_source) * u.pythonifyPDP11Word(py_dest)
-        print (f'MUL result:{result} = {oct(result)}')
+        #print (f'MUL result: {oct(result)} = {result}')
 
-        self.psw.set_n('', result)
+        n = 0
+        if result < 0:
+            #print(f'MUL {result} < 0; setting n bit in PSW')
+            n = 1
+        self.psw.set_psw(n=n)
         self.psw.set_z('', result)
         self.psw.set_psw(v=0)
         self.psw.set_psw(c=0)  # **** this needs to be handled
 
         # if rDest is even, store the high value in the +1 register
         if rDest % 2 == 0:
-            high_result = u.PDP11ifyPythonInteger(result >> 16)
-            low_result = u.PDP11ifyPythonInteger(result & MASK_WORD)
-            print(f'MUL high register:{oct(rDest)} low register:{oct(rDest+1)}')
-            print(f'MUL high_result:{oct(high_result)} low_result:{oct(low_result)}')
+            pdp11result = u.PDP11LongifyPythonInteger(result)
+            high_result = pdp11result >> 16
+            low_result = pdp11result & MASK_WORD
+            #print(f'MUL high register:{oct(rDest)} low register:{oct(rDest+1)}')
+            #print(f'MUL high_result:{oct(high_result)} low_result:{oct(low_result)}')
             self.reg.set(rDest + 1, low_result)
-            return high_result, ''
+            return high_result, '' # this is where we set the other regsiter
         else:
-            return u.PDP11ifyPythonInteger(result), ''
+            return u.PDP11WordifyPythonInteger(result), ''
 
     def DIV(self, rDest, source):
         """07 1R SS DIV 4-32

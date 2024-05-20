@@ -470,7 +470,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(z - p)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(z - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -482,7 +482,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(P - p)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(P - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
@@ -506,7 +506,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(p - P)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(p - P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -518,7 +518,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -530,7 +530,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N - p)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011"
 
@@ -542,7 +542,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N - P)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N - P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011"
 
@@ -554,7 +554,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N - p)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N - p)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -566,7 +566,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(-P)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(-P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -578,7 +578,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N - n)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N - n)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
@@ -603,7 +603,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(n - N)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(n - N)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"  
 
@@ -615,7 +615,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(-n)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(-n)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
         
@@ -627,7 +627,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(n - P)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(n - P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011" 
 
@@ -639,7 +639,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(N - P)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(N - P)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0011"
 
@@ -651,7 +651,7 @@ class TestClass():
         logging.info(f'R4:{oct(self.reg.get(4))} R6:{oct(self.reg.get(6))}')
         instruction = self.op(opcode=0o160000, modeS=0, regS=4, modeD=0, regD=6)  # mode 0 R1
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
-        assert self.reg.get(6) == u.PDP11ifyPythonInteger(P - N)
+        assert self.reg.get(6) == u.PDP11WordifyPythonInteger(P - N)
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1011"
 
