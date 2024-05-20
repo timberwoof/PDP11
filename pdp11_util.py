@@ -65,7 +65,7 @@ def PDP11ifyPythonInteger(source):
         result = source & MASK_WORD
     else:
         result = twosComplementNegative(-source)
-    logging.info(f'PDP11ifyPythonInteger({oct(source)}) returns {oct(result)}')
+    print(f'PDP11ifyPythonInteger({source}) returns {oct(result)}')
     return result
 
 def extendSign(source):

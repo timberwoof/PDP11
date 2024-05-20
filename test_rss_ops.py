@@ -262,7 +262,7 @@ class TestClass():
         RD = 1
         RS = 2
 
-        print(f'\ntest_MUL_pp {oct(a)} * {oct(b)}')
+        print(f'\ntest_MUL_pp {a} * {b} = {oct(a)} * {oct(b)}')
 
         instruction = 0o070000
         self.psw.set_psw(psw=0)
@@ -280,13 +280,40 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
+    def test_MUL_pP(self):
+        a = p
+        b = P
+        RD = 2
+        RS = 4
+
+        print(f'\ntest_MUL_pP {a} * {b} = {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        high_word = self.reg.get(RD)
+        low_word = self.reg.get(RD+1)
+        print(f'high_word:{oct(high_word)} low_word:{oct(low_word)}')
+        product = (high_word << 16) | low_word
+        print(f'product:{oct(product)}')
+        assert product == a * P
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0000"
+
     def test_MUL_np(self):
         RD = 1
         RS = 2
         a = n
         b = p
 
-        print(f'\ntest_MUL_np {oct(a)} * {oct(b)}')
+        print(f'\ntest_MUL_np {a} * {b} = {oct(a)} * {oct(b)}')
 
         instruction = 0o070000
         self.psw.set_psw(psw=0)
@@ -313,7 +340,7 @@ class TestClass():
         a = p
         b = n
 
-        print(f'\ntest_MUL_pn {oct(a)} * {oct(b)}')
+        print(f'\ntest_MUL_pn {a} * {b} = {oct(a)} * {oct(b)}')
 
         instruction = 0o070000
         self.psw.set_psw(psw=0)
@@ -334,13 +361,54 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1000"
 
+    def test_MUL_nP(self):
+        a = n
+        b = P
+        RD = 4
+        RS = 0
+
+        print(f'\ntest_MUL_nP {a} * {b} = {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        expected = u.pythonifyPDP11Word(a) * u.pythonifyPDP11Word(b)
+        print(f'product expected:{oct(expected)}')
+
+        # The contents of the destination register and source taken as two's complement integers
+        # are multiplied and stored in the destination register and the succeeding register (if R is even).
+        # If R is Even
+        #   Store high-order result in R
+        #   Store low-order result in R+1
+        # Else
+        #   Store result in R
+
+        high_word = self.reg.get(RD)
+        low_word = self.reg.get(RD+1)
+        print(f'high_word:{oct(high_word)} low_word:{oct(low_word)}')
+        high_word_shifted = high_word << 16
+        print(f'high_word shifted:{oct(high_word_shifted)}')
+        actual = high_word_shifted | low_word
+        print(f'actual:{oct(actual)}')
+        print(f'product actual:{oct(actual)}')
+        assert actual == expected
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "1000"
+
     def test_MUL_nn(self):
         RD = 1
         RS = 2
         a = n
         b = n
 
-        print(f'\ntest_MUL_nn {oct(a)} * {oct(b)}')
+        print(f'\ntest_MUL_nn {a} * {b} = {oct(a)} * {oct(b)}')
 
         instruction = 0o070000
         self.psw.set_psw(psw=0)
@@ -361,31 +429,71 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"
 
-    def test_DIV(self):
-        R = 2  # must be even
-        a = 0o1536230
-        b = 0o75  # max 0o77
-        Rv1 = R + 1
+    def test_MUL_nN(self):
+        a = n
+        b = P
+        RD = 2
+        RS = 4
 
-        print(f'\ntest_DIV {oct(a)} / {oct(b)} R:{R} Rv1:{Rv1} ')
+        print(f'\ntest_MUL_nN {a} * {b} = {oct(a)} * {oct(b)}')
+
+        instruction = 0o070000
+        self.psw.set_psw(psw=0)
+        self.reg.set(RD, a)
+        self.reg.set(RS, b)
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
+        print(oct(instruction))  # 070RSS
+        assert self.rss_ops.is_rss_op(instruction)
+        self.rss_ops.do_rss_op(instruction)
+
+        expected = u.pythonifyPDP11Word(a) * u.pythonifyPDP11Word(b)
+        print(f'product expected:{oct(expected)}')
+
+        high_word = self.reg.get(RD)
+        low_word = self.reg.get(RD+1)
+        print(f'high_word:{oct(high_word)} low_word:{oct(low_word)}')
+        actual = (high_word << 16) | low_word
+        print(f'actual:{oct(actual)}')
+        print(f'product actual:{oct(actual)}')
+        assert actual == expected
+
+        condition_codes = self.psw.get_nzvc()
+        assert condition_codes == "0000"
+
+    def test_DIV(self):
+        RD = 2
+        RS = 4
+        # N n z p P
+        a = p * P
+        b = p
+        Rvl = RD + 1
+
+        print(f'\ntest_DIV {a} / {b} = {oct(a)} / {oct(b)}')
+        print(f'test_DIV R:{RD} Rvl:{Rvl} ')
 
         self.psw.set_psw(psw=0)
 
-        # set up R and Rv1
-        self.reg.set(R, a >> 16)
-        self.reg.set(Rv1, a & MASK_WORD)
+        # set up R and Rvl
+        self.reg.set(RD, a >> 16)            # high-order word
+        self.reg.set(Rvl, a & MASK_WORD)    # low-order word
+        self.reg.set(RS, b)
 
-        instruction = 0o071000 | R << 6 | b
+        instruction = 0o071000
+        instruction = self.make_rss_op(instruction, regD=RD, modeS=0, regS=RS)
         print(f'test_DIV instruction:{oct(instruction)}')  #
         assert self.rss_ops.is_rss_op(instruction)
         self.rss_ops.do_rss_op(instruction)
 
-        quotient = self.reg.get(R)
-        remainder = self.reg.get(Rv1)
-        print(f'quotient:{oct(quotient)}')
-        print(f'remainder:{oct(remainder)}')
-        assert quotient == a // b
-        assert remainder == a % b
+        quotient = self.reg.get(RD)
+        remainder = self.reg.get(Rvl)
+        print(f'test_DIV quotient:{oct(quotient)}')
+        print(f'test_DIV remainder:{oct(remainder)}')
+        expected_quotient = a // b
+        expected_remainder = a % b
+        print(f'test_DIV expected_quotient:{oct(expected_quotient)}')
+        print(f'test_DIV expected_remainder:{oct(expected_remainder)}')
+        assert quotient == expected_quotient
+        assert remainder == expected_remainder
 
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "0000"

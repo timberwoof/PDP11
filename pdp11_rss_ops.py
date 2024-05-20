@@ -55,18 +55,19 @@ class rss_ops:
         # The contents of the destination register and source taken as two's complement integers
         # are multiplied and stored in the destination register and the succeeding register (if R is even).
         # If R is odd only the low order product is stored. Assembler syntax is : MUL S,R.
+        # If R is Even
+        #   Store high-order result in R
+        #   Store low-order result in R+1
+        # Else
+        #   Store result in R
         dest = self.reg.get(rDest)
 
         py_source = u.pythonifyPDP11Word(source)
         py_dest = u.pythonifyPDP11Word(dest)
         print (f'MUL(r:{oct(dest)}, SS:{oct(source)})')
         print (f'MUL(r:{py_dest},SS:{py_source})')
-        py_product = py_source * py_dest
-        result = py_product
+        result = u.pythonifyPDP11Word(py_source) * u.pythonifyPDP11Word(py_dest)
         print (f'MUL result:{result} = {oct(result)}')
-
-        low_result = u.pythonifyPDP11Word(result & MASK_WORD)
-        print (f'MUL low_result:{low_result} = {oct(low_result)}')
 
         self.psw.set_n('', result)
         self.psw.set_z('', result)
@@ -75,38 +76,50 @@ class rss_ops:
 
         # if rDest is even, store the high value in the +1 register
         if rDest % 2 == 0:
-            high_result = result >> 16
-            print(f'MUL high register:{oct(rDest + 1)} low register:{oct(rDest)}')
+            high_result = u.PDP11ifyPythonInteger(result >> 16)
+            low_result = u.PDP11ifyPythonInteger(result & MASK_WORD)
+            print(f'MUL high register:{oct(rDest)} low register:{oct(rDest+1)}')
             print(f'MUL high_result:{oct(high_result)} low_result:{oct(low_result)}')
-            self.reg.set(rDest + 1, high_result)
-        return low_result, ''
+            self.reg.set(rDest + 1, low_result)
+            return high_result, ''
+        else:
+            return u.PDP11ifyPythonInteger(result), ''
 
     def DIV(self, rDest, source):
         """07 1R SS DIV 4-32
 
         (R, R+1) < (R, R+1) / (src)"""
-        # The 32-bit two's complement integer in R andRvl is divided by the source operand.
-        # The quotient is left in R; the remain- der in Rvl.
+        # The 32-bit two's complement integer in R and Rvl is divided by the source operand.
+        # The quotient is left in R; the remainder in Rvl.
         # Division will be performed so that the remainder is of the same sign as the dividend.
         # R must be even.
         # get_n: set if quotient <0; cleared otherwise
         # get_z: set if quotient =0; cleared otherwise
         # get_v: set if source =0 or if the absolute value of the register is larger than the absolute value of the source. (In this case the instruction is aborted because the quotient would exceed 15 bits.)
         # get_c: set if divide 0 attempted; cleared otherwise
-        if source == 0:
+        if rDest % 2 == 1:
+            # check for even R1
+            print('DIV R was not even')
+            return 0, 'DIV R was not even'
+
+        R = self.reg.get(rDest)         # high-order word
+        Rvl = self.reg.get(rDest + 1)   # low-order word
+        # this is why we have to pass in the R number and not the contents
+        print(f'DIV R:{oct(R)} Rvl:{oct(Rvl)}')
+        numerator = (R << 16) | Rvl
+        print(f'DIV numerator:{numerator}  denominator:{source}')
+
+        if numerator == 0:
             # *** divide by zero needs to trap
             v = 0
             c = 0
             self.psw.set_psw(v=v, c=c)
+            print('DIV divide by zero')
             return 0, 'DIV Divide by Zero'
 
-        R = self.reg.get(rDest)
-        Rv1 = self.reg.get(rDest + 1)
-        # this is why we have to pass in the R number and not the contents
-
-        numerator = (R << 16) + Rv1
         quotient = numerator // source
         remainder = numerator % source
+        print(f'DIV quotient:{quotient} remainder:{remainder}')
         self.reg.set(rDest, quotient)
         self.reg.set(rDest + 1, remainder)
         self.psw.set_n('', quotient)
