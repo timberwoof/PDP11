@@ -1,8 +1,8 @@
 '''pdp 11 emulator utilities'''
 import logging
 
-MASK_LONG_WORD     = 0o37777777777 # 32 bits
-MASK_LONG_WORD_MSB = 0o20000000000
+MASK_LONG     = 0o37777777777 # 32 bits
+MASK_LONG_MSB = 0o20000000000
 MASK_WORD     = 0o177777 # 16 bits
 MASK_WORD_MSB = 0o100000
 MASK_BYTE     = 0o000377 # 8 bits

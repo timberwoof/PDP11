@@ -30,12 +30,16 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
+        pytest test_utils.py
         pytest test_hardware_reg.py
         pytest test_hardware_ram.py
         pytest test_hardware_psw.py
         pytest test_address_modes.py
         pytest test_condition_code_ops.py
+        pytest test_stack.py
         pytest test_rss_ops.py
         pytest test_ss_ops.py
         pytest test_ssdd_ops.py
-        pytest test_stack.py
+        pytest test_DL11.py
+        pytest test_jump.py
+        
