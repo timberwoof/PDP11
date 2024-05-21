@@ -405,7 +405,7 @@ class TestClass():
         run, operand1, operand2, assembly, report = self.ss_ops.do_ss_op(instruction)
         assert assembly == "ASR R1"
         r1 = self.reg.get(1)
-        logging.info(f'r1:{bin(r1)}  {report}')
+        logging.debug(f'r1:{bin(r1)}  {report}')
         assert r1 == 0b1110011000011001
         condition_codes = self.psw.get_nzvc()
         assert condition_codes == "1001" # NZVC

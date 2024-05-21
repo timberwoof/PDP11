@@ -327,7 +327,6 @@ class ss_ops:
             testresult = result & MASK_LOW_BYTE
         else:
             operand = operand | 0o400000  # set the high bit for python weirdness
-            logging.info(f'operand:{bin(operand)}')
             bit15 = operand & 0b1000000000000000
             bit0 = operand & 0b0000000000000001
             result = (operand >> 1) & MASK_WORD | bit15

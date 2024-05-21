@@ -340,6 +340,7 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         #print(f'test_MUL   actual nzvc: {condition_codes}');
         assert condition_codes == CC
+        print(f'test_MUL result:{u.pythonifyPDP11Long(pdp11_actual_product)} = {oct(pdp11_actual_product)}  CC:{condition_codes}')
 
     def test_constants(self):
         print(f'\ntest_constants')

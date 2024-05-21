@@ -32,5 +32,5 @@ class TestClass():
         pdp11.reg.set_pc(echo_address, "load_machine_code")
         pdp11.ram.dump(echo_address, echo_address+0o10)
         run = pdp11Run(pdp11)
-        run.run_in_VT52_emulator()
+        run.run_with_VT52_emulator()
 
