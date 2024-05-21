@@ -26,6 +26,8 @@ MASK_HIGH_BYTE = 0o177400
 
 P = 0o764 # 500
 p = 0o265 # 181
+p1 = 1
+n1 = u.twosComplementNegative(p1)
 z = 0 # 0o0
 n = u.twosComplementNegative(p)
 N = u.twosComplementNegative(P)
@@ -42,6 +44,10 @@ multiplication_testcases = [
     ("zp", z, p, 2, 4, '0100'),
     ("zz", z, z, 2, 4, '0100'),
     ("zn", z, n, 2, 4, '0100'),
+    ("p1p1", p1, p1, 2, 4, '0000'),
+    ("p1n1", p1, n1, 2, 4, '1000'),
+    ("n1p1", n1, p1, 2, 4, '1000'),
+    ("n1n1", n1, n1, 2, 4, '0000'),
     ("np", n, p, 2, 4, '1000'),
     ("nz", n, z, 2, 4, '0100'),
     ("nn", n, n, 2, 4, '0000'),
