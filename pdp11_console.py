@@ -47,14 +47,18 @@ class Console:
                                 font=('Arial', 18), finalize=True)
         logging.info('console make_window done')
 
-    def cycle(self, cpu_run):
+    def window_cycle(self, cpu_run):
         '''one console window update window_cycle'''
+        # parameters from PDP11
+        # PC - remove this. It just t akes time.
+        # outputs to PDP11: events
+        # window_run
+        # cpu_run
         self.sw.start('console')
         window_run = True
 
         pc_display = self.window['pc_display']
         pc_display.update(oct(self.pdp11.reg.get_pc()))
-
         pc_lights = self.window['pc_lights']
         pc_lights.update(self.pc_to_blinky_lights())
 

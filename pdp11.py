@@ -1,6 +1,7 @@
 """PDP-11 Emulator"""
 import time
 import logging
+import threading
 
 import pdp11_util as u
 from pdp11_logger import Logger
@@ -93,7 +94,7 @@ class PDP11():
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        logging.info(f'pdp11CPU dispatch_opcode {oct(instruction)} PSW:{oct(self.psw.get_psw())}')
+        logging.debug(f'pdp11CPU dispatch_opcode {oct(instruction)} PSW:{oct(self.psw.get_psw())}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -123,26 +124,17 @@ class PDP11():
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute window_cycle"""
         # fetch opcode and increment program counter
-        self.sw.start("instruction cycle")
+        self.sw.start("instruction_cycle")
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        logging.debug(f'{u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
-        #if operand1 != '':
-        #    logging.debug(f'{u.oct6(pc+2)} {u.pad(operand1, 7)}')
-        #if operand2 != '':
-        #    logging.debug(f'{u.oct6(pc+4)} {u.pad(operand2, 7)}')
-        #if report != '':
-        #    logging.debug(report)
-        logging.debug(f'{oct(pc)} {assembly}')
+        logging.debug(f'{run} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
         if pc == self.reg.get_pc():
             logging.debug(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
             result = False
-
-        self.sw.stop("instruction cycle")
+        self.sw.stop("instruction_cycle")
         self.executed[instruction] = f'{instruction},{assembly}'
         return run
-
 
 class pdp11Run():
     """sets up and runs PDP11 emulator"""
@@ -163,7 +155,7 @@ class pdp11Run():
         while cpu_run:
             cpu_run = self.pdp11.instruction_cycle()
             instructions_done = instructions_done + 1
-            self.pdp11.terminal.cycle()
+            self.pdp11.terminal.window_cycle()
             if instructions_done > limit:
                 logging.info('run: instruction limit reached')
                 cpu_run = False
@@ -175,7 +167,7 @@ class pdp11Run():
 
         run_stopwatch = self.pdp11.sw.get_watch("run")
         run_time = run_stopwatch.get_sum()  # (microseconds)
-        cycle_stopwatch = self.pdp11.sw.get_watch("instruction cycle")
+        cycle_stopwatch = self.pdp11.sw.get_watch("instruction_cycle")
         cycles = cycle_stopwatch.get_sum()  # cycles
         processor_speed = cycles / run_time * 1000000  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
@@ -185,34 +177,53 @@ class pdp11Run():
             logging.info(self.pdp11.executed[item])
         logging.info('instructions executed report ends')
 
-    def run_in_VT52_emulator(self):
+    def cpuThread(self, pdp11):
+        """Run CPU cycles"""
+        logging.info('cpuThread: begin')
+        instructions_done = 0
+        limit = 1000000
+        while self.cpu_run:
+            self.cpu_run = pdp11.instruction_cycle()
+            instructions_done = instructions_done + 1
+            if instructions_done > limit:
+                logging.info('run: instruction limit reached')
+                self.cpu_run = False
+            logging.debug(f'run:{self.cpu_run} instructions_done:{instructions_done}')
+        self.pdp11.sw.stop("run")
+        logging.info(f'cpuThread: end. run:{self.cpu_run}  instructions_done:{instructions_done}')
+
+    def run_with_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
-        logging.info('run_in_VT52_emulator: begin PDP11 emulator')
+        logging.info('run_with_VT52_emulator: begin PDP11 emulator')
         logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.get_nzvc()}')
 
         # Create and run the terminal window in PySimpleGUI
-        logging.info('run_in_VT52_emulator make windows')
+        logging.info('run_with_VT52_emulator make windows')
         console_window = self.pdp11.console.make_window()
         vt52_window = self.pdp11.vt52.make_window()
-        cpu_run = False
+        self.cpu_run = False
+        was_cpu_run = False
         console_run = True
 
         self.pdp11.sw.start("run")
         while console_run:
-            # run window bits
-            if cpu_run:
-                cpu_run = self.pdp11.instruction_cycle()
-            console_run, cpu_run = self.pdp11.console.cycle(cpu_run)
+            console_run, self.cpu_run = self.pdp11.console.window_cycle(self.cpu_run)
             self.pdp11.vt52.window_cycle()
+
+            if self.cpu_run and (self.cpu_run != was_cpu_run):
+                logging.info('start CPU thread')
+                self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
+                self.cpuThread.start()
+                was_cpu_run = self.cpu_run
         self.pdp11.sw.stop("run")
 
-        logging.info('run_in_VT52_emulator ends')
+        logging.info(f'run_with_VT52_emulator ends.')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
 
         run_stopwatch = self.pdp11.sw.get_watch("run")
         run_time = run_stopwatch.get_sum()  # (microseconds)
-        cycle_stopwatch = self.pdp11.sw.get_watch("instruction cycle")
+        cycle_stopwatch = self.pdp11.sw.get_watch("instruction_cycle")
         cycles = cycle_stopwatch.get_sum()  # cycles
         processor_speed = cycles / run_time * 1000000  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)

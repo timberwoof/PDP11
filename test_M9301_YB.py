@@ -16,4 +16,4 @@ class TestClass():
         Boot0 = pdp11.boot.read_pdp11_assembly_file('source/M9301-YB.txt')
         pdp11.reg.set_pc(0o173000, "test_M9301-YB") # 0o165000
         run = pdp11Run(pdp11)
-        run.run_in_VT52_emulator()
+        run.run_with_VT52_emulator()

@@ -104,7 +104,7 @@ class M9301:
             boot.read_pdp11_assembly_file('source/M9301-YA.txt')
             self.switch_settings = switch81_3 + switch81_4 + switch81_5 + switch81_6 + \
                  switch81_7 + switch81_8 + switch81_9 + switch81_10 + self.base_address
-            logging.info(f'    switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
+            logging.info(f'switch_address:{oct(self.switch_address)} switch_settings:{oct(self.switch_settings)}')
             reg.set_pc(self.switch_settings, 'M9301 switch81_2 True')
         else:
             reg.set_pc(0o24,"M9301 else switch81_2 False")

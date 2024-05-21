@@ -14,5 +14,5 @@ class TestClass():
         Boot0 = boot.read_pdp11_assembly_file('source/M9301-YA.txt')
         pdp11.reg.set_pc(0o173000, "test_M9301-YA") # 0o165000
         run = pdp11Run(pdp11)
-        run.run_in_VT52_emulator()
+        run.run_with_VT52_emulator()
 # http://ftpmirror.your.org/pub/misc/bitsavers/pdf/dec/pdp11/xxdp/diag_listings/MAINDEC-11-DQM9A-A-D_M9301_ROM_Bootstrap_Jan77.pdf

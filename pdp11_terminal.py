@@ -16,7 +16,7 @@ class Terminal:
     # ************************************
     # Cycle the terminal
     def cycle(self):
-        '''One  cycle for terminal'''
+        '''One  window_cycle for terminal'''
         # This is an attenpt to make the terminal automatcaly send LF after CR.
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:

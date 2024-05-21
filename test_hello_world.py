@@ -67,6 +67,6 @@ class TestClass():
 
         pdp11.reg.set_pc(0o2000, "load_machine_code")
         run = pdp11Run(pdp11)
-        run.run_in_VT52_emulator()
+        run.run_with_VT52_emulator()
         logging.info('test_hello_world done')
 

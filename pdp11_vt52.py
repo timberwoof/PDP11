@@ -19,7 +19,7 @@ class VT52:
     # PySimpleGUI Interface
     # https://pypi.org/project/PySimpleGUI/
     # VT52 has a multiline and ain input_text
-    # These take ~ 1000 uS to read each cycle
+    # These take ~ 1000 uS to read each window_cycle
 
     def make_window(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
@@ -42,6 +42,10 @@ class VT52:
 
     def window_cycle(self):
         '''One PySimpleGUI window_cycle'''
+        # parameters from PDP11
+        # RCSR XCSR XBUF
+        # outputs to PDP11: events
+        # RBUF
         self.sw.start('VT52')
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:
