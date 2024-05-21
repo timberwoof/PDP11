@@ -39,15 +39,15 @@ class Console:
         """create the DL11 console using PySimpleGUI"""
         logging.info('console make_window begins')
         pc_display = oct(self.pdp11.reg.get_pc())
-        pc_lights = self.pc_to_blinky_lights()
-        layout = [[sg.Text(pc_display, key='pc_display'), sg.Text(pc_lights, key='pc_lights')],
+        #pc_lights = self.pc_to_blinky_lights()
+        layout = [[sg.Text(pc_display, key='pc_display')], #, sg.Text(pc_lights, key='pc_lights')
                   [sg.Text(CIRCLE, key='runLED'), sg.Button('Run'), sg.Button('Halt'), sg.Button('Exit')]
                   ]
         self.window = sg.Window('PDP-11 Console', layout, location=(50,50),
                                 font=('Arial', 18), finalize=True)
         logging.info('console make_window done')
 
-    def window_cycle(self, cpu_run):
+    def window_cycle(self):
         '''one console window update window_cycle'''
         # parameters from PDP11
         # PC - remove this. It just t akes time.
@@ -59,8 +59,8 @@ class Console:
 
         pc_display = self.window['pc_display']
         pc_display.update(oct(self.pdp11.reg.get_pc()))
-        pc_lights = self.window['pc_lights']
-        pc_lights.update(self.pc_to_blinky_lights())
+        #pc_lights = self.window['pc_lights']
+        #pc_lights.update(self.pc_to_blinky_lights())
 
         # mean duration 16000 microseconds:
         self.sw.start('console read')
@@ -68,21 +68,25 @@ class Console:
         self.sw.stop('console read')
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
+            logging.info('Quit')
             window_run = False
         elif event == "Run":
-            cpu_run = True
+            logging.info('Run')
+            self.pdp11.set_run(True)
             text = self.window['runLED']
             text.update(CIRCLE_OUTLINE)
         elif event == "Halt":
-            cpu_run = False
+            logging.info('Halt')
+            self.pdp11.set_run(False)
             text = self.window['runLED']
             text.update(CIRCLE)
         elif event == "Exit":
-            cpu_run = False
+            logging.info('Exit')
+            self.pdp11.set_run(False)
             window_run = False
 
         self.sw.stop('console')
-        return window_run, cpu_run
+        return window_run
 
     def close_window(self):
         """close the terminal window"""

@@ -2,6 +2,7 @@
 import time
 import logging
 import threading
+import traceback
 
 import pdp11_util as u
 from pdp11_logger import Logger
@@ -73,6 +74,10 @@ class PDP11():
 
         self.executed = {}
 
+        self.run = False
+        self.runEvent = threading.Event()
+        self.runEvent.set()
+
         # i/o devices
         self.boot = boot(self.reg, self.ram)
         self.m9301 = M9301(self.reg, self.ram, self.boot)
@@ -91,6 +96,23 @@ class PDP11():
         if ui:
             self.console = Console(self, self.sw)
         logging.info('pdp11CPU initializing done')
+
+    def set_run(self, new_run):
+        """thread-safe run setter"""
+        self.runEvent.wait()
+        self.runEvent.clear()
+        if self.run != new_run:
+            self.run = new_run
+            logging.info(f'set_run({self.run})')
+        self.runEvent.set()
+
+    def get_run(self):
+        """thread-safe run getter"""
+        self.runEvent.wait()
+        self.runEvent.clear()
+        result = self.run
+        self.runEvent.set()
+        return result
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
@@ -148,17 +170,17 @@ class pdp11Run():
         logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.get_nzvc()}')
 
         # start the processor loop
-        cpu_run = True
+        self.pdp11.set_run(True)
         instructions_done = 0
 
         self.pdp11.sw.start("run")
-        while cpu_run:
-            cpu_run = self.pdp11.instruction_cycle()
+        while self.pdp11.get_run():
+            self.pdp11.set_run(self.pdp11.instruction_cycle())
             instructions_done = instructions_done + 1
             self.pdp11.terminal.window_cycle()
             if instructions_done > limit:
                 logging.info('run: instruction limit reached')
-                cpu_run = False
+                self.pdp11.set_run(False)
         self.pdp11.sw.stop("run")
 
         logging.info('run ends')
@@ -181,12 +203,22 @@ class pdp11Run():
         """Run CPU cycles in a separate thread"""
         logging.info('cpuThread: begin')
         instructions_done = 0
-        while self.cpu_run:
-            self.cpu_run = pdp11.instruction_cycle()
+
+        # assume that since we got started, we should run
+        self.pdp11.set_run(True)
+        run = True;
+        while run:
+            if pdp11.instruction_cycle():
+                # check for whether something else called for a stop
+                run = self.pdp11.get_run()
+            else:
+                # instruction_cycle called for a stop
+                run = False
+                self.pdp11.set_run(False)
             instructions_done = instructions_done + 1
-            logging.debug(f'run:{self.cpu_run} instructions_done:{instructions_done}')
+
         self.pdp11.sw.stop("run")
-        logging.info(f'cpuThread: end. run:{self.cpu_run}  instructions_done:{instructions_done}')
+        logging.info(f'cpuThread: end. Instructions_done:{instructions_done}')
 
     def run_with_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
@@ -197,20 +229,30 @@ class pdp11Run():
         logging.info('run_with_VT52_emulator make windows')
         console_window = self.pdp11.console.make_window()
         vt52_window = self.pdp11.vt52.make_window()
-        self.cpu_run = False
+        self.pdp11.set_run(False)
         was_cpu_run = False
         console_run = True
 
         self.pdp11.sw.start("run")
         while console_run:
-            console_run, self.cpu_run = self.pdp11.console.window_cycle(self.cpu_run)
             self.pdp11.vt52.window_cycle()
+            console_run = self.pdp11.console.window_cycle() # may set cu flag
 
-            if self.cpu_run and (self.cpu_run != was_cpu_run):
-                logging.info('start CPU thread')
-                self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
-                self.cpuThread.start()
-                was_cpu_run = self.cpu_run
+            # check for whether we need to start or stop the CPU thread
+            self.pdp11.runEvent.wait() # wait for flag set
+            self.pdp11.runEvent.clear() # clear flag
+            if (self.pdp11.run != was_cpu_run): # if run changed
+                if was_cpu_run:
+                    logging.info('stop CPU thread')
+                    self.pdp11.run = False
+                else: # was_cpu_run == FALSE
+                    logging.info('start CPU thread')
+                    self.pdp11.run = True
+                    self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
+                    self.cpuThread.start()
+                was_cpu_run = self.pdp11.run
+            self.pdp11.runEvent.set() # set the flag
+
         self.pdp11.sw.stop("run")
 
         logging.info(f'run_with_VT52_emulator ends.')
