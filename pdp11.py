@@ -178,16 +178,12 @@ class pdp11Run():
         logging.info('instructions executed report ends')
 
     def cpuThread(self, pdp11):
-        """Run CPU cycles"""
+        """Run CPU cycles in a separate thread"""
         logging.info('cpuThread: begin')
         instructions_done = 0
-        limit = 1000000
         while self.cpu_run:
             self.cpu_run = pdp11.instruction_cycle()
             instructions_done = instructions_done + 1
-            if instructions_done > limit:
-                logging.info('run: instruction limit reached')
-                self.cpu_run = False
             logging.debug(f'run:{self.cpu_run} instructions_done:{instructions_done}')
         self.pdp11.sw.stop("run")
         logging.info(f'cpuThread: end. run:{self.cpu_run}  instructions_done:{instructions_done}')
