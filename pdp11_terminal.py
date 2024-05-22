@@ -27,7 +27,7 @@ class Terminal:
         # if there's a character in the dl11 transmit buffer,
         # then eat it
         if self.dl11.XCSR & self.dl11.XCSR_XMIT_RDY == 0:
-            newchar = self.dl11.read_XBUF()
+            logging.info(f'dl11 read_XBUF:{chr(newchar)}')
             # Sure, DL11 can send me nulls; I just won't show them.
             if newchar != 0:
                 logging.info(f'dl11 read_XBUF:{chr(newchar)}')

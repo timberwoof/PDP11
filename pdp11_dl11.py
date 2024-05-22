@@ -1,5 +1,7 @@
 """PDP11 DL11 communications console"""
 import logging
+import threading
+
 class DL11:
     """DEC DL11 serial interface emulator"""
     def __init__(self, ram, base_address):
@@ -11,15 +13,18 @@ class DL11:
         self.XCSR_address = base_address + 4
         self.XBUF_address = base_address + 6
 
-        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR)
-        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF)
-        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR)
-        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF)
+        self.lock = threading.Event()
+        self.lock.set()
 
-        self.ram.register_io_reader(self.RCSR_address, self.read_RCSR)
-        self.ram.register_io_reader(self.RBUF_address, self.read_RBUF)
-        self.ram.register_io_reader(self.XCSR_address, self.read_XCSR)
-        self.ram.register_io_reader(self.XBUF_address, self.read_XBUF)
+        self.ram.register_io_writer(self.RCSR_address, self.write_RCSR, self.lock)
+        self.ram.register_io_writer(self.RBUF_address, self.write_RBUF, self.lock)
+        self.ram.register_io_writer(self.XCSR_address, self.write_XCSR, self.lock)
+        self.ram.register_io_writer(self.XBUF_address, self.write_XBUF, self.lock)
+
+        self.ram.register_io_reader(self.RCSR_address, self.read_RCSR, self.lock)
+        self.ram.register_io_reader(self.RBUF_address, self.read_RBUF, self.lock)
+        self.ram.register_io_reader(self.XCSR_address, self.read_XCSR, self.lock)
+        self.ram.register_io_reader(self.XBUF_address, self.read_XBUF, self.lock)
 
         # RCSR Receiver Status Register bits
         # This is a DL11-B
@@ -46,6 +51,14 @@ class DL11:
 
         logging.info('initializing dl11 done')
 
+    # emulator interface to locking
+    def get_lock(self):
+        self.lock.wait()
+        self.lock.clear()
+
+    def release_lock(self):
+        self.lock.set()
+
     # DL11 Internal Interface to PDP-11 Emulator
 
     # Receiver receives characters from a terminal.
@@ -55,12 +68,12 @@ class DL11:
     # 0: reader enable (wo) clears 7
     def write_RCSR(self, byte):
         """write to receiver status register"""
-        #logging.info(f'    dl11.write_RCSR({oct(byte)})')
+        logging.info(f'    dl11.write_RCSR({oct(byte)})')
         self.RCSR = byte
 
     def read_RCSR(self):
         """read from receiver status register"""
-        #logging.info(f'    dl11.read_RCSR() returns {oct(self.RCSR)}')
+        logging.info(f'    dl11.read_RCSR() returns {oct(self.RCSR)}')
         return self.RCSR
 
     # RBUF reciever data buffer (ro)
@@ -71,14 +84,14 @@ class DL11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        #logging.debug(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        logging.info(f'    dl11.write_RBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         result = self.RBUF
-        #logging.debug(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        logging.info(f'    dl11.read_RBUF() returns {oct(result)}:"{self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         return result
 
@@ -92,21 +105,21 @@ class DL11:
     # 0: break. when set sends continuous space (rw)
     def write_XCSR(self, byte):
         """write to transmitter status register"""
-        ##logging.debug(f'    dl11.write_XCSR({oct(byte)})')
+        #logging.info(f'    dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
 
     def read_XCSR(self):
         """read from transitter status register"""
-        ##logging.debug(f'    dl11.read_XCSR() returns {oct(self.XCSR)}')
+        #logging.info(f'    dl11.read_XCSR() returns {oct(self.XCSR)}') # often gives uninteresting results
         return self.XCSR
 
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        #logging.debug(f'    dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
+        logging.info(f'dl11.write_XBUF({oct(byte)}):"{self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -115,12 +128,12 @@ class DL11:
         if self.XCSR & self.XCSR_MAINT:
             self.write_RBUF(byte)
 
-    def read_XBUF(self):
+    def read_XBUF(self, whoCalled=''):
         """DL11 calls this to read from transmitter buffer register."""
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        #logging.debug(f'    dl11.read_XBUF() returns {oct(result)}:"{self.safe_character(result)}"')
+        logging.info(f'dl11.read_XBUF({whoCalled}) returns {oct(result)}:"{self.safe_character(result)}"')
         return result
 
     def safe_character(self, byte):

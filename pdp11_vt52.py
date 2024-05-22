@@ -40,6 +40,20 @@ class VT52:
 
         # autoscroll=True,
 
+    def wait_for_RCSR_DONE_get_lock(self):
+        """get lock, read RCSR. If it's done, keep the lock"""
+        logging.info('wait_for_RCSR_DONE_get_lock')
+        self.dl11.get_lock()
+        rcsr = self.dl11.read_RCSR()
+        while rcsr & self.dl11.RCSR_RCVR_DONE != 0:
+            logging.info('wait_for_RCSR_DONE_get_lock loop')
+            self.dl11.release_lock()
+            sleep(0.1)
+            self.dl11.get_lock()
+            rcsr = self.dl11.read_RCSR()
+        logging.info('got RCSR_DONE and lock')
+        # RCSR_RCVR_DONE == 0 and we have the python event lock
+
     def window_cycle(self):
         '''One PySimpleGUI window_cycle'''
         # parameters from PDP11
@@ -49,17 +63,22 @@ class VT52:
         self.sw.start('VT52')
         # If there's a character in our buffer, send it to the DL11
         if self.buffer != 0:
-            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                self.dl11.write_RBUF(self.buffer)
-                self.buffer = 0
+            wait_for_RCSR_DONE_get_lock()
+            self.dl11.write_RBUF(self.buffer)
+            self.dl11.release_lock()
+            self.buffer = 0
 
         # if there's a character in the dl11 transmit buffer,
         # then send it to the display
-        if self.dl11.XCSR & self.dl11.XCSR_XMIT_RDY == 0:
+        #logging.info('dl11.get_lock for XCSR') # not hanging here.
+        self.dl11.get_lock()
+        if self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY == 0:
+            logging.info(f'call dl11.read_XBUF')
             newchar = self.dl11.read_XBUF()
             # Sure, DL11 can send me nulls; I just won't show them.
+            logging.info(
+                f'dl11 XBUF sent us {oct(newchar)} {newchar} "{self.dl11.safe_character(newchar)}"')
             if newchar != 0:
-                logging.debug(f'dl11 XBUF sent us {oct(newchar)} {newchar} "{self.dl11.safe_character(newchar)}"')
                 print(chr(newchar), end='')
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
@@ -69,29 +88,30 @@ class VT52:
                 # try to filter out carriage return 13. Ddn't break wrong.
                 if newchar != 13:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
+        self.dl11.release_lock()
 
         # 1000 microseconds
         event, values = self.window.read(timeout=0)
 
         # If the Enter key was hit
-        # then send CR LF to the serial interface
+        # then send CR to the serial interface
         if event == 'keyboard_Enter':
-            logging.debug(f'sending DL11 0o12 "CR"')
             self.window['keyboard'].Update('')
-            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                self.dl11.write_RBUF(0o15) # CR, not \n which is LF
-                # put the LF into our buffer
-                self.buffer = 0o12
+            logging.info(f'sending DL11 0o12 "CR"')
+            wait_for_RCSR_DONE_get_lock()
+            self.dl11.write_RBUF(0o15)
+            self.dl11.release_lock()
 
         # If there's a keyboard event
         # then send the character to the serial interface
         kbd = values['keyboard']
         if kbd != '':
             self.window['keyboard'].Update('')
-            if self.dl11.RCSR & self.dl11.RCSR_RCVR_DONE == 0:
-                o = ord(kbd[0:1])
-                logging.debug(f'sending DL11 {o} "{self.dl11.safe_character(o)}"')
-                self.dl11.write_RBUF(o)
+            o = ord(kbd[0:1])
+            logging.info(f'sending DL11 {o} "{self.dl11.safe_character(o)}"')
+            wait_for_RCSR_DONE_get_lock()
+            self.dl11.write_RBUF(o)
+            self.dl11.release_lock()
 
         self.sw.stop('VT52')
         return

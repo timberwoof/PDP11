@@ -1,5 +1,6 @@
 """PDP11 M9301 Boot Rom"""
 import logging
+import threading
 
 class M9301:
     """Emulates PDP11 M9301 boot ROM card"""
@@ -110,8 +111,9 @@ class M9301:
             reg.set_pc(0o24,"M9301 else switch81_2 False")
 
         # Register address 173024 like an io device
-
-        self.ram.register_io_reader(self.switch_address, self.read_dip_switches)
+        self.lock = threading.Event()
+        self.lock.set()
+        self.ram.register_io_reader(self.switch_address, self.read_dip_switches, self.lock)
 
         logging.info(f'initializing M9301 done. PC:{oct(reg.get_pc())}')
 
