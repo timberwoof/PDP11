@@ -21,10 +21,9 @@ from pdp11_rss_ops import rss_ops
 from pdp11_ss_ops import ss_ops
 from pdp11_ssdd_ops import ssdd_ops
 
-from pdp11_console import Console
 from pdp11_dl11 import DL11
 from pdp11_terminal import Terminal
-from pdp11_vt52 import VT52
+from pdp11_vt52_Console import VT52_Console
 from pdp11_boot import pdp11Boot as boot
 from pdp11_m9301 import M9301
 from pdp11_rk11 import RK11
@@ -90,12 +89,10 @@ class PDP11():
         # reader status register 177560
         self.dl11 = DL11(self.ram, 0o177560)
         if (ui):
-            self.vt52 = VT52(self.dl11, self.sw)
+            self.vt52 = VT52_Console(self, self.sw)
         else:
             self.terminal = Terminal(self.dl11, self.sw)
 
-        if ui:
-            self.console = Console(self, self.sw)
         logging.info('pdp11CPU initializing done')
 
     def set_run(self, new_run):
@@ -228,7 +225,6 @@ class pdp11Run():
 
         # Create and run the terminal window in PySimpleGUI
         logging.info('run_with_VT52_emulator make windows')
-        console_window = self.pdp11.console.make_window()
         vt52_window = self.pdp11.vt52.make_window()
         self.pdp11.set_run(False)
         was_cpu_run = False
@@ -236,8 +232,7 @@ class pdp11Run():
 
         self.pdp11.sw.start("run")
         while console_run:
-            self.pdp11.vt52.window_cycle()
-            console_run = self.pdp11.console.window_cycle() # may set cu flag
+            console_run = self.pdp11.vt52.window_cycle() # may set cu flag
 
             # check for whether we need to start or stop the CPU thread
             self.pdp11.runEvent.wait() # wait for flag set
