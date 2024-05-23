@@ -46,8 +46,32 @@ class DL11:
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
 
+        self.i_set_lock = False
+
         logging.info('initializing dl11 done')
 
+    def lock(self):
+        if self.ram.lock.is_set(): # lock was NOT set
+            self.ram.lock.wait()
+            self.ram.lock.clear()
+            self.i_set_lock = True
+
+    def unlock(self):
+        if self.i_set_lock:
+            self.ram.lock.set()
+            self.i_set_lock = False
+
+    def safe_character(self, byte):
+        """return character if it is printable"""
+        if byte > 31:
+            result = chr(byte)
+        else:
+            low_ascii = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+                         'BS', 'HT', 'LF', 'VF', 'FF', 'CR', 'SO', 'SI',
+                         'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+                         'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
+            result = low_ascii[byte]
+        return result
 
     # DL11 Internal Interface to PDP-11 Emulator
 
@@ -74,15 +98,19 @@ class DL11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        #logging.info(f'dl11.write_RBUF({oct(byte)}):"{u.safe_character(byte)}"')
+        #logging.info(f'dl11.write_RBUF({oct(byte)} {self.safe_character(byte)}"')
+        self.lock()
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
+        self.unlock()
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
+        self.lock()
         result = self.RBUF
-        #logging.info(f'dl11.read_RBUF() returns {oct(result)}:"{u.safe_character(result)}"')
+        #logging.info(f'dl11.read_RBUF() returns {oct(result)} {self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
+        self.unlock()
         return result
 
     # Transmitter enables CPU to send characters to a terminal.
@@ -95,21 +123,24 @@ class DL11:
     # 0: break. when set sends continuous space (rw)
     def write_XCSR(self, byte):
         """write to transmitter status register"""
-        #logging.info(f'    dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
+        self.lock()
+        #logging.info(f'dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
+        self.unlock()
 
     def read_XCSR(self):
         """read from transitter status register"""
-        #logging.info(f'    dl11.read_XCSR() returns {oct(self.XCSR)}') # often gives uninteresting results
+        #logging.info(f'dl11.read_XCSR() returns {oct(self.XCSR)}') # often gives uninteresting results
         return self.XCSR
 
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        #logging.info(f'dl11.write_XBUF({oct(byte)}):"{u.safe_character(byte)}"')
+        self.lock()
+        #logging.info(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -117,12 +148,15 @@ class DL11:
         # check for Maintenance mode
         if self.XCSR & self.XCSR_MAINT:
             self.write_RBUF(byte)
+        self.unlock()
 
     def read_XBUF(self, whoCalled=''):
         """DL11 calls this to read from transmitter buffer register."""
+        self.lock()
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        #logging.info(f'dl11.read_XBUF({whoCalled}) returns {oct(result)}:"{u.safe_character(result)}"')
+        #logging.info(f'dl11.read_XBUF({whoCalled}) returns {oct(result)} {self.safe_character(result)}"')
+        self.unlock()
         return result
 

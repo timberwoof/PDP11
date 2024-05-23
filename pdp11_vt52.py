@@ -22,6 +22,18 @@ class VT52:
     # VT52 has a multiline and ain input_text
     # These take ~ 1000 uS to read each window_cycle
 
+    def safe_character(self, byte):
+        """return character if it is printable"""
+        if byte > 31:
+            result = chr(byte)
+        else:
+            low_ascii = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+                         'BS', 'HT', 'LF', 'VF', 'FF', 'CR', 'SO', 'SI',
+                         'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+                         'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
+            result = low_ascii[byte]
+        return result
+
     def make_window(self):
         """create the DL11 emulated terminal using PySimpleGUI"""
         logging.info('vt52 make_window begins')
@@ -46,7 +58,7 @@ class VT52:
         logging.info('wait_for_RCSR_DONE_get_lock')
         self.dl11.ram.get_lock()
         rcsr = self.dl11.read_RCSR()
-        while rcsr & self.dl11.RCSR_RCVR_DONE != 0:
+        while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
             logging.info('wait_for_RCSR_DONE_get_lock loop')
             self.dl11.ram.release_lock()
             sleep(0.1)
@@ -73,12 +85,12 @@ class VT52:
         # then send it to the display
         #logging.info('dl11.get_lock for XCSR') # not hanging here.
         self.dl11.ram.get_lock()
-        if self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY == 0:
-            logging.info(f'{self.cycles_since_window} call dl11.read_XBUF')
+        if (self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY) == 0:
+            #logging.info(f'{self.cycles_since_window} call dl11.read_XBUF')
             newchar = self.dl11.read_XBUF()
-            # Sure, DL11 can send me nulls; I just won't show them.
             logging.info(
-                f'{self.cycles_since_window} dl11 XBUF sent us {oct(newchar)} {newchar}') # "{u.safe_character(newchar)}"')
+                f'{self.cycles_since_window} dl11 XBUF sent us {oct(newchar)} {newchar} {self.safe_character(newchar)}')
+            # Sure, DL11 can send me nulls; I just won't show them.
             if newchar != 0:
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
@@ -105,7 +117,7 @@ class VT52:
         if kbd != '':
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
-            logging.info(f'{self.cycles_since_window} sending DL11 {o} "{u.safe_character(o)}"')
+            logging.info(f'{self.cycles_since_window} sending DL11 {o} {self.safe_character(o)}')
             wait_for_RCSR_DONE_get_lock()
             self.dl11.write_RBUF(o)
             self.dl11.ram.release_lock()

@@ -178,20 +178,30 @@ class Ram:
 
         self.lock = threading.Event()
         self.lock.set()
-        self.lock.wait()
-        self.lock.clear()
-        self.lock.set()
+        logging.info(f'lock.is_set:{self.lock.is_set()}') # lock.is_set:True which means it's free
         logging.info(f'Ram init done')
 
     # emulator interface to locking
     def get_lock(self):
         self.lock.wait()
         self.lock.clear()
-        pass
 
     def release_lock(self):
         self.lock.set()
-        pass
+
+    def safe_character(self, byte):
+        """return character if it is printable"""
+        if byte <= 31:
+            low_ascii = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+                         'BS', 'HT', 'LF', 'VF', 'FF', 'CR', 'SO', 'SI',
+                         'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+                         'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
+            result = low_ascii[byte]
+        elif byte <= 127:
+            result = chr(byte)
+        else:
+            result = '_'
+        return result
 
     def register_io_writer(self, device_address, method):
         """map i/o write handler into memory"""
@@ -217,13 +227,12 @@ class Ram:
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
             if data != 0:
-                logging.info(f'write_byte io({oct(address)}, {oct(data)}')  #, {u.safe_character(o)})')
-            self.lock.wait()
-            self.lock.clear()
+                logging.info(f'write_byte io({oct(address)}, {oct(data)} {self.safe_character(data)})')
+            self.get_lock()
             self.iomap_writers[address](data)
-            self.lock.set()
+            self.release_lock()
         else:
-            #logging.debug(f'; write_byte({u.oct6(address)}, {u.oct3(data)})')
+            #logging.debug(f'; write_byte({u.oct6(address)}, {u.oct3(data)} {self.safe_character(data)})')
             self.memory[address] = data
 
     def read_byte(self, address):
@@ -232,12 +241,11 @@ class Ram:
         assert address <= self.top_of_memory
         if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
             #logging.info(f'read_byte IO({oct(address)})')
-            self.lock.wait()
-            self.lock.clear()
+            self.get_lock()
             result = self.iomap_readers[address]()
-            self.lock.set()
+            self.release_lock()
             if result != 0:
-                logging.info(f'read_byte IO({oct(address)}) returns {oct(result)}') # , {u.safe_character(o)}
+                logging.info(f'read_byte IO({oct(address)}) returns {oct(result)} {self.safe_character(result)}')
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')
@@ -256,10 +264,9 @@ class Ram:
         assert data <= MASK_WORD
         if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
             logging.info(f'write_word IO({oct(address)}, {oct(data)})')
-            self.lock.wait()
-            self.lock.clear()
+            self.get_lock()
             self.iomap_writers[address](data)
-            self.lock.set()
+            self.release_lock()
         else:
             self.memory[address + 1] = (data & MASK_HIGH_BYTE) >> 8
             self.memory[address] = data & MASK_LOW_BYTE
@@ -277,10 +284,9 @@ class Ram:
         result = ""
         if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
             logging.info(f'read word IO({u.oct6(address)})')
-            self.lock.wait()
-            self.lock.clear()
+            self.get_lock()
             result =  self.iomap_readers[address]()
-            self.lock.set()
+            self.release_lock()
             logging.debug(f'read word IO({u.oct6(address)}) returns {u.oct6(result)}')
         else:
             result = (self.memory[address + 1] << 8) + self.memory[address]
