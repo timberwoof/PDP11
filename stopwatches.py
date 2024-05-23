@@ -13,6 +13,7 @@ class StopWatch():
         self.sum = 0
         self.mean = -1  # "uninitialized"
         self.start_time = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+        self.duration = 0
 
     def get_id(self):
         """retrun this StopWatch's instance ID"""
@@ -38,16 +39,20 @@ class StopWatch():
         """return the number of times this interval has been timed so far"""
         return self.count
 
+    def get_duration(self):
+        """return the duration of the last start-stop pair"""
+        return self.duration
+
     def restart_watch(self):
         """Restarts the clock. You better call stop first if you want to accumulate that time!"""
         self.start_time = time.clock_gettime_ns(time.CLOCK_MONOTONIC)
 
     def stop_watch(self, time_stop):
         """Stops the clock and calculates min, max, and mean."""
-        duration = time_stop - self.start_time
-        self.min = min(duration, self.min)
-        self.max = max(duration, self.max)
-        self.sum = self.sum + duration
+        self.duration = time_stop - self.start_time
+        self.min = min(self.duration, self.min)
+        self.max = max(self.duration, self.max)
+        self.sum = self.sum + self.duration
         self.count = self.count + 1
         self.mean = self.sum / self.count
 
@@ -148,3 +153,8 @@ class StopWatches():
     def get_watch(self, instance_id):
         '''get the specified watch options'''
         return self.stop_watch_dict[instance_id]
+
+    def get_duration(self, instance_id):
+        '''get the duration of the last stop-start pair'''
+        this_stop_watch = self.stop_watch_dict[instance_id]
+        return this_stop_watch.get_duration()

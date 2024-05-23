@@ -1,11 +1,11 @@
 """PDP11 VT52 Emulator"""
+import time
 import logging
 import PySimpleGUI as sg
-import pdp11_util as u
 
 class VT52:
     """DEC VT52 terminal emulator"""
-    def __init__(self, dl11, sw, ui=False):
+    def __init__(self, dl11, sw):
         """vt52(pdp11, serial interface)"""
         logging.info('initializing vt52')
         logging.info(f'PySimpleGUI version:{sg.__version__}') # PySimpleGUI version:5.0.4
@@ -53,15 +53,15 @@ class VT52:
 
         # autoscroll=True,
 
-    def wait_for_RCSR_DONE_get_lock(self):
+    def wait_for_rcsr_done_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
-        logging.info('wait_for_RCSR_DONE_get_lock')
+        logging.info('wait_for_rcsr_done_get_lock')
         self.dl11.ram.get_lock()
         rcsr = self.dl11.read_RCSR()
         while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
-            logging.info('wait_for_RCSR_DONE_get_lock loop')
+            logging.info('wait_for_rcsr_done_get_lock loop')
             self.dl11.ram.release_lock()
-            sleep(0.1)
+            time.sleep(0.1)
             self.dl11.ram.get_lock()
             rcsr = self.dl11.read_RCSR()
         logging.info('got RCSR_DONE and lock')
@@ -73,24 +73,25 @@ class VT52:
         # RCSR XCSR XBUF
         # outputs to PDP11: events
         # RBUF
-        self.sw.start('VT52')
-        # If there's a character in our buffer, send it to the DL11
-        if self.buffer != 0:
-            wait_for_RCSR_DONE_get_lock()
-            self.dl11.write_RBUF(self.buffer)
-            self.dl11.ram.release_lock()
-            self.buffer = 0
+
+        # multiple-character bug facts:
+        # The bug happens in two successive iterations of window_cycle
+        # We get only one call to dl11.write_XBUF.
+        # dl11.write_XBUF reliably sets XCSR.
+        # RAM is protected from simultaneous acecss by threads
+
+        self.sw.start('VT52 window_cycle')
 
         # if there's a character in the dl11 transmit buffer,
         # then send it to the display
-        #logging.info('dl11.get_lock for XCSR') # not hanging here.
         self.dl11.ram.get_lock()
         if (self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY) == 0:
-            #logging.info(f'{self.cycles_since_window} call dl11.read_XBUF')
             newchar = self.dl11.read_XBUF()
             logging.info(
-                f'{self.cycles_since_window} dl11 XBUF sent us {oct(newchar)} {newchar} {self.safe_character(newchar)}')
-            # Sure, DL11 can send me nulls; I just won't show them.
+                f'{self.cycles_since_window} dl11 XBUF sent us ' +
+                f'{oct(newchar)} {newchar} {self.safe_character(newchar)}')
+
+            # Sure, DL11 can send us nulls; I just won't show them.
             if newchar != 0:
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
@@ -99,7 +100,6 @@ class VT52:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
         self.dl11.ram.release_lock()
 
-        # 1000 microseconds
         event, values = self.window.read(timeout=0)
 
         # If the Enter key was hit
@@ -107,7 +107,7 @@ class VT52:
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
             logging.info(f'{self.cycles_since_window} sending DL11 0o12 "CR"')
-            wait_for_RCSR_DONE_get_lock()
+            self.wait_for_rcsr_done_get_lock()
             self.dl11.write_RBUF(0o15)
             self.dl11.ram.release_lock()
 
@@ -118,13 +118,12 @@ class VT52:
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
             logging.info(f'{self.cycles_since_window} sending DL11 {o} {self.safe_character(o)}')
-            wait_for_RCSR_DONE_get_lock()
+            self.wait_for_rcsr_done_get_lock()
             self.dl11.write_RBUF(o)
             self.dl11.ram.release_lock()
 
         self.cycles_since_window = self.cycles_since_window + 1
-        self.sw.stop('VT52')
-        return
+        self.sw.stop('VT52 window_cycle')
 
     def close_window(self):
         """close the terminal window"""

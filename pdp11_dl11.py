@@ -27,7 +27,7 @@ class DL11:
         # This is a DL11-B
         # no paper tape bits as for A and get_c.
         # no modem-control bits as for E
-        self.RCSR_RCVR_ACT = 0o004000  # 11 RO - active (we're not multithreaded yet)
+        self.RCSR_RCVR_ACT = 0o004000  # 11 RO - active (not implemented)
         self.RCSR_RCVR_DONE = 0o000200  # 7 RO
         #   set when character has been received,
         #   cleared when RBUF is read (addressed for read or write by CPU)
@@ -45,6 +45,8 @@ class DL11:
         self.XCSR_MAINT = 0o000004  # 2 RW - maintenance loopback XBUF to RBUF
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
+
+        # The unused and load-only bits are always read as Os.
 
         self.i_set_lock = False
 
@@ -83,12 +85,17 @@ class DL11:
     def write_RCSR(self, byte):
         """write to receiver status register"""
         #logging.info(f' dl11.write_RCSR({oct(byte)})')
+        self.lock()
         self.RCSR = byte
+        self.unlock()
 
     def read_RCSR(self):
         """read from receiver status register"""
         #logging.info(f' dl11.read_RCSR() returns {oct(self.RCSR)}')
-        return self.RCSR
+        self.lock()
+        result = self.RCSR
+        self.unlock()
+        return result
 
     # RBUF receiver data buffer (ro)
     # 15: error
@@ -102,6 +109,7 @@ class DL11:
         self.lock()
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
+        #   set when character has been received,
         self.unlock()
 
     def read_RBUF(self):
@@ -110,6 +118,7 @@ class DL11:
         result = self.RBUF
         #logging.info(f'dl11.read_RBUF() returns {oct(result)} {self.safe_character(result)}"')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
+        #   cleared when RBUF is read
         self.unlock()
         return result
 
@@ -132,8 +141,10 @@ class DL11:
 
     def read_XCSR(self):
         """read from transitter status register"""
-        #logging.info(f'dl11.read_XCSR() returns {oct(self.XCSR)}') # often gives uninteresting results
-        return self.XCSR
+        self.lock()
+        result = self.XCSR
+        self.unlock()
+        return result
 
     # XBUF transmit data buffer (wo)
     # 7-0 transmitted data buffer
@@ -146,7 +157,7 @@ class DL11:
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
 
         # check for Maintenance mode
-        if self.XCSR & self.XCSR_MAINT:
+        if (self.XCSR & self.XCSR_MAINT) == self.XCSR_MAINT:
             self.write_RBUF(byte)
         self.unlock()
 

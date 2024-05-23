@@ -227,7 +227,7 @@ class Ram:
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
             if data != 0:
-                logging.info(f'write_byte io({oct(address)}, {oct(data)} {self.safe_character(data)})')
+                logging.info(f'write_byte io {oct(address)}, {oct(data)} {self.safe_character(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()
@@ -245,7 +245,7 @@ class Ram:
             result = self.iomap_readers[address]()
             self.release_lock()
             if result != 0:
-                logging.info(f'read_byte IO({oct(address)}) returns {oct(result)} {self.safe_character(result)}')
+                logging.info(f'read_byte IO {oct(address)}) returns {oct(result)} {self.safe_character(result)}')
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')
@@ -263,7 +263,7 @@ class Ram:
         assert address % 2 == 0                # *** should be a trap
         assert data <= MASK_WORD
         if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
-            logging.info(f'write_word IO({oct(address)}, {oct(data)})')
+            logging.info(f'write_word IO {oct(address)}, {oct(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()

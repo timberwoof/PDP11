@@ -90,7 +90,7 @@ class PDP11():
         # reader status register 177560
         self.dl11 = DL11(self.ram, 0o177560)
         if (ui):
-            self.vt52 = VT52(self.dl11, self.sw, ui)
+            self.vt52 = VT52(self.dl11, self.sw)
         else:
             self.terminal = Terminal(self.dl11, self.sw)
 
