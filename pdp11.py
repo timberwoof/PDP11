@@ -74,6 +74,7 @@ class PDP11():
 
         self.executed = {}
 
+        # Set up locking so control of whether CPU is running doesn't get stepped on
         self.run = False
         self.runEvent = threading.Event()
         self.runEvent.set()

@@ -163,7 +163,6 @@ class Ram:
         # io map is dictionaries of addresses, methods, and locks
         self.iomap_readers = {}
         self.iomap_writers = {}
-        self.iomap_locks = {}
 
         # set up the vector space
         # the bottom area is io device handler vectors
@@ -177,25 +176,38 @@ class Ram:
         for address in range(self.io_space, self.top_of_memory):
            self.write_byte(address, 0o0)
 
-    def register_io_writer(self, device_address, method, lock):
+        #self.lock = threading.Event()
+        #self.lock.set()
+        #self.lock.wait()
+        #self.lock.clear()
+        #self.lock.set()
+        logging.info(f'Ram init done')
+
+    # emulator interface to locking
+    def get_lock(self):
+        #self.lock.wait()
+        #self.lock.clear()
+        pass
+
+    def release_lock(self):
+        #self.lock.set()
+        pass
+
+    def register_io_writer(self, device_address, method):
         """map i/o write handler into memory"""
         assert device_address < self.top_of_memory
         assert device_address >= self.io_space
         # The actual criteria are a little more stringent.
         logging.info(f'register_io_writer({oct(device_address)}, {method.__name__})')
         self.iomap_writers[device_address] = method
-        self.iomap_locks[device_address] = lock
-        self.iomap_locks[device_address].set() # should be set by device. Just making sure
 
-    def register_io_reader(self, device_address, method, lock):
+    def register_io_reader(self, device_address, method):
         """map i/o read handler into memory"""
         assert device_address < self.top_of_memory
         assert device_address >= self.io_space
         # The actual criteria are a little more stringent.
         logging.info(f'register_io_reader({oct(device_address)}, {method.__name__})')
         self.iomap_readers[device_address] = method
-        self.iomap_locks[device_address] = lock
-        self.iomap_locks[device_address].set() # should be set by device. Just making sure
         # This has been confirmed to work from here
 
     def write_byte(self, address, data):
@@ -203,12 +215,13 @@ class Ram:
         Address can be even or odd"""
         assert address <= self.top_of_memory    # *** should be a trap
         data = data & MASK_LOW_BYTE
-        if address in self.iomap_writers:
-            logging.info(f'write_byte io({oct(address)}, {oct(data)})')
-            self.iomap_locks[device_address].wait()
-            self.iomap_locks[device_address].clear()
+        if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
+            if data != 0:
+                logging.info(f'write_byte io({oct(address)}, {oct(data)}')  #, {u.safe_character(o)})')
+            #self.lock.wait()
+            #self.lock.clear()
             self.iomap_writers[address](data)
-            self.iomap_locks[device_address].set()
+            #self.lock.set()
         else:
             #logging.debug(f'; write_byte({u.oct6(address)}, {u.oct3(data)})')
             self.memory[address] = data
@@ -217,15 +230,17 @@ class Ram:
         """Read one byte of memory.
         Address can be even or odd."""
         assert address <= self.top_of_memory
-        if address in self.iomap_readers:
-            logging.info(f'read_byte io({oct(address)}) wait')
-            self.iomap_locks[device_address].wait(timeout=0.1) # This is where it hangs
-            logging.info(f'read_byte io({oct(address)}) clear')
-            self.iomap_locks[device_address].clear()
+        if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
+            logging.info(f'read_byte IO({oct(address)})')
+            #logging.info(f'read_byte IO lock wait')
+            #self.lock.wait()
+            #logging.info(f'read_byte IO lock clear')
+            #self.lock.clear()
+            #logging.info(f'read_byte IO iomap_readers')
             result = self.iomap_readers[address]()
-            logging.info(f'read_byte io({oct(address)}) set')
-            self.iomap_locks[device_address].set()
-            logging.debug(f'read_byte io({oct(address)}) returns {oct(result)}')
+            #logging.info(f'read_byte IO lock set') # it gets this far
+            #self.lock.set() # here's where it hangs
+            logging.info(f'read_byte IO({oct(address)}) returns {oct(result)}') # , {u.safe_character(o)}
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')
@@ -242,12 +257,12 @@ class Ram:
         assert address < self.top_of_memory   # *** should be a trap
         assert address % 2 == 0                # *** should be a trap
         assert data <= MASK_WORD
-        if address in self.iomap_writers:
+        if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
             logging.info(f'write_word IO({oct(address)}, {oct(data)})')
-            self.iomap_locks[device_address].wait()
-            self.iomap_locks[device_address].clear()
+            #self.lock.wait()
+            #self.lock.clear()
             self.iomap_writers[address](data)
-            self.iomap_locks[device_address].set()
+            #self.lock.set()
         else:
             self.memory[address + 1] = (data & MASK_HIGH_BYTE) >> 8
             self.memory[address] = data & MASK_LOW_BYTE
@@ -263,13 +278,17 @@ class Ram:
         assert address < self.top_of_memory   # *** should be a trap
         assert address % 2 == 0                # *** should be a trap
         result = ""
-        if address in self.iomap_readers:
-            logging.info(f'read word IO {u.oct6(address)}')
-            self.iomap_locks[device_address].wait()
-            self.iomap_locks[device_address].clear()
+        if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
+            logging.info(f'read word IO({u.oct6(address)})')
+            #logging.info(f'read word IO lock wait')
+            #self.lock.wait()
+            #logging.info(f'read word IO lock clear')
+            #self.lock.clear()
+            #logging.info(f'read word IO iomap_readers')
             result =  self.iomap_readers[address]()
-            self.iomap_locks[device_address].set()
-            #logging.debug(f'read word IO {u.oct6(address)} = {u.oct6(result)}')
+            #logging.info(f'read word IO lock set')
+            #self.lock.set()
+            logging.debug(f'read word IO({u.oct6(address)}) returns {u.oct6(result)}')
         else:
             result = (self.memory[address + 1] << 8) + self.memory[address]
             #logging.debug(f'read word RAM {u.oct6(address)} = {u.oct6(result)}')
@@ -369,9 +388,7 @@ class PSW:
         self.c_mask = 0o000001  # Carry
 
         # set up psw as an io device so we're not constantly writing to ram
-        #self.lock = threading.Event()
-        #self.lock.set()
-        #self.ram.register_io_reader(self.psw_address, self.get_psw, self.lock)
+        self.ram.register_io_reader(self.psw_address, self.get_psw)
         logging.info(f'psw initilialized @{oct(self.psw_address)}')
 
     def get_psw(self):
@@ -562,7 +579,7 @@ class AddressModes:
             operand_word = u.oct6(self.ram.read_word(self.reg.get(7)))
         assembly = ''
 
-        #logging.debug(f'addressing_mode_get("{b}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
+        #logging.info(f'addressing_mode_get("{b}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
 
         if b == 'B':
             ram_read = self.ram.read_byte

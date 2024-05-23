@@ -105,3 +105,14 @@ def extendSign(source):
         result = source & ~0
     return result
 
+def safe_character(self, byte):
+    """return character if it is printable"""
+    if byte > 31:
+        result = chr(byte)
+    else:
+        low_ascii = ['NUL', 'SOH', 'STX', 'ETX', 'EOT', 'ENQ', 'ACK', 'BEL',
+                     'BS', 'HT', 'LF', 'VF', 'FF', 'CR', 'SO', 'SI',
+                     'DLE', 'DC1', 'DC2', 'DC3', 'DC4', 'NAK', 'SYN', 'ETB',
+                     'CAN', 'EM', 'SUB', 'ESC', 'FS', 'GS', 'RS', 'US']
+        result = low_ascii[byte]
+    return result

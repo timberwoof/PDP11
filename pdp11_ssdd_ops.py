@@ -10,7 +10,7 @@ MASK_HIGH_BYTE = 0o177400
 class ssdd_ops:
     """Implements PDP11 double-operand ssdd instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        logging.debug('initializing doubleOperandOps')
+        logging.debug('initializing DoubleOperandOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw

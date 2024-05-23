@@ -11,7 +11,7 @@ MASK_BYTE_MSB = 0o000200
 class other_ops:
     """Implements the remainder of PDP11 instructions"""
     def __init__(self, reg, ram, psw, am, sw):
-        logging.info('initializing otherOps')
+        logging.info('initializing OtherOps')
         self.reg = reg
         self.ram = ram
         self.psw = psw
