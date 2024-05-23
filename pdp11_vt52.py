@@ -44,13 +44,13 @@ class VT52:
     def wait_for_RCSR_DONE_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
         logging.info('wait_for_RCSR_DONE_get_lock')
-        #self.dl11.ram.get_lock()
+        self.dl11.ram.get_lock()
         rcsr = self.dl11.read_RCSR()
         while rcsr & self.dl11.RCSR_RCVR_DONE != 0:
             logging.info('wait_for_RCSR_DONE_get_lock loop')
-            #self.dl11.ram.release_lock()
+            self.dl11.ram.release_lock()
             sleep(0.1)
-            #self.dl11.ram.get_lock()
+            self.dl11.ram.get_lock()
             rcsr = self.dl11.read_RCSR()
         logging.info('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
@@ -66,13 +66,13 @@ class VT52:
         if self.buffer != 0:
             wait_for_RCSR_DONE_get_lock()
             self.dl11.write_RBUF(self.buffer)
-            #self.dl11.ram.release_lock()
+            self.dl11.ram.release_lock()
             self.buffer = 0
 
         # if there's a character in the dl11 transmit buffer,
         # then send it to the display
         #logging.info('dl11.get_lock for XCSR') # not hanging here.
-        #self.dl11.ram.get_lock()
+        self.dl11.ram.get_lock()
         if self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY == 0:
             logging.info(f'{self.cycles_since_window} call dl11.read_XBUF')
             newchar = self.dl11.read_XBUF()
@@ -83,12 +83,9 @@ class VT52:
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
                 # call update or cprint with key
-
-                # try to filter out linefeeds 11. Nope. Still breaks wrong
-                # try to filter out carriage return 13. Ddn't break wrong.
                 if newchar != 13:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
-        #self.dl11.ram.release_lock()
+        self.dl11.ram.release_lock()
 
         # 1000 microseconds
         event, values = self.window.read(timeout=0)
@@ -100,7 +97,7 @@ class VT52:
             logging.info(f'{self.cycles_since_window} sending DL11 0o12 "CR"')
             wait_for_RCSR_DONE_get_lock()
             self.dl11.write_RBUF(0o15)
-            #self.dl11.ram.release_lock()
+            self.dl11.ram.release_lock()
 
         # If there's a keyboard event
         # then send the character to the serial interface
@@ -111,7 +108,7 @@ class VT52:
             logging.info(f'{self.cycles_since_window} sending DL11 {o} "{u.safe_character(o)}"')
             wait_for_RCSR_DONE_get_lock()
             self.dl11.write_RBUF(o)
-            #self.dl11.ram.release_lock()
+            self.dl11.ram.release_lock()
 
         self.cycles_since_window = self.cycles_since_window + 1
         self.sw.stop('VT52')
