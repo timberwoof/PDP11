@@ -46,11 +46,12 @@ class DL11:
         self.XCSR = self.XCSR_XMIT_RDY   # transmit status register ready on init
         self.XBUF = 0   # transmit buffer
 
-        # The unused and load-only bits are always read as Os.
-
         self.i_set_lock = False
-
         logging.info('initializing dl11 done')
+
+    # All reads and writes to IO buffers and CSRs must be protected.
+    # CPU access to these routines is suppsoed to happen through hardware ram.read and ram.write methods.
+    # DL11 access happes directly through these calls.
 
     def lock(self):
         if self.ram.lock.is_set(): # lock was NOT set
@@ -151,7 +152,7 @@ class DL11:
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
         self.lock()
-        #logging.info(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
+        logging.info(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY

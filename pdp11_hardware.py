@@ -151,6 +151,10 @@ class Ram:
         logging.info(f'{bits} bits -> top_of_memory: {oct(self.top_of_memory)} = {self.top_of_memory}; io_space:{oct(self.io_space)} io_space={self.io_space}')
 
         # instantiate the byte array
+        # Nobody outside this class is supposed to access this.
+        # Sometimes I really hate Python and people's attitudes when you want a feature. 
+        # For example, when people suggest that Python shoudl have private variables, 
+        # the responses are the usual: you don't need that, don't write it that way, whaty's wrong with ugly code? 
         self.memory = bytearray(self.top_of_memory+1)
 
         # set up always-ready i/o device status words
@@ -225,7 +229,7 @@ class Ram:
         Address can be even or odd"""
         assert address <= self.top_of_memory    # *** should be a trap
         data = data & MASK_LOW_BYTE
-        if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
+        if address in self.iomap_writers:
             if data != 0:
                 logging.info(f'write_byte io {oct(address)}, {oct(data)} {self.safe_character(data)}')
             self.get_lock()
@@ -239,13 +243,13 @@ class Ram:
         """Read one byte of memory.
         Address can be even or odd."""
         assert address <= self.top_of_memory
-        if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
+        if address in self.iomap_readers:
             #logging.info(f'read_byte IO({oct(address)})')
             self.get_lock()
             result = self.iomap_readers[address]()
             self.release_lock()
             if result != 0:
-                logging.info(f'read_byte IO {oct(address)}) returns {oct(result)} {self.safe_character(result)}')
+                logging.info(f'read_byte io {oct(address)}) returns {oct(result)} {self.safe_character(result)}')
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')
@@ -262,8 +266,8 @@ class Ram:
         assert address < self.top_of_memory   # *** should be a trap
         assert address % 2 == 0                # *** should be a trap
         assert data <= MASK_WORD
-        if address in self.iomap_writers: # *** might be more efficient to test for > io page boundary
-            logging.info(f'write_word IO {oct(address)}, {oct(data)}')
+        if address in self.iomap_writers:
+            #logging.info(f'write_word io {oct(address)}, {oct(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()
@@ -282,12 +286,12 @@ class Ram:
         assert address < self.top_of_memory   # *** should be a trap
         assert address % 2 == 0                # *** should be a trap
         result = ""
-        if address in self.iomap_readers: # *** might be more efficient to test for > io page boundary
-            logging.info(f'read word IO({u.oct6(address)})')
+        if address in self.iomap_readers:
+            #logging.info(f'read word IO({u.oct6(address)})')
             self.get_lock()
             result =  self.iomap_readers[address]()
             self.release_lock()
-            logging.debug(f'read word IO({u.oct6(address)}) returns {u.oct6(result)}')
+            #logging.debug(f'read word IO({u.oct6(address)}) returns {u.oct6(result)}')
         else:
             result = (self.memory[address + 1] << 8) + self.memory[address]
             #logging.debug(f'read word RAM {u.oct6(address)} = {u.oct6(result)}')

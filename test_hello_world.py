@@ -69,4 +69,3 @@ class TestClass():
         run = pdp11Run(pdp11)
         run.run_with_VT52_emulator()
         logging.info('test_hello_world done')
-

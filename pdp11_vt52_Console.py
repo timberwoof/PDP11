@@ -14,8 +14,7 @@ class VT52_Console:
         logging.info('initializing vt52')
         logging.info(f'PySimpleGUI version:{sg.__version__}') # PySimpleGUI version:5.0.4
         self.pdp11 = pdp11
-        # throttle window updates because they are very slow
-        self.cycles_since_window = 0
+        self.window_cycles = 0
         self.buffer = 0  # for holding LF after CR was sent
         self.window = 0
         self.sw = sw
@@ -100,7 +99,8 @@ class VT52_Console:
         # The bug happens in two successive iterations of window_cycle
         # We get only one call to dl11.write_XBUF.
         # dl11.write_XBUF reliably sets XCSR.
-        # RAM is protected from simultaneous acecss by threads
+        # RAM is protected from simultaneous acecss by threads.
+        # The bug happens when a CPU cycle is split.
 
         self.sw.start('VT52 window_cycle')
         window_run = True
@@ -109,13 +109,14 @@ class VT52_Console:
         #pc_lights = self.window['pc_lights']
         #pc_lights.update(self.pc_to_blinky_lights())
 
-        # if there's a character in the dl11 transmit buffer,
+        # If there's a character in the dl11 transmit buffer,
         # then send it to the display
         self.pdp11.dl11.ram.get_lock()
+        logging.info(f'begin XBUF lock {self.window_cycles}')
         if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
             newchar = self.pdp11.dl11.read_XBUF()
             logging.info(
-                f'{self.cycles_since_window} dl11 XBUF sent us ' +
+                f'cycle {self.window_cycles} {self.pdp11.CPU_cycles} dl11 XBUF sent us ' +
                 f'{oct(newchar)} {newchar} {self.safe_character(newchar)}')
 
             # Sure, DL11 can send us nulls; I just won't show them.
@@ -125,15 +126,15 @@ class VT52_Console:
                 # call update or cprint with key
                 if newchar != 13:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
+        logging.info(f'end XBUF lock {self.window_cycles}')
         self.pdp11.dl11.ram.release_lock()
 
         event, values = self.window.read(timeout=0)
-
         # If the Enter key was hit
         # then send CR to the serial interface
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
-            logging.info(f'{self.cycles_since_window} sending DL11 0o12 "CR"')
+            logging.info(f'{self.window_cycles} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(0o15)
             self.pdp11.dl11.ram.release_lock()
@@ -144,12 +145,10 @@ class VT52_Console:
         if kbd != '':
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
-            logging.info(f'{self.cycles_since_window} sending DL11 {o} {self.safe_character(o)}')
+            logging.info(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(o)
             self.pdp11.dl11.ram.release_lock()
-
-        self.cycles_since_window = self.cycles_since_window + 1
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
             logging.info('Quit')
@@ -169,6 +168,7 @@ class VT52_Console:
             self.pdp11.set_run(False)
             window_run = False
 
+        self.window_cycles = self.window_cycles + 1
         self.sw.stop('VT52 window_cycle')
         return window_run
 

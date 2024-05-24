@@ -72,6 +72,7 @@ class PDP11():
         self.cc_ops = cc_ops(self.psw, self.sw)
 
         self.executed = {}
+        self.CPU_cycles = 0
 
         # Set up locking so control of whether CPU is running doesn't get stepped on
         self.run = False
@@ -148,12 +149,13 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        logging.debug(f'{run} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
+        #logging.info(f'{self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
         if pc == self.reg.get_pc():
             logging.debug(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
             result = False
         self.sw.stop("instruction_cycle")
         self.executed[instruction] = f'{instruction},{assembly}'
+        self.CPU_cycles = self.CPU_cycles + 1
         return run
 
 class pdp11Run():
@@ -169,29 +171,27 @@ class pdp11Run():
 
         # start the processor loop
         self.pdp11.set_run(True)
-        instructions_done = 0
-
-        self.pdp11.sw.start("run")
+        self.pdp11.CPU_cycles = 0
+        self.pdp11.sw.start("CPU")
         while self.pdp11.get_run():
             self.pdp11.set_run(self.pdp11.instruction_cycle())
-            instructions_done = instructions_done + 1
+            self.pdp11.CPU_cycles = self.pdp11.CPU_cycles + 1
             self.pdp11.terminal.window_cycle()
-            if instructions_done > limit:
+            if self.pdp11.CPU_cycles > limit:
                 logging.info('run: instruction limit reached')
                 self.pdp11.set_run(False)
-        self.pdp11.sw.stop("run")
+        self.pdp11.sw.stop("CPU")
 
-        logging.info('run ends')
+        logging.info('run: stop PDP11 emulator')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
 
-        run_stopwatch = self.pdp11.sw.get_watch("run")
-        run_time = run_stopwatch.get_sum()  # (microseconds)
-        cycle_stopwatch = self.pdp11.sw.get_watch("instruction_cycle")
-        cycles = cycle_stopwatch.get_sum()  # cycles
-        processor_speed = cycles / run_time * 1000000  # (cycles per second)
+        run_time = self.pdp11.sw.get_watch("CPU").get_sum() / 1000000000
+        logging.info(f'run_time:{run_time}')
+        processor_speed = self.pdp11.CPU_cycles / run_time  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
-        logging.info(f"processor speed: {format_processor_speed} instructions per second")
+        logging.info(f'self.pdp11.CPU_cycles:{self.pdp11.CPU_cycles}')
+        logging.info(f"processor speed: {self.pdp11.CPU_cycles} cycles / {run_time} seconds = {format_processor_speed} instructions per second")
         logging.info('instructions executed:')
         for item in self.pdp11.executed.keys():
             logging.info(self.pdp11.executed[item])
@@ -200,7 +200,6 @@ class pdp11Run():
     def cpuThread(self, pdp11):
         """Run CPU cycles in a separate thread"""
         logging.info('cpuThread: begin')
-        instructions_done = 0
 
         # assume that since we got started, we should run
         self.pdp11.set_run(True)
@@ -213,10 +212,9 @@ class pdp11Run():
                 # instruction_cycle called for a stop
                 run = False
                 self.pdp11.set_run(False)
-            instructions_done = instructions_done + 1
+                self.pdp11.sw.stop("CPU")
 
-        self.pdp11.sw.stop("run")
-        logging.info(f'cpuThread: end. Instructions_done:{instructions_done}')
+        logging.info(f'cpuThread: end. Instructions_done:{self.pdp11.CPU_cycles}')
 
     def run_with_VT52_emulator(self):
         """run PDP11 with a PySimpleGUI terminal window."""
@@ -230,15 +228,17 @@ class pdp11Run():
         was_cpu_run = False
         console_run = True
 
-        self.pdp11.sw.start("run")
+        logging.info(f'run_with_VT52_emulator begins.')
         while console_run:
             console_run = self.pdp11.vt52.window_cycle() # may set cu flag
 
-            # check for whether we need to start or stop the CPU thread
+            # Check for whether we need to start or stop the CPU thread.
+            # Start CPU here instead of in startup because console has to start and stop it. 
             self.pdp11.runEvent.wait() # wait for flag set
             self.pdp11.runEvent.clear() # clear flag
             if (self.pdp11.run != was_cpu_run): # if run changed
                 if was_cpu_run:
+                    self.pdp11.sw.stop("CPU")
                     logging.info('stop CPU thread')
                     self.pdp11.run = False
                 else: # was_cpu_run == FALSE
@@ -246,24 +246,22 @@ class pdp11Run():
                     self.pdp11.run = True
                     self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
                     self.cpuThread.start()
+                    self.pdp11.sw.start("CPU")
                 was_cpu_run = self.pdp11.run
             self.pdp11.runEvent.set() # set the flag
-
-        self.pdp11.sw.stop("run")
 
         logging.info(f'run_with_VT52_emulator ends.')
         self.pdp11.am.address_mode_report()
         self.pdp11.sw.report()
 
-        run_stopwatch = self.pdp11.sw.get_watch("run")
-        run_time = run_stopwatch.get_sum()  # (microseconds)
-        cycle_stopwatch = self.pdp11.sw.get_watch("instruction_cycle")
-        cycles = cycle_stopwatch.get_sum()  # cycles
-        processor_speed = cycles / run_time * 1000000  # (cycles per second)
+        run_time = self.pdp11.sw.get_watch("CPU").get_sum() / 1000000000
+        logging.info(f'run_time:{run_time}')
+        processor_speed = self.pdp11.CPU_cycles / run_time  # (cycles per second)
         format_processor_speed = '{:5.0f}'.format(processor_speed)
-        logging.info(f"processor speed: {format_processor_speed} instructions per second")
-        #logging.info('instructions executed:')
-        #for item in self.pdp11.executed.keys():
-        #    logging.info(bin(item),self.pdp11.executed[item])
-        #logging.info('instructions executed report ends')
+        logging.info(f'self.pdp11.CPU_cycles:{self.pdp11.CPU_cycles}')
+        logging.info(f"processor speed: {self.pdp11.CPU_cycles} cycles / {run_time} seconds = {format_processor_speed} instructions per second")
+        logging.info('instructions executed:')
+        for item in self.pdp11.executed.keys():
+            logging.info(self.pdp11.executed[item])
+        logging.info('instructions executed report ends')
 
