@@ -116,7 +116,7 @@ class PDP11():
 
     def dispatch_opcode(self, instruction):
         """ top-level dispatch"""
-        logging.debug(f'pdp11CPU dispatch_opcode {oct(instruction)} PSW:{oct(self.psw.get_psw())}')
+        #logging.debug(f'pdp11CPU dispatch_opcode {oct(instruction)} PSW:{oct(self.psw.get_psw())}')
         # *** Redo this based on the table in PDP-11-10 processor manual.pdf II-1-34
         run = True
 
@@ -141,7 +141,7 @@ class PDP11():
         else:
             run, operand1, operand2, assembly, report = self.other_ops.do_other_op(instruction)
 
-        logging.debug(f'pdp11CPU dispatch_opcode returns run:{run} {assembly}')
+        #logging.debug(f'pdp11CPU dispatch_opcode returns run:{run} {assembly}')
         return run, operand1, operand2, assembly, report
 
     def instruction_cycle(self):
@@ -151,7 +151,7 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        logging.debug('instruction_cycle came back from dispatch_opcode')
+        #logging.debug('instruction_cycle came back from dispatch_opcode')
         #logging.debug(f'instruction_cycle: {self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
         if pc == self.reg.get_pc():
             logging.error(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')

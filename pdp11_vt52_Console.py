@@ -77,16 +77,16 @@ class VT52_Console:
 
     def wait_for_rcsr_done_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
-        logging.debug('wait_for_rcsr_done_get_lock')
+        #logging.debug('wait_for_rcsr_done_get_lock')
         self.lock.acquire()
         rcsr = self.pdp11.dl11.read_RCSR()
         while (rcsr & self.pdp11.dl11.RCSR_RCVR_DONE) != 0:
-            logging.debug('wait_for_rcsr_done_get_lock loop')
+            #logging.debug('wait_for_rcsr_done_get_lock loop')
             self.lock.release()
             time.sleep(0.1)
             self.lock.acquire()
             rcsr = self.pdp11.dl11.read_RCSR()
-        logging.debug('got RCSR_DONE and lock')
+        #logging.debug('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
 
     def window_cycle(self):
@@ -113,12 +113,15 @@ class VT52_Console:
         # If there's a character in the dl11 transmit buffer,
         # then send it to the display
         self.lock.acquire()
-        logging.debug(f'vt52 got lock {self.window_cycles}')
+        #logging.debug(f'vt52 got lock {self.window_cycles}')
         if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
             newchar = self.pdp11.dl11.read_XBUF()
             logging.info(
                 f'cycle {self.window_cycles} {self.pdp11.CPU_cycles} dl11 XBUF sent us ' +
                 f'{oct(newchar)} {newchar} {self.safe_character(newchar)}')
+
+            if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
+                logging.error('XCSR was not set')
 
             # Sure, DL11 can send us nulls; I just won't show them.
             if newchar != 0:
@@ -128,20 +131,17 @@ class VT52_Console:
                 if newchar != 13:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
         self.lock.release()
-        logging.debug(f'vt52 release lock {self.window_cycles}')
-
-        if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
-            logging.error('XCSR was not set')
+        #logging.debug(f'vt52 release lock {self.window_cycles}')
 
         event, values = self.window.read(timeout=0)
         # If the Enter key was hit
         # then send CR to the serial interface
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
-            logging.debug(f'{self.window_cycles} sending DL11 0o12 "CR"')
+            #logging.debug(f'{self.window_cycles} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(0o15)
-            logging.debug(f'vt52 released lock {self.window_cycles}')
+            #logging.debug(f'vt52 released lock {self.window_cycles}')
             self.lock.release()
 
         # If there's a keyboard event
@@ -150,27 +150,27 @@ class VT52_Console:
         if kbd != '':
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
-            logging.debug(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
+            #logging.debug(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(o)
-            logging.debug(f'vt52 released lock {self.window_cycles}')
+            #logging.debug(f'vt52 released lock {self.window_cycles}')
             self.lock.release()
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
-            logging.debug('Quit')
+            #logging.debug('Quit')
             window_run = False
         elif event == "Run":
-            logging.debug('Run')
+            #logging.debug('Run')
             self.pdp11.set_run(True)
             text = self.window['runLED']
             text.update(CIRCLE_OUTLINE)
         elif event == "Halt":
-            logging.debug('Halt')
+            #logging.debug('Halt')
             self.pdp11.set_run(False)
             text = self.window['runLED']
             text.update(CIRCLE)
         elif event == "Exit":
-            logging.debug('Exit')
+            #logging.debug('Exit')
             self.pdp11.set_run(False)
             window_run = False
 

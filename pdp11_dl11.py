@@ -58,13 +58,13 @@ class DL11:
     def get_lock(self):
         if not self.lock.locked(): #self.lock.is_set(): # lock was NOT set
             self.lock.acquire()
-            logging.debug('dl11 got lock')
+            #logging.debug('dl11 got lock')
             self.i_set_lock = True
 
     def release_lock(self):
         if self.i_set_lock:
             self.lock.release()
-            logging.debug('dl11 released lock')
+            #logging.debug('dl11 released lock')
             self.i_set_lock = False
 
     def safe_character(self, byte):
@@ -137,7 +137,7 @@ class DL11:
     def write_XCSR(self, byte):
         """write to transmitter status register"""
         self.get_lock()
-        logging.debug(f'dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
+        #logging.debug(f'dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
@@ -148,7 +148,7 @@ class DL11:
         self.get_lock()
         result = self.XCSR
         self.release_lock()
-        logging.debug(f'dl11.read_XCSR returns {oct(result)}')
+        #logging.debug(f'dl11.read_XCSR returns {oct(result)}')
         return result
 
     # XBUF transmit data buffer (wo)
@@ -156,7 +156,7 @@ class DL11:
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
         self.get_lock()
-        logging.debug(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
+        #logging.debug(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
         self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
@@ -172,7 +172,7 @@ class DL11:
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        logging.debug(f'dl11.read_XBUF returns {oct(result)} {self.safe_character(result)}')
+        #logging.debug(f'dl11.read_XBUF returns {oct(result)} {self.safe_character(result)}')
         self.release_lock()
         return result
 
