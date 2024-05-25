@@ -4,6 +4,7 @@
 # pip install -U pytest
 
 import logging
+import threading
 
 from pdp11_hardware import Ram
 from pdp11_hardware import Registers as reg
@@ -59,7 +60,7 @@ def subtract_word(psw, b1, b2):
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg, 16)
+    ram = Ram(threading.Lock(), reg, 16)
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)

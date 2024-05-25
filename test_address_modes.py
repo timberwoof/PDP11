@@ -1,4 +1,6 @@
 import logging
+import threading
+
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
 from pdp11_hardware import PSW
@@ -18,7 +20,7 @@ MASK_HIGH_BYTE = 0o177400
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg, 16)
+    ram = Ram(threading.Lock(), reg, 16)
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)

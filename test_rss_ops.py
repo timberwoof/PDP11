@@ -1,5 +1,6 @@
 import logging
-import pytest
+import threading
+import pytest # because pytest.mark.parametrize
 
 import pdp11_util as u
 from pdp11_hardware import Registers as reg
@@ -88,7 +89,7 @@ division_testcases = [
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg)
+    ram = Ram(threading.Lock(), reg, 16)
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)

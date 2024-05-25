@@ -1,4 +1,6 @@
 import logging
+import threading
+
 import pdp11_util as u
 from pdp11_logger import Logger
 from pdp11_hardware import Registers as reg
@@ -33,7 +35,7 @@ N = u.twosComplementNegative(P)
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg)
+    ram = Ram(threading.Lock(), reg, 16)
     psw = PSW(ram)
     stack = Stack(reg, ram, psw)
     am = am(reg, ram, psw)

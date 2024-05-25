@@ -2,6 +2,7 @@
 
 # pdp11-40 ref p. 4-79
 import logging
+import threading
 
 from pdp11_hardware import Registers as reg
 from pdp11_hardware import Ram
@@ -12,7 +13,7 @@ from stopwatches import StopWatches as sw
 
 class TestClass():
     reg = reg()
-    ram = Ram(reg, 16)
+    ram = Ram(threading.Lock(), reg, 16)
     psw = PSW(ram)
     sw = sw()
     cc_ops = cc_ops(psw, sw)

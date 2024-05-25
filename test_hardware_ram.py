@@ -4,6 +4,8 @@
 # pip install -U pytest
 
 import logging
+import threading
+
 from pdp11_logger import Logger
 from pdp11_config import Config
 from pdp11_hardware import Ram
@@ -23,23 +25,23 @@ class TestClass():
     reg = reg()
     config = Config()
     Logger()
-    ram = Ram(reg, bits=16)
+    ram = Ram(threading.Lock(), reg, 16)
 
     def test_ram_16(self):
         logging.info('test_ram_16')
-        ram = Ram(reg, bits=16)
+        ram = Ram(threading.Lock(), reg, bits=16)
         assert ram.top_of_memory == 0o177777
         assert ram.io_space == 0o160000
 
     def test_ram_18(self):
         logging.info('test_ram_18')
-        ram = Ram(reg, bits=18)
+        ram = Ram(threading.Lock(), reg, bits=18)
         assert ram.top_of_memory == 0o777777
         assert ram.io_space == 0o760000
 
     def test_ram_24(self):
         logging.info('test_ram_24')
-        ram = Ram(reg, bits=24)
+        ram = Ram(threading.Lock(), reg, bits=24)
         assert ram.top_of_memory == 0o77777777
         assert ram.io_space == 0o77760000
 
