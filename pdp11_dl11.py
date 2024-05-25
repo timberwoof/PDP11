@@ -47,6 +47,7 @@ class DL11:
         self.XBUF = 0   # transmit buffer
 
         self.i_set_lock = False
+        logging.info(f'ram.lock: {self.ram.lock}')
         logging.info('initializing dl11 done')
 
     # All reads and writes to IO buffers and CSRs must be protected.
@@ -56,12 +57,14 @@ class DL11:
     def lock(self):
         if self.ram.lock.is_set(): # lock was NOT set
             self.ram.lock.wait()
+            logging.info('dl11 got lock')
             self.ram.lock.clear()
             self.i_set_lock = True
 
     def unlock(self):
         if self.i_set_lock:
             self.ram.lock.set()
+            logging.info('dl11 released lock')
             self.i_set_lock = False
 
     def safe_character(self, byte):
@@ -117,7 +120,7 @@ class DL11:
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
         self.lock()
         result = self.RBUF
-        #logging.info(f'dl11.read_RBUF() returns {oct(result)} {self.safe_character(result)}"')
+        #logging.info(f'dl11.read_RBUF() returns {oct(result)} {self.safe_character(result)}')
         self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
         #   cleared when RBUF is read
         self.unlock()
@@ -134,7 +137,7 @@ class DL11:
     def write_XCSR(self, byte):
         """write to transmitter status register"""
         self.lock()
-        #logging.info(f'dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
+        logging.info(f'dl11.write_XCSR({oct(byte)})') # often gives uninteresting results
         # make the RW and RO bits play nice
         # only two are implemented so far
         self.XCSR = byte
@@ -145,6 +148,7 @@ class DL11:
         self.lock()
         result = self.XCSR
         self.unlock()
+        logging.info(f'dl11.read_XCSR returns {oct(result)}')
         return result
 
     # XBUF transmit data buffer (wo)
@@ -162,13 +166,13 @@ class DL11:
             self.write_RBUF(byte)
         self.unlock()
 
-    def read_XBUF(self, whoCalled=''):
+    def read_XBUF(self):
         """DL11 calls this to read from transmitter buffer register."""
         self.lock()
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
         self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
-        #logging.info(f'dl11.read_XBUF({whoCalled}) returns {oct(result)} {self.safe_character(result)}"')
+        logging.info(f'dl11.read_XBUF returns {oct(result)} {self.safe_character(result)}')
         self.unlock()
         return result
 

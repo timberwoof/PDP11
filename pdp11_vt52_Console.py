@@ -96,8 +96,8 @@ class VT52_Console:
         # RBUF
 
         # multiple-character bug facts:
-        # The bug happens in two successive iterations of window_cycle
-        # We get only one call to dl11.write_XBUF.
+        # The bug happens in immediately successive iterations of window_cycle.
+        # There is only one call to dl11.write_XBUF.
         # dl11.write_XBUF reliably sets XCSR.
         # RAM is protected from simultaneous acecss by threads.
         # The bug happens when a CPU cycle is split.
@@ -112,7 +112,7 @@ class VT52_Console:
         # If there's a character in the dl11 transmit buffer,
         # then send it to the display
         self.pdp11.dl11.ram.get_lock()
-        logging.info(f'begin XBUF lock {self.window_cycles}')
+        logging.info(f'vt52 got lock {self.window_cycles}')
         if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
             newchar = self.pdp11.dl11.read_XBUF()
             logging.info(
@@ -126,8 +126,11 @@ class VT52_Console:
                 # call update or cprint with key
                 if newchar != 13:
                     sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
-        logging.info(f'end XBUF lock {self.window_cycles}')
         self.pdp11.dl11.ram.release_lock()
+        logging.info(f'vt52 release lock {self.window_cycles}')
+
+        if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
+            logging.info('XCSR was not set')
 
         event, values = self.window.read(timeout=0)
         # If the Enter key was hit
@@ -137,6 +140,7 @@ class VT52_Console:
             logging.info(f'{self.window_cycles} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(0o15)
+            logging.info(f'vt52 released lock {self.window_cycles}')
             self.pdp11.dl11.ram.release_lock()
 
         # If there's a keyboard event
@@ -148,6 +152,7 @@ class VT52_Console:
             logging.info(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
             self.wait_for_rcsr_done_get_lock()
             self.pdp11.dl11.write_RBUF(o)
+            logging.info(f'vt52 released lock {self.window_cycles}')
             self.pdp11.dl11.ram.release_lock()
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel
