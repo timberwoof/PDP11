@@ -74,7 +74,7 @@ class PDP11():
         self.executed = {}
         self.CPU_cycles = 0
 
-        # Set up locking so control of whether CPU is running doesn't get stepped on
+        # Set up event so control of whether CPU is running doesn't get stepped on
         self.run = False
         self.runEvent = threading.Event()
         self.runEvent.set()
@@ -162,6 +162,7 @@ class pdp11Run():
     """sets up and runs PDP11 emulator"""
     def __init__(self, pdp11):
         """instantiate the PDP11 CPU"""
+        logging.info('initializing PDP11 emulator')
         self.pdp11 = pdp11
 
     def run(self, limit=100000):

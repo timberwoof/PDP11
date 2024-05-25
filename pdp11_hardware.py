@@ -180,18 +180,16 @@ class Ram:
         for address in range(self.io_space, self.top_of_memory):
            self.write_byte(address, 0o0)
 
-        self.lock = threading.Event()
-        self.lock.set()
-        logging.info(f'Ram init done')
+        self.lock = threading.Lock()
+        logging.info(f'Ram init done. Lock object:{self.lock}')
 
     # emulator interface to locking
     def get_lock(self):
-        self.lock.wait()
-        self.lock.clear()
+        self.lock.acquire()
         logging.info(f'ram got lock')
 
     def release_lock(self):
-        self.lock.set()
+        self.lock.release()
         logging.info(f'ram released lock')
 
     def safe_character(self, byte):
@@ -232,7 +230,7 @@ class Ram:
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers:
             if data != 0:
-                logging.info(f'write_byte io self_lock:{self.lock.is_set()} @{oct(address)}, {oct(data)} {self.safe_character(data)}')
+                logging.info(f'write_byte io self_lock:{self.lock.locked()} @{oct(address)}, {oct(data)} {self.safe_character(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()
@@ -250,7 +248,7 @@ class Ram:
             result = self.iomap_readers[address]()
             self.release_lock()
             if result != 0:
-                logging.info(f'read_byte io self_lock:{self.lock.is_set()} @{oct(address)} returns {oct(result)} {self.safe_character(result)}')
+                logging.info(f'read_byte io self_lock:{self.lock.locked()} @{oct(address)} returns {oct(result)} {self.safe_character(result)}')
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')

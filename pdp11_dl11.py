@@ -55,15 +55,14 @@ class DL11:
     # DL11 access happes directly through these calls.
 
     def lock(self):
-        if self.ram.lock.is_set(): # lock was NOT set
-            self.ram.lock.wait()
+        if not self.ram.lock.locked(): #self.ram.lock.is_set(): # lock was NOT set
+            self.ram.lock.acquire()
             logging.info('dl11 got lock')
-            self.ram.lock.clear()
             self.i_set_lock = True
 
     def unlock(self):
         if self.i_set_lock:
-            self.ram.lock.set()
+            self.ram.lock.release()
             logging.info('dl11 released lock')
             self.i_set_lock = False
 
