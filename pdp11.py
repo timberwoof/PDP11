@@ -52,12 +52,13 @@ class PDP11():
         Logger()
         logging.info('pdp11CPU initializing')
         self.sw = sw()
+        self.lock = threading.Lock()
 
         config = Config()
 
         # hardware
         self.reg = reg()
-        self.ram = Ram(self.reg, config.lookup('ram', 'bits'))
+        self.ram = Ram(self.lock, self.reg, config.lookup('ram', 'bits'))
         self.psw = PSW(self.ram)
         self.stack = Stack(self.reg, self.ram, self.psw)
         self.am = am(self.reg, self.ram, self.psw)
@@ -140,6 +141,7 @@ class PDP11():
         else:
             run, operand1, operand2, assembly, report = self.other_ops.do_other_op(instruction)
 
+        logging.debug(f'pdp11CPU dispatch_opcode returns run:{run} {assembly}')
         return run, operand1, operand2, assembly, report
 
     def instruction_cycle(self):
@@ -149,9 +151,10 @@ class PDP11():
         pc = self.reg.get_pc()  # get pc without incrementing
         instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
         run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        #logging.info(f'{self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
+        logging.debug('instruction_cycle came back from dispatch_opcode')
+        #logging.debug(f'instruction_cycle: {self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
         if pc == self.reg.get_pc():
-            logging.debug(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
+            logging.error(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
             result = False
         self.sw.stop("instruction_cycle")
         self.executed[instruction] = f'{instruction},{assembly}'
