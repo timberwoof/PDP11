@@ -55,16 +55,16 @@ class VT52:
 
     def wait_for_rcsr_done_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
-        logging.info('wait_for_rcsr_done_get_lock')
+        logging.debug('wait_for_rcsr_done_get_lock')
         self.dl11.ram.get_lock()
         rcsr = self.dl11.read_RCSR()
         while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
-            logging.info('wait_for_rcsr_done_get_lock loop')
+            logging.debug('wait_for_rcsr_done_get_lock loop')
             self.dl11.ram.release_lock()
             time.sleep(0.1)
             self.dl11.ram.get_lock()
             rcsr = self.dl11.read_RCSR()
-        logging.info('got RCSR_DONE and lock')
+        logging.debug('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
 
     def window_cycle(self):
@@ -91,6 +91,9 @@ class VT52:
                 f'{self.cycles_since_window} dl11 XBUF sent us ' +
                 f'{oct(newchar)} {newchar} {self.safe_character(newchar)}')
 
+            if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
+                logging.error('XCSR was not set')
+
             # Sure, DL11 can send us nulls; I just won't show them.
             if newchar != 0:
                 # deal specially with <o15><o12> <13><11> CR LF
@@ -106,7 +109,7 @@ class VT52:
         # then send CR to the serial interface
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
-            logging.info(f'{self.cycles_since_window} sending DL11 0o12 "CR"')
+            logging.debug(f'{self.cycles_since_window} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
             self.dl11.write_RBUF(0o15)
             self.dl11.ram.release_lock()
@@ -117,7 +120,7 @@ class VT52:
         if kbd != '':
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
-            logging.info(f'{self.cycles_since_window} sending DL11 {o} {self.safe_character(o)}')
+            logging.debug(f'{self.cycles_since_window} sending DL11 {o} {self.safe_character(o)}')
             self.wait_for_rcsr_done_get_lock()
             self.dl11.write_RBUF(o)
             self.dl11.ram.release_lock()

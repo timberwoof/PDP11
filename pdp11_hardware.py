@@ -186,11 +186,11 @@ class Ram:
     # emulator interface to locking
     def get_lock(self):
         self.lock.acquire()
-        logging.info(f'ram got lock')
+        logging.debug(f'ram got lock')
 
     def release_lock(self):
         self.lock.release()
-        logging.info(f'ram released lock')
+        logging.debug(f'ram released lock')
 
     def safe_character(self, byte):
         """return character if it is printable"""
@@ -230,7 +230,7 @@ class Ram:
         data = data & MASK_LOW_BYTE
         if address in self.iomap_writers:
             if data != 0:
-                logging.info(f'write_byte io self_lock:{self.lock.locked()} @{oct(address)}, {oct(data)} {self.safe_character(data)}')
+                logging.debug(f'write_byte io self_lock:{self.lock.locked()} @{oct(address)}, {oct(data)} {self.safe_character(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()
@@ -243,12 +243,12 @@ class Ram:
         Address can be even or odd."""
         assert address <= self.top_of_memory
         if address in self.iomap_readers:
-            #logging.info(f'read_byte IO(@{oct(address)})')
+            #logging.debug(f'read_byte IO(@{oct(address)})')
             self.get_lock()
             result = self.iomap_readers[address]()
             self.release_lock()
             if result != 0:
-                logging.info(f'read_byte io self_lock:{self.lock.locked()} @{oct(address)} returns {oct(result)} {self.safe_character(result)}')
+                logging.debug(f'read_byte io self_lock:{self.lock.locked()} @{oct(address)} returns {oct(result)} {self.safe_character(result)}')
         else:
             result = self.memory[address]
             #logging.debug(f'; read byte {u.oct6(address)}) = {u.oct3(result)}')
@@ -266,7 +266,7 @@ class Ram:
         assert address % 2 == 0                # *** should be a trap
         assert data <= MASK_WORD
         if address in self.iomap_writers:
-            #logging.info(f'write_word io @{oct(address)}, {oct(data)}')
+            #logging.debug(f'write_word io @{oct(address)}, {oct(data)}')
             self.get_lock()
             self.iomap_writers[address](data)
             self.release_lock()
@@ -286,7 +286,7 @@ class Ram:
         assert address % 2 == 0                # *** should be a trap
         result = ""
         if address in self.iomap_readers:
-            #logging.info(f'read word IO({u.oct6(address)})')
+            #logging.debug(f'read word IO({u.oct6(address)})')
             self.get_lock()
             result =  self.iomap_readers[address]()
             self.release_lock()
@@ -581,7 +581,7 @@ class AddressModes:
             operand_word = u.oct6(self.ram.read_word(self.reg.get(7)))
         assembly = ''
 
-        #logging.info(f'addressing_mode_get("{b}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
+        #logging.debug(f'addressing_mode_get("{b}", {oct(mode_register)}) address mode:{oct(addressmode)} register:{oct(register)}')
 
         if b == 'B':
             ram_read = self.ram.read_byte
