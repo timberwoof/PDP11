@@ -12,6 +12,8 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
+# *** This needs to be improved by having the test loop check the RCSR, not the RBUF
+
 # http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
 echo = [0o012700, 0o177560,  # start: mov #kbs, r0
         0o105710,  # wait: tstb (r0)       ; character received?

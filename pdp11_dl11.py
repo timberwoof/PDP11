@@ -111,10 +111,13 @@ class DL11:
     # 7-0 received data
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
-        #logging.info(f'dl11.write_RBUF({oct(byte)} {self.safe_character(byte)}"')
+        logging.info(f'dl11.write_RBUF {oct(byte)} {self.safe_character(byte)}"')
         self.get_lock()
         self.RBUF = byte
-        self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
+        RCSR = self.RCSR | self.RCSR_RCVR_DONE
+        self.RCSR = RCSR
+        if (self.RCSR & self.RCSR_RCVR_DONE) != self.RCSR_RCVR_DONE:
+            logging.error(f'XCSR {oct(self.RCSR)} was not set with {oct(self.RCSR_RCVR_DONE)}')
         #   set when character has been received,
         self.release_lock()
 
@@ -123,7 +126,10 @@ class DL11:
         self.get_lock()
         result = self.RBUF
         #logging.info(f'dl11.read_RBUF() returns {oct(result)} {self.safe_character(result)}')
-        self.RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
+        RCSR = self.RCSR & ~self.RCSR_RCVR_DONE
+        self.RCSR = RCSR
+        if (self.RCSR & self.RCSR_RCVR_DONE) == self.RCSR_RCVR_DONE:
+            logging.error(f'XCSR {oct(self.RCSR)} was not cleared with {oct(self.RCSR_RCVR_DONE)}')
         #   cleared when RBUF is read
         self.release_lock()
         return result
@@ -161,8 +167,10 @@ class DL11:
         #logging.debug(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded
-        self.XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
-
+        XCSR = self.XCSR & ~self.XCSR_XMIT_RDY
+        self.XCSR = XCSR
+        if (self.XCSR & self.XCSR_XMIT_RDY) == self.XCSR_XMIT_RDY:
+            logging.error(f'XCSR {oct(self.XCSR)} was not cleared with {oct(self.XCSR_XMIT_RDY)}')
         # check for Maintenance mode
         if (self.XCSR & self.XCSR_MAINT) == self.XCSR_MAINT:
             self.write_RBUF(byte)
@@ -176,7 +184,7 @@ class DL11:
         XCSR = self.XCSR | self.XCSR_XMIT_RDY # this works
         self.XCSR = XCSR # This fails! *****
         if (self.XCSR & self.XCSR_XMIT_RDY) != self.XCSR_XMIT_RDY:
-            logging.error(f'XCSR {oct(self.XCSR)} was not set with {oct(self.XCSR_XMIT_RDY)}') # this does not happen
+            logging.error(f'XCSR {oct(self.XCSR)} was not set with {oct(self.XCSR_XMIT_RDY)}')
         #logging.debug(f'dl11.read_XBUF returns {oct(result)} {self.safe_character(result)}')
         self.release_lock()
         return result
