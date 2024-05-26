@@ -14,7 +14,10 @@ class VT52_Console:
         logging.info('initializing vt52')
         logging.info(f'PySimpleGUI version:{sg.__version__}') # PySimpleGUI version:5.0.4
         self.pdp11 = pdp11
+        self.dl11 = pdp11.dl11
+        logging.info(f'vt52 dl11:{self.dl11}')
         self.lock = pdp11.lock
+        logging.info(f'vt52 lock:{self.lock}')
         self.window_cycles = 0
         self.buffer = 0  # for holding LF after CR was sent
         self.window = 0
@@ -79,13 +82,13 @@ class VT52_Console:
         """get lock, read RCSR. If it's done, keep the lock"""
         #logging.debug('wait_for_rcsr_done_get_lock')
         self.lock.acquire()
-        rcsr = self.pdp11.dl11.read_RCSR()
-        while (rcsr & self.pdp11.dl11.RCSR_RCVR_DONE) != 0:
+        rcsr = self.dl11.read_RCSR()
+        while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
             #logging.debug('wait_for_rcsr_done_get_lock loop')
             self.lock.release()
             time.sleep(0.1)
             self.lock.acquire()
-            rcsr = self.pdp11.dl11.read_RCSR()
+            rcsr = self.dl11.read_RCSR()
         #logging.debug('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
 
@@ -114,22 +117,23 @@ class VT52_Console:
         # then send it to the display
         self.lock.acquire()
         #logging.debug(f'vt52 got lock {self.window_cycles}')
-        if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
-            newchar = self.pdp11.dl11.read_XBUF()
+        if (self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY) == 0:
+            XBUF = self.dl11.read_XBUF() # read_XBUF is supposed to set XCSR to XCSR_XMIT_RDY
             logging.info(
                 f'cycle {self.window_cycles} {self.pdp11.CPU_cycles} dl11 XBUF sent us ' +
-                f'{oct(newchar)} {newchar} {self.safe_character(newchar)}')
+                f'{oct(XBUF)} {XBUF} {self.safe_character(XBUF)}')
 
-            if (self.pdp11.dl11.read_XCSR() & self.pdp11.dl11.XCSR_XMIT_RDY) == 0:
-                logging.error('XCSR was not set')
+            XCSR = self.dl11.read_XCSR()
+            if (XCSR & self.dl11.XCSR_XMIT_RDY) != self.dl11.XCSR_XMIT_RDY:
+                logging.error(f'XCSR {oct(XCSR)} was not set with {oct(self.dl11.XCSR_XMIT_RDY)}')
 
             # Sure, DL11 can send us nulls; I just won't show them.
-            if newchar != 0:
+            if XBUF != 0:
                 # deal specially with <o15><o12> <13><11> CR LF
                 # multiline rstrip=True therefore whitespace is stripped
                 # call update or cprint with key
-                if newchar != 13:
-                    sg.cprint(chr(newchar), end='', sep='', autoscroll=True)
+                if XBUF != 13:
+                    sg.cprint(chr(XBUF), end='', sep='', autoscroll=True)
         self.lock.release()
         #logging.debug(f'vt52 release lock {self.window_cycles}')
 
@@ -140,7 +144,7 @@ class VT52_Console:
             self.window['keyboard'].Update('')
             #logging.debug(f'{self.window_cycles} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
-            self.pdp11.dl11.write_RBUF(0o15)
+            self.dl11.write_RBUF(0o15)
             #logging.debug(f'vt52 released lock {self.window_cycles}')
             self.lock.release()
 
@@ -152,7 +156,7 @@ class VT52_Console:
             o = ord(kbd[0:1])
             #logging.debug(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
             self.wait_for_rcsr_done_get_lock()
-            self.pdp11.dl11.write_RBUF(o)
+            self.dl11.write_RBUF(o)
             #logging.debug(f'vt52 released lock {self.window_cycles}')
             self.lock.release()
 

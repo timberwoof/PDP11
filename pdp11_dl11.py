@@ -8,7 +8,9 @@ class DL11:
         """dl11(ram object, base address for this device)"""
         logging.info(f'initializing dl11({oct(base_address)})')
         self.ram = ram
+        logging.info(f'dl11 ram:{self.ram}')
         self.lock = ram.lock
+        logging.info(f'dl11 lock:{self.lock}')
         self.RCSR_address = base_address
         self.RBUF_address = base_address + 2
         self.XCSR_address = base_address + 4
@@ -171,7 +173,10 @@ class DL11:
         self.get_lock()
         result = self.XBUF
         # self.XCSR_XMIT_RDY is set when XBUF can accept another character
-        self.XCSR = self.XCSR | self.XCSR_XMIT_RDY
+        XCSR = self.XCSR | self.XCSR_XMIT_RDY # this works
+        self.XCSR = XCSR # This fails! *****
+        if (self.XCSR & self.XCSR_XMIT_RDY) != self.XCSR_XMIT_RDY:
+            logging.error(f'XCSR {oct(self.XCSR)} was not set with {oct(self.XCSR_XMIT_RDY)}') # this does not happen
         #logging.debug(f'dl11.read_XBUF returns {oct(result)} {self.safe_character(result)}')
         self.release_lock()
         return result
