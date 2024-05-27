@@ -147,19 +147,22 @@ class PDP11():
     def instruction_cycle(self):
         """Run one PDP11 fetch-decode-execute window_cycle"""
         # fetch opcode and increment program counter
-        self.sw.start("instruction_cycle")
-        pc = self.reg.get_pc()  # get pc without incrementing
-        instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
-        run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
-        #logging.debug('instruction_cycle came back from dispatch_opcode')
-        #logging.debug(f'instruction_cycle: {self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
-        if pc == self.reg.get_pc():
-            logging.error(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
-            result = False
-        self.sw.stop("instruction_cycle")
-        self.executed[instruction] = f'{instruction},{assembly}'
-        self.CPU_cycles = self.CPU_cycles + 1
-        return run
+        try:
+            self.sw.start("instruction_cycle")
+            pc = self.reg.get_pc()  # get pc without incrementing
+            instruction = self.ram.read_word_from_pc()  # read at pc and increment pc
+            run, operand1, operand2, assembly, report = self.dispatch_opcode(instruction)
+            logging.debug('instruction_cycle came back from dispatch_opcode')
+            logging.debug(f'instruction_cycle: {self.pdp11.CPU_cycles} {u.oct6(pc)} {u.oct6(instruction)} {u.pad(assembly, 20)};{self.reg.registers_to_string()} NZVC:{self.psw.get_nzvc()}')
+            if pc == self.reg.get_pc():
+                logging.error(f'instruction_cycle: pc was not changed at {oct(pc)}. Halting.')
+                result = False
+            self.sw.stop("instruction_cycle")
+            self.executed[instruction] = f'{instruction},{assembly}'
+            self.CPU_cycles = self.CPU_cycles + 1
+            return run
+        except error:
+            traceback.print_stack()
 
 class pdp11Run():
     """sets up and runs PDP11 emulator"""
