@@ -7,6 +7,16 @@ from pdp11_logger import Logger
 # the name is given in the init cparameters
 # if no name is given, read config_default.json
 # hardware binds hardware type, base address, options, and name
+
+# needs to set up logging level and format and stuff
+
+# pdp11 needs to define the memory size and IO page
+# (Maybe pdp11 needs to load additional instructions.)
+# DL11 needs to set up a DL11 with a name and set its base address
+# TV52 needs to connect to a specific DL11 by name
+# Tek4010 needs to connect to a specific DL11 by name
+# Disk drives need to define their symbolic names and base addresses.
+
 class Config:
     def __init__(self, filename='config_default.json'):
         logger = Logger()
@@ -16,7 +26,6 @@ class Config:
                 self.automation_config = json.load(configFile)
             except json.decoder.JSONDecodeError:
                 logging.error(f'There was an error while reading {configFilePath}')
-
 
     def safe_dictionary_lookup(self, dictionry, key, default=''):
         """safely get value out of dictionary where key might be missing

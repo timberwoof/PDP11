@@ -1,6 +1,7 @@
-# test_echo.py
-# load a small pdp11 program that echoes inputs back to outputs
-from stopwatches import StopWatches
+# test_Tek4010.py
+# test the 4010 emulator
+# This test class helps define the needs placed on the
+# as yet unwritten configuration system
 
 from pdp11 import PDP11
 from pdp11 import pdp11Run
@@ -12,8 +13,6 @@ MASK_BYTE_MSB = 0o000200
 MASK_LOW_BYTE = 0o000377
 MASK_HIGH_BYTE = 0o177400
 
-# *** This needs to be improved by having the test loop check the RCSR, not the RBUF
-
 # http://www.retrocmp.com/how-tos/interfacing-to-a-pdp-1105/146-interfacing-with-a-pdp-1105-test-programs-and-qhello-worldq
 echo = [0o012700, 0o177560,  # start: mov #kbs, r0
         0o105710,  # wait: tstb (r0)       ; character received?
@@ -23,16 +22,14 @@ echo = [0o012700, 0o177560,  # start: mov #kbs, r0
 echo_address = 0o001000
 
 class TestClass():
-
     def test_echo(self):
         print('test_echo pdp11CPU()')
-        pdp11 = PDP11('VT52')
+        pdp11 = PDP11('TEK4010') # this is where I need configuration
         print('test_echo pdp11Boot()')
         boot = pdp11Boot(pdp11.reg, pdp11.ram)
         print('test_echo load_machine_code()')
         boot.load_machine_code(echo, echo_address)
         pdp11.reg.set_pc(echo_address, "load_machine_code")
-        pdp11.ram.dump(echo_address, echo_address+0o10)
+        pdp11.ram.dump(echo_address, echo_address + 0o10)
         run = pdp11Run(pdp11)
-        run.run_with_VT52_emulator()
-
+        run.run_with_TEK4010_emulator()

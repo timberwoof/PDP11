@@ -24,6 +24,7 @@ from pdp11_ssdd_ops import ssdd_ops
 from pdp11_dl11 import DL11
 from pdp11_terminal import Terminal
 from pdp11_vt52_Console import VT52_Console
+from pdp11_tek4010_Console import TEK4010_Console
 from pdp11_boot import pdp11Boot as boot
 from pdp11_m9301 import M9301
 from pdp11_rk11 import RK11
@@ -47,10 +48,10 @@ from stopwatches import StopWatches as sw
 
 class PDP11():
     """Timber's PDP11 emulator"""
-    def __init__(self, ui=False):
+    def __init__(self, ui="None"):
         """instantiate the PDP11 emulator components"""
         Logger()
-        logging.info('pdp11CPU initializing')
+        logging.info(f'pdp11CPU initializing with ui={ui}')
         self.sw = sw()
         self.lock = threading.Lock()
 
@@ -89,9 +90,13 @@ class PDP11():
         # set up the serial interface addresses
         # this must eventually be definable in a file so it has to be here
         # reader status register 177560
+        logging.info('pdp11CPU setting up DL111 at 0o177560')
         self.dl11 = DL11(self.ram, 0o177560)
-        if (ui):
+        logging.info(f'pdp11CPU initializing ui:{ui}')
+        if ui == 'VT52':
             self.vt52 = VT52_Console(self, self.sw)
+        if ui == 'TEK4010':
+            self.tek4010 = TEK4010_Console(self, self.sw)
         else:
             self.terminal = Terminal(self.dl11, self.sw)
 
@@ -272,3 +277,51 @@ class pdp11Run():
             logging.info(self.pdp11.executed[item])
         logging.info('instructions executed report ends')
 
+    def run_with_TEK4010_emulator(self):
+        """run PDP11 with a PySimpleGUI terminal window."""
+        logging.info('run_with_TEK4010_emulator: begin PDP11 emulator')
+        logging.info(f'{self.pdp11.reg.registers_to_string()} NZVC:{self.pdp11.psw.get_nzvc()}')
+
+        # Create and run the terminal window in PySimpleGUI
+        logging.info('run_with_TEK4010_emulator make windows')
+        tek4010_window = self.pdp11.tek4010.make_window()
+        self.pdp11.set_run(False)
+        was_cpu_run = False
+        console_run = True
+
+        logging.info(f'run_with_TEK4010_emulator begins.')
+        while console_run:
+            console_run = self.pdp11.tek4010.window_cycle() == True # may set cu flag
+
+            # Check for whether we need to start or stop the CPU thread.
+            # Start CPU here instead of in startup because console has to start and stop it.
+            self.pdp11.runEvent.wait() # wait for flag set
+            self.pdp11.runEvent.clear() # clear flag
+            if (self.pdp11.run != was_cpu_run): # if run changed
+                if was_cpu_run:
+                    self.pdp11.sw.stop("CPU")
+                    logging.info('stop CPU thread')
+                    self.pdp11.run = False
+                else: # was_cpu_run == FALSE
+                    logging.info('start CPU thread')
+                    self.pdp11.run = True
+                    self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
+                    self.cpuThread.start()
+                    self.pdp11.sw.start("CPU")
+                was_cpu_run = self.pdp11.run
+            self.pdp11.runEvent.set() # set the flag
+
+        logging.info(f'run_with_TEK4010_emulator ends.')
+        self.pdp11.am.address_mode_report()
+        self.pdp11.sw.report()
+
+        run_time = self.pdp11.sw.get_watch("CPU").get_sum() / 1000000000
+        logging.info(f'run_time:{run_time}')
+        processor_speed = self.pdp11.CPU_cycles / run_time  # (cycles per second)
+        format_processor_speed = '{:5.0f}'.format(processor_speed)
+        logging.info(f'self.pdp11.CPU_cycles:{self.pdp11.CPU_cycles}')
+        logging.info(f"processor speed: {self.pdp11.CPU_cycles} cycles / {run_time} seconds = {format_processor_speed} instructions per second")
+        logging.info('instructions executed:')
+        for item in self.pdp11.executed.keys():
+            logging.info(self.pdp11.executed[item])
+        logging.info('instructions executed report ends')
