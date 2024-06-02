@@ -187,16 +187,16 @@ class Ram:
     # emulator interface to locking
     # The idea is that any time there's unlocked access to IO page RAM,
     # It's the CPU doing it and that section needs to be locked.
-    def get_lock(self):
+    def get_lock(self, whocalled=''):
         if not self.lock.locked(): #self.ram.lock.is_set(): # lock was NOT set
             self.lock.acquire()
-            #logging.debug('dl11 got lock')
+            logging.info(f'{whocalled} got lock')
             self.i_set_lock = True
 
-    def release_lock(self):
+    def release_lock(self, whocalled=''):
         if self.i_set_lock:
             self.lock.release()
-            #logging.debug('dl11 released lock')
+            logging.debug(f'{whocalled} released lock')
             self.i_set_lock = False
 
     def safe_character(self, byte):

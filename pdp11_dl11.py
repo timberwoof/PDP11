@@ -58,17 +58,17 @@ class DL11:
     # DL11 access happens directly through these calls.
 
     def get_lock(self, whocalled=''):
-        logging.debug(f'get_lock {whocalled}')
+        logging.info(f'get_lock called by {whocalled}')
         if not self.lock.locked(): #self.lock.is_set(): # lock was NOT set
             self.lock.acquire()
-            logging.debug('dl11 got lock')
+            logging.info('dl11 got lock')
             self.i_set_lock = True
 
     def release_lock(self, whocalled=''):
-        logging.debug(f'release_lock {whocalled}')
+        logging.info(f'release_lock called by {whocalled}')
         if self.i_set_lock:
             self.lock.release()
-            logging.debug('dl11 released lock')
+            logging.info('dl11 released lock')
             self.i_set_lock = False
 
     def safe_character(self, byte):
@@ -114,13 +114,13 @@ class DL11:
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
         logging.info(f'dl11.write_RBUF {oct(byte)} {self.safe_character(byte)}')
-        self.get_lock(f'write_RBUF{oct(byte)}')
+        self.get_lock(f'write_RBUF({oct(byte)})')
         self.RBUF = byte
         self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
         if (self.RCSR & self.RCSR_RCVR_DONE) != self.RCSR_RCVR_DONE:
             logging.error(f'XCSR {oct(self.RCSR)} was not set with {oct(self.RCSR_RCVR_DONE)}')
-        logging.info('dl11.write_RBUF exit')
         self.release_lock('write_RBUF')
+        logging.info('dl11.write_RBUF exit')
 
     def read_RBUF(self):
         """PDP11 calls this to read from receiver buffer. Read buffer and reset ready bit"""
@@ -164,7 +164,7 @@ class DL11:
     # 7-0 transmitted data buffer
     def write_XBUF(self, byte):
         """PDP11 calls this to write to transmitter buffer register."""
-        self.get_lock('write_XBUF')
+        self.get_lock('write_XBUF({oct(byte)})')
         #logging.debug(f'dl11.write_XBUF({oct(byte)}) {self.safe_character(byte)}"')
         self.XBUF = byte
         # self.XCSR_XMIT_RDY is cleared when XBUF is loaded

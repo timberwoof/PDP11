@@ -80,16 +80,16 @@ class VT52_Console:
 
     def wait_for_rcsr_done_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
-        #logging.debug('wait_for_rcsr_done_get_lock')
-        self.lock.acquire()
+        logging.info('wait_for_rcsr_done_get_lock')
+        self.dl11.ram.get_lock('VT52 RCSR')
         rcsr = self.dl11.read_RCSR()
         while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
-            #logging.debug('wait_for_rcsr_done_get_lock loop')
-            self.lock.release()
+            logging.info('wait_for_rcsr_done_get_lock loop')
+            self.dl11.ram.release_lock()
             time.sleep(0.1)
-            self.lock.acquire()
+            self.dl11.ram.get_lock('VT52 RCSR')
             rcsr = self.dl11.read_RCSR()
-        #logging.debug('got RCSR_DONE and lock')
+        logging.info('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
 
     def window_cycle(self):
@@ -143,7 +143,9 @@ class VT52_Console:
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
             logging.info(f'{self.window_cycles} sending DL11 0o12 "CR"')
+            logging.info(f'vt52 wait_for_rcsr_done_get_lock')
             self.wait_for_rcsr_done_get_lock()
+            logging.info(f'vt52 got lock; dl11.write_RBUF')
             self.dl11.write_RBUF(0o15)
             logging.info(f'vt52 release lock {self.window_cycles}')
             self.lock.release()
@@ -157,7 +159,7 @@ class VT52_Console:
             logging.info(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
             logging.info(f'vt52 wait_for_rcsr_done_get_lock')
             self.wait_for_rcsr_done_get_lock()
-            logging.info(f'vt52 got lock')
+            logging.info(f'vt52 got lock; dl11.write_RBUF')
             self.dl11.write_RBUF(o)
             logging.info(f'vt52 release lock')
             self.lock.release()

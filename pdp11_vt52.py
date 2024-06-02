@@ -55,16 +55,16 @@ class VT52:
 
     def wait_for_rcsr_done_get_lock(self):
         """get lock, read RCSR. If it's done, keep the lock"""
-        logging.debug('wait_for_rcsr_done_get_lock')
-        self.dl11.ram.get_lock()
+        logging.info('wait_for_rcsr_done_get_lock')
+        self.dl11.ram.get_lock('VT52 RCSR')
         rcsr = self.dl11.read_RCSR()
         while (rcsr & self.dl11.RCSR_RCVR_DONE) != 0:
-            logging.debug('wait_for_rcsr_done_get_lock loop')
+            logging.info('wait_for_rcsr_done_get_lock loop')
             self.dl11.ram.release_lock()
             time.sleep(0.1)
-            self.dl11.ram.get_lock()
+            self.dl11.ram.get_lock('VT52 RCSR')
             rcsr = self.dl11.read_RCSR()
-        logging.debug('got RCSR_DONE and lock')
+        logging.info('got RCSR_DONE and lock')
         # RCSR_RCVR_DONE == 0 and we have the python event lock
 
     def window_cycle(self):
@@ -84,7 +84,7 @@ class VT52:
 
         # if there's a character in the dl11 transmit buffer,
         # then send it to the display
-        self.dl11.ram.get_lock()
+        self.dl11.ram.get_lock('VT52 XCSR')
         if (self.dl11.read_XCSR() & self.dl11.XCSR_XMIT_RDY) == 0:
             newchar = self.dl11.read_XBUF()
             logging.info(
