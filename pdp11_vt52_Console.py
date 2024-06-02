@@ -142,10 +142,10 @@ class VT52_Console:
         # then send CR to the serial interface
         if event == 'keyboard_Enter':
             self.window['keyboard'].Update('')
-            #logging.debug(f'{self.window_cycles} sending DL11 0o12 "CR"')
+            logging.info(f'{self.window_cycles} sending DL11 0o12 "CR"')
             self.wait_for_rcsr_done_get_lock()
             self.dl11.write_RBUF(0o15)
-            #logging.debug(f'vt52 released lock {self.window_cycles}')
+            logging.info(f'vt52 release lock {self.window_cycles}')
             self.lock.release()
 
         # If there's a keyboard event
@@ -154,10 +154,12 @@ class VT52_Console:
         if kbd != '':
             self.window['keyboard'].Update('')
             o = ord(kbd[0:1])
-            #logging.debug(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
+            logging.info(f'{self.window_cycles} sending DL11 {o} {self.safe_character(o)}')
+            logging.info(f'vt52 wait_for_rcsr_done_get_lock')
             self.wait_for_rcsr_done_get_lock()
+            logging.info(f'vt52 got lock')
             self.dl11.write_RBUF(o)
-            #logging.debug(f'vt52 released lock {self.window_cycles}')
+            logging.info(f'vt52 release lock')
             self.lock.release()
 
         if event in (sg.WIN_CLOSED, 'Quit'):  # if user closes window or clicks cancel

@@ -114,13 +114,12 @@ class DL11:
     def write_RBUF(self, byte):
         """DL11 calls this to write to receiver buffer and set ready bit"""
         logging.info(f'dl11.write_RBUF {oct(byte)} {self.safe_character(byte)}')
-        self.get_lock('write_RBUF')
+        self.get_lock(f'write_RBUF{oct(byte)}')
         self.RBUF = byte
-        RCSR = self.RCSR | self.RCSR_RCVR_DONE
-        self.RCSR = RCSR
+        self.RCSR = self.RCSR | self.RCSR_RCVR_DONE
         if (self.RCSR & self.RCSR_RCVR_DONE) != self.RCSR_RCVR_DONE:
             logging.error(f'XCSR {oct(self.RCSR)} was not set with {oct(self.RCSR_RCVR_DONE)}')
-        #   set when character has been received,
+        logging.info('dl11.write_RBUF exit')
         self.release_lock('write_RBUF')
 
     def read_RBUF(self):
