@@ -1,7 +1,7 @@
 """PDP-11 Emulator"""
 import time
 import logging
-import threading
+from multiprocessing import Process, Lock
 import traceback
 
 import pdp11_util as u
@@ -45,6 +45,10 @@ from stopwatches import StopWatches as sw
 # source/M9301-YB.txt - raw machine, not very useful in diagnosing anything
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 # self.ram.dump(0o165000, 0o165000+32)
+
+# multiprocessing
+# https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between-processes
+# the i/o page becomes the shared object.
 
 class PDP11():
     """Timber's PDP11 emulator"""
@@ -253,7 +257,7 @@ class pdp11Run():
                 else: # was_cpu_run == FALSE
                     logging.info('start CPU thread')
                     self.pdp11.run = True
-                    self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
+                    self.cpuThread = Process.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
                     self.cpuThread.start()
                     self.pdp11.sw.start("CPU")
                 was_cpu_run = self.pdp11.run
