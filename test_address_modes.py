@@ -1,3 +1,4 @@
+"""test address modes"""
 import logging
 import threading
 
