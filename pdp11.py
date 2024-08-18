@@ -57,7 +57,7 @@ class PDP11():
         Logger()
         logging.info(f'pdp11CPU initializing with ui={ui}')
         self.sw = sw()
-        self.lock = threading.Lock()
+        self.lock = threading.Lock() # *** no threading
 
         config = Config()
 
@@ -82,7 +82,7 @@ class PDP11():
 
         # Set up event so control of whether CPU is running doesn't get stepped on
         self.run = False
-        self.runEvent = threading.Event()
+        self.runEvent = threading.Event() # *** no threading
         self.runEvent.set()
 
         # i/o devices
@@ -306,6 +306,7 @@ class pdp11Run():
                 else: # was_cpu_run == FALSE
                     logging.info('start CPU thread')
                     self.pdp11.run = True
+                    # *** no threading
                     self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
                     self.cpuThread.start()
                     self.pdp11.sw.start("CPU")
