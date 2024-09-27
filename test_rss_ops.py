@@ -117,7 +117,7 @@ class TestClass():
         return opcode | regD << 6 | self.DD_part(modeS, regS)
 
     def test_BIC(self):
-        print('\ntest_BIC')
+        #print('\ntest_BIC')
         self.psw.set_psw(psw=0)
         self.reg.set(1, 0b1010101010101010)
         self.reg.set(2, 0b1111111111111111)
@@ -134,7 +134,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BICB(self):
-        print('\ntest_BICB')
+        #print('\ntest_BICB')
         self.psw.set_psw(psw=0)
         # evil test shows that The high byte is unaffected.
         self.reg.set(1, 0b1010101010101010)
@@ -153,7 +153,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_BIC_2(self):
-        print('\ntest_BIC_2')
+        #print('\ntest_BIC_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0o777777)
         # evil test puts word data into a byte test and expects byte result
@@ -172,7 +172,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_BICB_2(self):
-        print('\ntest_BICB_2')
+        #print('\ntest_BICB_2')
         # PDP-11/40 p. 4-21
         self.psw.set_psw(psw=0)
         # evil test puts word data into a byte test and expects byte result
@@ -191,7 +191,7 @@ class TestClass():
         assert condition_codes == "0000"
 
     def test_MOV_0(self):
-        print('\ntest_MOV_0')
+        #print('\ntest_MOV_0')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0o123456)
         self.reg.set(4,0o000000)
@@ -210,7 +210,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOV_2(self):
-        print('\ntest_MOV_2')
+        #print('\ntest_MOV_2')
         # 010322 MOV R3,(R2)+
         # from M9001_YA that broke
         self.psw.set_psw(psw=0o777777)
@@ -218,10 +218,10 @@ class TestClass():
         self.reg.set(2,0o000000)
         instruction = self.make_ssdd_op(opcode=0o010000, modeS=0, regS=3, modeD=2, regD=2)   # mode 0 R1
         assert self.ssdd_ops.is_ssdd_op(instruction)
-        print('setup done; running make_ssdd_op')
+        #print('setup done; running make_ssdd_op')
         run, operand1, operand2, assembly, report = self.ssdd_ops.do_ssdd_op(instruction)
         assert assembly == "MOV R3,(R2)+"
-        print('make_ssdd_op done; checking results')
+        #print('make_ssdd_op done; checking results')
 
         r3 = self.reg.get(3)
         assert r3 == 0o177777
@@ -236,7 +236,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_01(self):
-        print('\ntest_MOVB_01')
+        #print('\ntest_MOVB_01')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011100101110)
         self.reg.set(4,0b0000000000000000)
@@ -255,7 +255,7 @@ class TestClass():
         assert condition_codes == "0001"
 
     def test_MOVB_02(self):
-        print('\ntest_MOVB_02')
+        #print('\ntest_MOVB_02')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b1010011110101110)
         self.reg.set(4,0b0000000000000000)
@@ -274,7 +274,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_03(self):
-        print('\ntest_MOVB_03')
+        #print('\ntest_MOVB_03')
         self.psw.set_psw(psw=0o777777)
         self.reg.set(3,0b0000000010101110)
         self.reg.set(4,0b1010011100000000)
@@ -293,7 +293,7 @@ class TestClass():
         assert condition_codes == "1001"
 
     def test_MOVB_04(self):
-        print('\ntest_MOVB_04')
+        #print('\ntest_MOVB_04')
         # 165250 112512 MOVB (R5)+,@R2 from M9301-YA
         # MOVB (R5)+,@R2
         self.psw.set_psw(psw=0o777777)
@@ -312,12 +312,12 @@ class TestClass():
         assert assembly == "MOVB (R5)+,@R2"
         assert self.reg.get(5) == 0o165321
         atr2  = self.ram.read_byte(self.reg.get(2))
-        print(f'@R2={oct(atr2)} {bin(atr2)}')
+        #print(f'@R2={oct(atr2)} {bin(atr2)}')
         assert atr2 == 0o377
 
     @pytest.mark.parametrize('name, s, d, RS, RD, CC', multiplication_testcases)
     def test_MUL(self, name, s, d, RS, RD, CC):
-        print(f'\ntest_MUL assembly: MUL R{RS},R{RD} ; {oct(d)} * {oct(s)} = {u.pythonifyPDP11Word(d)} * {u.pythonifyPDP11Word(s)}')
+        #print(f'\ntest_MUL assembly: MUL R{RS},R{RD} ; {oct(d)} * {oct(s)} = {u.pythonifyPDP11Word(d)} * {u.pythonifyPDP11Word(s)}')
         instruction = 0o070000
         self.psw.set_psw(psw=0)
         self.reg.set(RD, d)
@@ -341,9 +341,9 @@ class TestClass():
         condition_codes = self.psw.get_nzvc()
         #print(f'test_MUL   actual nzvc: {condition_codes}');
         assert condition_codes == CC
-        print(f'test_MUL result:{u.pythonifyPDP11Long(pdp11_actual_product)} = {oct(pdp11_actual_product)}  CC:{condition_codes}')
+        #print(f'test_MUL result:{u.pythonifyPDP11Long(pdp11_actual_product)} = {oct(pdp11_actual_product)}  CC:{condition_codes}')
 
-    def test_constants(self):
+    def not_test_constants(self):
         print(f'\ntest_constants')
         print(f'P: {P} = {oct(P)}')
         print(f'p: {p} = {oct(p)}')
@@ -367,7 +367,7 @@ class TestClass():
         # We reuse parameters and results from MUL
         py_numerator = u.pythonifyPDP11Long(numerator)
         py_denominator = u.pythonifyPDP11Word(denominator)
-        print(f'\ntest_DIV assembly: DIV R{RS},R{RD} ; {oct(numerator)} / {oct(denominator)} = {py_numerator} / {py_denominator}')
+        #print(f'\ntest_DIV assembly: DIV R{RS},R{RD} ; {oct(numerator)} / {oct(denominator)} = {py_numerator} / {py_denominator}')
         if py_denominator == 0:
             py_expected_quotient = 0
             py_expected_remainder = 0

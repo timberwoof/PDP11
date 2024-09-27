@@ -1,4 +1,3 @@
-"""test multiprocessing"""
 import logging
 import threading
 

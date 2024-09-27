@@ -1,7 +1,7 @@
 """PDP-11 Emulator"""
 import time
 import logging
-import threading
+from multiprocessing import Process, Lock
 import traceback
 
 import pdp11_util as u
@@ -46,6 +46,10 @@ from stopwatches import StopWatches as sw
 # source/M9301-YH.txt - raw machine, not very useful in diagnosing anything
 # self.ram.dump(0o165000, 0o165000+32)
 
+# multiprocessing
+# https://docs.python.org/3/library/multiprocessing.html#exchanging-objects-between-processes
+# the i/o page becomes the shared object.
+
 class PDP11():
     """Timber's PDP11 emulator"""
     def __init__(self, ui="None"):
@@ -53,7 +57,7 @@ class PDP11():
         Logger()
         logging.info(f'pdp11CPU initializing with ui={ui}')
         self.sw = sw()
-        self.lock = threading.Lock()
+        self.lock = threading.Lock() # *** no threading
 
         config = Config()
 
@@ -78,7 +82,7 @@ class PDP11():
 
         # Set up event so control of whether CPU is running doesn't get stepped on
         self.run = False
-        self.runEvent = threading.Event()
+        self.runEvent = threading.Event() # *** no threading
         self.runEvent.set()
 
         # i/o devices
@@ -253,7 +257,7 @@ class pdp11Run():
                 else: # was_cpu_run == FALSE
                     logging.info('start CPU thread')
                     self.pdp11.run = True
-                    self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
+                    self.cpuThread = Process.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
                     self.cpuThread.start()
                     self.pdp11.sw.start("CPU")
                 was_cpu_run = self.pdp11.run
@@ -302,6 +306,7 @@ class pdp11Run():
                 else: # was_cpu_run == FALSE
                     logging.info('start CPU thread')
                     self.pdp11.run = True
+                    # *** no threading
                     self.cpuThread = threading.Thread(target=self.cpuThread, args=(self.pdp11,), daemon=True)
                     self.cpuThread.start()
                     self.pdp11.sw.start("CPU")
