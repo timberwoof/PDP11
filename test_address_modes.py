@@ -1,4 +1,3 @@
-"""test address modes again"""
 import logging
 import threading
 
